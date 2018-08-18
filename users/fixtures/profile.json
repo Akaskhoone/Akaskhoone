@@ -1,4 +1,3 @@
-// Remeber to copy profile_photos to media folder too
 [
   {
     "model": "users.profile",

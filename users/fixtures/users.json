@@ -1,7 +1,3 @@
-// passwords are "pass{username}". example:
-// email   : aasmpro@admin.com
-// username: aasmpro
-// password: passaasmpro
 [
   {
     "model": "users.user",
