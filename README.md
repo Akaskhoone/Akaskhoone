@@ -88,4 +88,4 @@ Windows:
 python manage.py runserver
 ```
 
-and then checkout ```http://127.0.0.1:8000```
+and then checkout [127.0.0.1:8000](http://127.0.0.1:8000 "localhost")
