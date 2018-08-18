@@ -1,0 +1,4 @@
+Django==2.1
+djangorestframework==3.8.2
+Markdown==2.6.11
+pytz==2018.5
