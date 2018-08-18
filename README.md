@@ -1,18 +1,18 @@
 # akaskhoone server
 this repo handles backend of akaskhoone project
 
-### Requirements
+## Requirements
 * python 3.6
 * django 2
 * djangorestframework 3
 
-### Setup
-- clone repo
+## Setup
+#### clone repo
 ```bash
 git clone http://gitlab.rahnemacollege.com/Team-3/akaskhoone.git
 ```
 
-- installing ```virtualenv``` if you don't have it already
+#### installing ```virtualenv``` if you don't have it already
 
 macOS / Linux:
 ```bash
@@ -22,11 +22,11 @@ Windows:
 ```bash
 pip install virtualenv
 ```
-- creating new virtualenv ( macOS / Linux / Windows )
+#### creating new virtualenv ( macOS / Linux / Windows )
 ```bash
 virtualenv env_akaskhoone
 ```
-- activate virtualenv with this command
+#### activate virtualenv with this command
 
 macOS / Linux:
 ```bash
@@ -36,7 +36,7 @@ Windows:
 ```bash
 .\env_akaskhoone\Scripts\activate
 ```
-- installing requirements
+#### installing requirements
 
 macOS / Linux:
 ```bash
@@ -47,7 +47,7 @@ Windows:
 pip install -r akaskhoone/requirements.txt
 ```
 
-### Migrating
+## Migrating
 in root directory of project run this command for migrating models
 
 macOS / Linux:
@@ -59,7 +59,7 @@ Windows:
 python manage.py migrate
 ```
 
-### Loading Fixture
+## Loading Fixture
 macOS / Linux:
 ```bash
 python3 manage.py loaddata
@@ -75,7 +75,7 @@ mkdir media
 cp -r users/fixtures/profile_photos/ media/
 ```  
 
-### Runserver
+## Runserver
 in root directory of project run this command:
 > change the ```DEBUG = True``` for testing projext with local Django server. 
 
