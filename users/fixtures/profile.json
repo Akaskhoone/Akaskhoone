@@ -1,0 +1,43 @@
+[
+{
+    "model": "users.profile",
+    "pk": 6,
+    "fields": {
+        "user": 4,
+        "bio": "reza bio",
+        "image": "profile_photos/4/photo_2018-08-16_22-11-55.jpg",
+        "followers": [],
+        "followings": [
+            8
+        ]
+    }
+},
+{
+    "model": "users.profile",
+    "pk": 7,
+    "fields": {
+        "user": 5,
+        "bio": "edi bio",
+        "image": "",
+        "followers": [
+            6
+        ],
+        "followings": []
+    }
+},
+{
+    "model": "users.profile",
+    "pk": 8,
+    "fields": {
+        "user": 6,
+        "bio": "",
+        "image": "profile_photos/6/photo_2018-08-16_22-11-55.jpg",
+        "followers": [
+            7
+        ],
+        "followings": [
+            6
+        ]
+    }
+}
+]
