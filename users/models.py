@@ -11,14 +11,15 @@ class User(AbstractUser):
 
 
 def get_profile_image_path(instance, filename):
-    return os.path.join('profile_photos', str(instance.id), filename)
+    return os.path.join('profile_photos', str(instance.user.id), filename)
 
 
 class Profile(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    bio = models.TextField('biography')
+    bio = models.TextField('biography', null=True, blank=True)
     image = models.ImageField(upload_to=get_profile_image_path, blank=True, null=True)
-    followers = models.ManyToManyField('Profile', related_name='user_followers')
-    followings = models.ManyToManyField('Profile', related_name='user_followings')
+    followers = models.ManyToManyField('Profile', related_name='user_followers', blank=True)
+    followings = models.ManyToManyField('Profile', related_name='user_followings', blank=True)
 
-
+    def __str__(self):
+        return str(self.user)
