@@ -3,7 +3,7 @@ from django.contrib.admin.decorators import register
 from django.contrib.auth.admin import UserAdmin
 
 from .models import User, Profile
-from .froms import UserCreationForm, UserChangeForm
+from .forms import UserCreationForm, UserChangeForm
 
 
 @register(User)
