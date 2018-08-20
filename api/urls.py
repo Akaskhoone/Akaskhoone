@@ -8,6 +8,7 @@ urlpatterns = [
     path('api/v0/', include(([
         path('users/', views.Users.as_view(), name='users'),
         path('login/', obtain_jwt_token, name='login'),
+        path('signup/', views.Signup.as_view(), name='signup'),
         path('refresh/', refresh_jwt_token, name='refresh'),
         path('verify/', verify_jwt_token, name='verify'),
     ], 'v0'))),

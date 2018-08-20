@@ -6,3 +6,5 @@ Pillow==5.2.0
 PyJWT==1.6.4
 pytz==2018.5
 six==1.11.0
+django-allauth==0.36.0
+django-rest-auth==0.9.3
