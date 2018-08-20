@@ -4,14 +4,11 @@ from users.serializers import *
 from rest_framework.views import APIView
 
 
-class Users(APIView):
-
+class GetProfile(APIView):
     def get(self, request, format=None):
-        content = {
-            'user': "user user",
-            'auth': "auth auth",
-        }
-        return JsonResponse(content)
+        p = Profile.objects.get(user=request.user)
+        ps = ProfileSerializer(p)
+        return JsonResponse(ps.data)
 
 
 class Signup(APIView):
