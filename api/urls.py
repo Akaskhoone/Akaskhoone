@@ -6,7 +6,7 @@ app_name = 'api'
 
 urlpatterns = [
     path('api/v0/', include(([
-        path('users/', views.Users.as_view(), name='users'),
+        path('profile/', views.GetProfile.as_view(), name='profile'),
         path('login/', obtain_jwt_token, name='login'),
         path('refresh/', refresh_jwt_token, name='refresh'),
         path('verify/', verify_jwt_token, name='verify'),
