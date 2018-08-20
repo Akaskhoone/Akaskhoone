@@ -1,7 +1,4 @@
 from django.http import JsonResponse
-# from
-from rest_framework import status
-from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from users.serializers import *
 from rest_framework.views import APIView
@@ -21,24 +18,24 @@ class Signup(APIView):
     permission_classes = (AllowAny,)
 
     def post(self, request, format=None):
-        newUserData = {
+        new_user_data = {
             "email": request.data["email"],
             "username": request.data["username"],
             "first_name": request.data["first_name"],
             "password": request.data["password"]
         }
-        userSerializer = UserSerializer(data=dict(newUserData))
-        if userSerializer.is_valid():
+        user_serializer = UserSerializer(data=dict(new_user_data))
+        if user_serializer.is_valid():
             print("validated")
-            user = userSerializer.save()
-            newProfileData = {
+            user = user_serializer.save()
+            new_profile_data = {
                 "user": user.id,
                 "bio": request.data["bio"],
                 # "image": request.data["image"],
             }
-            profileSerializer = ProfileSerializer(data=newProfileData)
-            if profileSerializer.is_valid():
-                profileSerializer.save()
+            profile_serializer = ProfileSerializer(data=new_profile_data)
+            if profile_serializer.is_valid():
+                profile_serializer.save()
                 return JsonResponse({"status": "user created"})
             else:
                 return JsonResponse({"status": "error profile exists"})
