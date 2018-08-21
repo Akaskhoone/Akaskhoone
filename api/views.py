@@ -45,6 +45,6 @@ class EditProfile(APIView):
     def post(self, request, format=None):
         p = Profile.objects.get(user=request.user)
         p.bio = request.data["bio"]
-        p.user.firstname = request.data["first_name"]
+        p.user.firstname = request.data["first_gname"]
         p.save()
         return JsonResponse({"status": "profile updated!"})
