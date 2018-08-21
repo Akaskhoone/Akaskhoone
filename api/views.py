@@ -5,11 +5,18 @@ from rest_framework.views import APIView
 
 
 class GetProfile(APIView):
-    def get(self, request, format=None):
+    def get(self, request):
         p = Profile.objects.get(user=request.user)
         ps = ProfileSerializer(p)
         return JsonResponse(ps.data)
 
+
+class UpdatePassword(APIView):
+    def post(self, request):
+        user=request.user
+        user.set_password(request.data['password'])
+        user.save()
+        return JsonResponse({"status":"Password changed"})
 
 class Signup(APIView):
     permission_classes = (AllowAny,)
