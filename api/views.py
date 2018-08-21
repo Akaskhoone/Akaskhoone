@@ -38,3 +38,13 @@ class Signup(APIView):
                 return JsonResponse({"status": "error profile exists"})
         else:
             return JsonResponse({"status": "error user exists"})
+
+
+class EditProfile(APIView):
+
+    def post(self, request, format=None):
+        p = Profile.objects.get(user=request.user)
+        p.bio = request.data["bio"]
+        p.user.firstname = request.data["first_name"]
+        p.save()
+        return JsonResponse({"status": "profile updated!"})
