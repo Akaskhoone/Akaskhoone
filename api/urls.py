@@ -11,5 +11,6 @@ urlpatterns = [
         path('signup/', views.Signup.as_view(), name='signup'),
         path('refresh/', refresh_jwt_token, name='refresh'),
         path('verify/', verify_jwt_token, name='verify'),
+        path('editProfile/', views.EditProfile.as_view(), name= "editProfile")
     ], 'v0'))),
 ]
