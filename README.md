@@ -27,7 +27,7 @@ if you commit code related to an issue, provide the issue number in this format:
 ```
 this is the commit message of fixing X issue [TTHREE-102]
 ```
-the `TTHREE-` is what issues are started with in [Jira](http://jira.rahnemacollege.com), so follow this rule.
+the `TTHREE-` is what issues are started with in [Jira](http://jira.rahnemacollege.com) for team 3, so follow this rule.
 
 also you can use this tags in comments to make code much more readable too.
 also if you use PyCharm you can find these tags by navigating to **`TODO`** panel in bottom:
