@@ -1,18 +1,13 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm as BaseUserCreationForm
-from django.contrib.auth.forms import UserChangeForm as BaseUserChangeForm
 from .models import User
 
 
 class UserCreationForm(BaseUserCreationForm):
-    email = forms.EmailField(required=True)
+    email = forms.EmailField(label="Email address", required=True,
+                             help_text="Required. Provide a real email address")
 
     class Meta:
         model = User
-        fields = ('username', 'email')
+        fields = ('email', 'username')
 
-
-class UserChangeForm(BaseUserChangeForm):
-    class Meta:
-        model = User
-        fields = BaseUserChangeForm.Meta.fields
