@@ -17,7 +17,7 @@ class UserAdmin(BaseUserAdmin):
         }),
     )
 
-    # -- snippet --
+    # snippet
     # this way you can have different add and change forms if using admin.ModelAdmin
     #
     # def get_form(self, request, obj=None, change=False, **kwargs):
