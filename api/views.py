@@ -42,9 +42,9 @@ class Signup(APIView):
 
 class EditProfile(APIView):
 
-    def post(self, request, format=None):
+    def post(self, request):
         p = Profile.objects.get(user=request.user)
         p.bio = request.data["bio"]
-        p.user.firstname = request.data["first_gname"]
+        p.user.first_name = request.data["first_name"]
         p.save()
         return JsonResponse({"status": "profile updated!"})
