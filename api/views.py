@@ -13,15 +13,16 @@ class GetProfile(APIView):
 
 class UpdatePassword(APIView):
     def post(self, request):
-        user=request.user
+        user = request.user
         user.set_password(request.data['password'])
         user.save()
-        return JsonResponse({"status":"Password changed"})
+        return JsonResponse({"status": "Password changed"})
+
 
 class Signup(APIView):
     permission_classes = (AllowAny,)
 
-    def post(self, request, format=None):
+    def post(self, request):
         new_user_data = {
             "email": request.data["email"],
             "username": request.data["username"],
@@ -48,10 +49,9 @@ class Signup(APIView):
 
 
 class EditProfile(APIView):
-
     def post(self, request):
         p = Profile.objects.get(user=request.user)
         p.bio = request.data["bio"]
         p.user.first_name = request.data["first_name"]
         p.save()
-        return JsonResponse({"status": "profile updated!"})
+        return JsonResponse({"status": "profile updated"})
