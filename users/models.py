@@ -2,9 +2,10 @@ import os
 from django.conf import settings
 from django.db import models
 from django.contrib.auth.models import AbstractUser
-
+from api.validators import *
 
 class User(AbstractUser):
+    first_name = models.CharField('first name', max_length=30, blank=True, validators=[NameValidator])
     email = models.EmailField('email address', unique=True)
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']
