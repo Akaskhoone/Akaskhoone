@@ -41,14 +41,15 @@ class APILoginTest(APIJWTTestCase):
 class APIAuthorizationTest(APIJWTTestCase):
     def test_api_authorization_needed_endpoint(self):
         print('>>> test api authorization needed endpoint')
-        response = self.client.get(reverse("api:v0:users"))
+        response = self.client.get(reverse("api:v0:profile"))
         self.assertEqual(response.status_code, 401)
-        User.objects.create_user('aasmpro', 'aasmpro@admin.com', 'passaasmpro')
+        u = User.objects.create_user('aasmpro', 'aasmpro@admin.com', 'passaasmpro')
         self.client.login(email='aasmpro@admin.com', password='passaasmpro')
+        Profile.objects.create(user_id=u.id, bio='testing profile')
         # response = self.client.post(reverse("api:v0:login"), {'email': 'aasmpro@admin.com', 'password': 'passaasmpro'})
         # authorization = F"{api_settings.JWT_AUTH_HEADER_PREFIX} {response.data['token']}"
         # self.client.credentials(HTTP_AUTHORIZATION=authorization)
-        response = self.client.get(reverse("api:v0:users"))
+        response = self.client.get(reverse("api:v0:profile"))
         self.assertEqual(response.status_code, 200)
 
 
@@ -82,3 +83,16 @@ class APITagTest(APIJWTTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(json.loads(response.content)["tags"],
                          ['bahar', 'baharan', "tabestoon", "paeez", "parviz", "kaveh", "kavir", "kavian"])
+
+
+class APIChangePasswordTest(APIJWTTestCase):
+    def test_change_password(self):
+        User.objects.create_user('reza', 'reza@admin.com', 'passreza')
+        self.client.login(email='reza@admin.com', password='passreza')
+        self.client.post(reverse("api:v0:change_password"), {'old_password': 'passreza', 'new_password': 'rezareza'})
+        response = self.client.post(reverse("api:v0:login"), {'email': 'reza@admin.com', 'password': 'passreza'})
+        self.assertEqual(response.status_code, 400)
+        response = self.client.post(reverse("api:v0:login"), {'email': 'reza@admin.com', 'password': 'mamadmamad'})
+        self.assertEqual(response.status_code, 400)
+        response = self.client.post(reverse("api:v0:login"), {'email': 'reza@admin.com', 'password': 'rezareza'})
+        self.assertEqual(response.status_code, 200)
