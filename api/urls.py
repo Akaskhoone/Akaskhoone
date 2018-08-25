@@ -14,6 +14,8 @@ urlpatterns = [
         path('verify/', verify_jwt_token, name='verify'),
         path('edit_profile/', views.EditProfile.as_view(), name="edit_profile"),
         path('allTags/', views.GetAllTags.as_view(), name="getAllTags"),
-        path('tags/', views.Tags.as_view(), name="tags")
+        path('tags/', views.Tags.as_view(), name="tags"),
+        path('createPost/', views.CreatePost.as_view(), name="createPost"),
+        path('posts/', views.GetUserPosts.as_view(), name="getUserPosts"),
     ], 'v0'))),
 ]
