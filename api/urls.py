@@ -12,6 +12,8 @@ urlpatterns = [
         path('signup/', views.Signup.as_view(), name='signup'),
         path('refresh/', refresh_jwt_token, name='refresh'),
         path('verify/', verify_jwt_token, name='verify'),
-        path('editProfile/', views.EditProfile.as_view(), name= "editProfile")
+        path('editProfile/', views.EditProfile.as_view(), name="editProfile"),
+        path('allTags/', views.GetAllTags.as_view(), name="getAllTags"),
+        path('tags/', views.Tags.as_view(), name="tags")
     ], 'v0'))),
 ]

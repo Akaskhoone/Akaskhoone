@@ -3,7 +3,9 @@ from django.urls import reverse
 from rest_framework.test import APITestCase, APIClient
 from rest_framework import status
 from rest_framework_jwt.settings import api_settings
+import json
 
+from posts.models import Tag
 from users.serializers import *
 
 
@@ -48,3 +50,35 @@ class APIAuthorizationTest(APIJWTTestCase):
         # self.client.credentials(HTTP_AUTHORIZATION=authorization)
         response = self.client.get(reverse("api:v0:users"))
         self.assertEqual(response.status_code, 200)
+
+
+class APITagTest(APIJWTTestCase):
+
+    def setUp(self):
+        User.objects.create_user('aasmpro', 'aasmpro@admin.com', 'passaasmpro')
+        self.client.login(email='aasmpro@admin.com', password='passaasmpro')
+        Tag.objects.create(name="bahar")
+        Tag.objects.create(name="baharan")
+        Tag.objects.create(name="tabestoon")
+        Tag.objects.create(name="paeez")
+        Tag.objects.create(name="parviz")
+        Tag.objects.create(name="kaveh")
+        Tag.objects.create(name="kavir")
+        Tag.objects.create(name="kavian")
+
+    def test_search_for_tags(self):
+        print(">>> test search for tags ")
+        response = self.client.get(reverse("api:v0:tags"), {"name": "b"})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(json.loads(response.content)["matched_tags"], ['bahar', 'baharan'])
+        response = self.client.get(reverse("api:v0:tags"), {"name": "kavi"})
+        self.assertEqual(json.loads(response.content)["matched_tags"], ['kavir', 'kavian'])
+        response = self.client.get(reverse("api:v0:tags"), {"name": "r"})
+        self.assertEqual(json.loads(response.content)["matched_tags"], [])
+
+    def test_all_tags(self):
+        print(">>> test all tags ")
+        response = self.client.get(reverse("api:v0:getAllTags"))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(json.loads(response.content)["tags"],
+                         ['bahar', 'baharan', "tabestoon", "paeez", "parviz", "kaveh", "kavir", "kavian"])
