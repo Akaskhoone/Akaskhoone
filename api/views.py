@@ -2,6 +2,7 @@ from django.http import JsonResponse
 from rest_framework.permissions import AllowAny
 from users.serializers import *
 from rest_framework.views import APIView
+from posts.models import *
 
 
 class GetProfile(APIView):
@@ -45,6 +46,24 @@ class EditProfile(APIView):
     def post(self, request, format=None):
         p = Profile.objects.get(user=request.user)
         p.bio = request.data["bio"]
-        p.user.firstname = request.data["first_gname"]
+        p.user.firstname = request.data["first_name"]
         p.save()
         return JsonResponse({"status": "profile updated!"})
+
+
+class GetAllTags(APIView):
+
+    def get(self, format=None):
+        return JsonResponse({
+            "tags": [str(t) for t in Tag.objects.all()]
+        })
+
+
+class Tags(APIView):
+
+    def get(self,request ,formant=None):
+        query = request.query_params['name']
+        matched_tags = [str(t) for t in Tag.objects.filter(name__startswith=query)]
+        return JsonResponse({
+            "matched_tags": matched_tags
+        })

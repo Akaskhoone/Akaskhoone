@@ -1,0 +1,79 @@
+[
+  {
+    "model": "posts.Tag",
+    "pk": 1,
+    "fields": {
+      "name": "bahar"
+    }
+  },
+  {
+    "model": "posts.Tag",
+    "pk": 2,
+    "fields": {
+      "name": "tabestoon"
+    }
+  },
+  {
+    "model": "posts.Tag",
+    "pk": 3,
+    "fields": {
+      "name": "paeez"
+    }
+  },
+  {
+    "model": "posts.Tag",
+    "pk": 4,
+    "fields": {
+      "name": "zemestoon"
+    }
+  },
+  {
+    "model": "posts.Tag",
+    "pk": 5,
+    "fields": {
+      "name": "baharan"
+    }
+  },
+  {
+    "model": "posts.Tag",
+    "pk": 6,
+    "fields": {
+      "name": "abshar"
+    }
+  },
+  {
+    "model": "posts.Tag",
+    "pk": 7,
+    "fields": {
+      "name": "darya"
+    }
+  },
+  {
+    "model": "posts.Tag",
+    "pk": 8,
+    "fields": {
+      "name": "kavir"
+    }
+  },
+  {
+    "model": "posts.Tag",
+    "pk": 9,
+    "fields": {
+      "name": "kaveh"
+    }
+  },
+  {
+    "model": "posts.Tag",
+    "pk": 10,
+    "fields": {
+      "name": "dard"
+    }
+  },
+  {
+    "model": "posts.Tag",
+    "pk": 11,
+    "fields": {
+      "name": "asemoon"
+    }
+  }
+]
