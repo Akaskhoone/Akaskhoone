@@ -2,6 +2,8 @@ from django.http import JsonResponse
 from rest_framework.permissions import AllowAny
 from users.serializers import *
 from rest_framework.views import APIView
+from posts.models import *
+from users.models import *
 
 
 class GetProfile(APIView):
@@ -14,9 +16,12 @@ class GetProfile(APIView):
 class UpdatePassword(APIView):
     def post(self, request):
         user = request.user
-        user.set_password(request.data['password'])
-        user.save()
-        return JsonResponse({"status": "Password changed"})
+        if(user.check_password(request.data['old_password'])):
+            user.set_password(request.data['new_password'])
+            user.save()
+            return JsonResponse({"status": "Password changed successfully"})
+        else:
+            return JsonResponse({"status": "The given old password is not true"})
 
 
 class Signup(APIView):
@@ -52,6 +57,27 @@ class EditProfile(APIView):
     def post(self, request):
         p = Profile.objects.get(user=request.user)
         p.bio = request.data["bio"]
+
+        NameValidator()(request.data["first_name"])
+
         p.user.first_name = request.data["first_name"]
         p.save()
+        p.user.save()
         return JsonResponse({"status": "profile updated"})
+
+
+class GetAllTags(APIView):
+    def get(self, request):
+        return JsonResponse({
+            "tags": [str(t) for t in Tag.objects.all()]
+        })
+
+
+class Tags(APIView):
+
+    def get(self, request, formant=None):
+        query = request.query_params['name']
+        matched_tags = [str(t) for t in Tag.objects.filter(name__startswith=query)]
+        return JsonResponse({
+            "matched_tags": matched_tags
+        })
