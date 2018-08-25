@@ -1,4 +1,3 @@
-from django.test import TestCase
 from django.urls import reverse
 from rest_framework.test import APITestCase, APIClient
 from rest_framework import status
@@ -39,8 +38,8 @@ class APILoginTest(APIJWTTestCase):
 
 
 class APIAuthorizationTest(APIJWTTestCase):
-    def test_api_authorization_needed_endpoint(self):
-        print('>>> test api authorization needed endpoint')
+    def test_authorization_needed(self):
+        print('>>> test authorization needed')
         response = self.client.get(reverse("api:v0:profile"))
         self.assertEqual(response.status_code, 401)
         u = User.objects.create_user('aasmpro', 'aasmpro@admin.com', 'passaasmpro')
@@ -50,8 +49,19 @@ class APIAuthorizationTest(APIJWTTestCase):
         self.assertEqual(response.status_code, 200)
 
 
-class APITagTest(APIJWTTestCase):
+class APIUsersTest(APIJWTTestCase):
+    def test_getting_user_profile(self):
+        print('>>> test getting user profile')
+        u = User.objects.create_user('aasmpro', 'aasmpro@admin.com', 'passaasmpro')
+        self.client.login(email='aasmpro@admin.com', password='passaasmpro')
+        Profile.objects.create(user_id=u.id, bio='testing profile')
+        response = self.client.get(reverse("api:v0:profile"))
+        self.assertEqual(response.status_code, 200)
+        self.assertJSONEqual(response.content,
+                             '{"id": 1, "bio": "testing profile", "image": null, "user": 1, "followers": [], "followings": []}')
 
+
+class APITagTest(APIJWTTestCase):
     def setUp(self):
         User.objects.create_user('aasmpro', 'aasmpro@admin.com', 'passaasmpro')
         self.client.login(email='aasmpro@admin.com', password='passaasmpro')
