@@ -7,11 +7,11 @@ app_name = 'api'
 urlpatterns = [
     path('api/v0/', include(([
         path('profile/', views.GetProfile.as_view(), name='profile'),
-        path('change_pass/', views.UpdatePassword.as_view(), name='profile'),
+        path('change_pass/', views.UpdatePassword.as_view(), name='change_password'),
         path('login/', obtain_jwt_token, name='login'),
         path('signup/', views.Signup.as_view(), name='signup'),
         path('refresh/', refresh_jwt_token, name='refresh'),
         path('verify/', verify_jwt_token, name='verify'),
-        path('editProfile/', views.EditProfile.as_view(), name= "editProfile")
+        path('editProfile/', views.EditProfile.as_view(), name="editProfile")
     ], 'v0'))),
 ]

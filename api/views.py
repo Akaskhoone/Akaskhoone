@@ -14,9 +14,12 @@ class GetProfile(APIView):
 class UpdatePassword(APIView):
     def post(self, request):
         user = request.user
-        user.set_password(request.data['password'])
-        user.save()
-        return JsonResponse({"status": "Password changed"})
+        if(user.check_password(request.data['old_password'])):
+            user.set_password(request.data['new_password'])
+            user.save()
+            return JsonResponse({"status": "Password changed successfully"})
+        else:
+            return JsonResponse({"status": "The given old password is not true"})
 
 
 class Signup(APIView):
