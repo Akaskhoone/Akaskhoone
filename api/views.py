@@ -6,7 +6,7 @@ from rest_framework.views import APIView
 from posts.models import *
 from posts.forms import UploadImageForm
 from django.contrib.auth.password_validation import validate_password
-
+from api.validators import *
 
 class GetProfile(APIView):
     def get(self, request):
