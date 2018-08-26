@@ -49,11 +49,11 @@ class Signup(APIView):
             profile_serializer = ProfileSerializer(data=new_profile_data)
             if profile_serializer.is_valid():
                 profile_serializer.save()
-                return JsonResponse({"status": "user created"})
+                return JsonResponse({"status": "User created successfully"})
             else:
-                return JsonResponse({"status": "error profile exists"})
+                return JsonResponse({"status": "Can not to create a profile with given data"})
         else:
-            return JsonResponse({"status": "error user exists"})
+            return JsonResponse({"status": "Can not to create a user with given data"})
 
 
 class EditProfile(APIView):
