@@ -5,6 +5,7 @@ from posts.serializers import postSerializer
 from rest_framework.views import APIView
 from posts.models import *
 from posts.forms import UploadImageForm
+from django.contrib.auth.password_validation import validate_password
 
 
 class GetProfile(APIView):
@@ -18,6 +19,7 @@ class UpdatePassword(APIView):
     def post(self, request):
         user = request.user
         if user.check_password(request.data['old_password']):
+            validate_password(request.data['new_password'], user=user, password_validators=None)
             user.set_password(request.data['new_password'])
             user.save()
             return JsonResponse({"status": "Password changed successfully"})
