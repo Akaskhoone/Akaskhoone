@@ -3,7 +3,7 @@ from rest_framework.permissions import AllowAny
 from users.serializers import *
 from rest_framework.views import APIView
 from posts.models import *
-
+from django.contrib.auth.password_validation import password_changed
 
 class GetProfile(APIView):
     def get(self, request):
@@ -16,7 +16,7 @@ class UpdatePassword(APIView):
     def post(self, request):
         user = request.user
         if user.check_password(request.data['old_password']):
-            user.set_password(request.data['new_password'])
+            password_changed(request.data['new_password'], user=user)
             user.save()
             return JsonResponse({"status": "Password changed successfully"})
         else:
