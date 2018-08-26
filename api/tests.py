@@ -3,7 +3,7 @@ from rest_framework.test import APITestCase, APIClient
 from rest_framework import status
 from rest_framework_simplejwt.settings import api_settings
 import json
-
+from django.core.exceptions import *
 from posts.models import Tag
 from users.serializers import *
 
@@ -93,7 +93,7 @@ class APITagTest(APIJWTTestCase):
 
 
 class APIChangePasswordTest(APIJWTTestCase):
-    def test_change_password(self):
+    def test_login_after_change(self):
         User.objects.create_user('reza', 'reza@admin.com', 'passreza')
         self.client.login(email='reza@admin.com', password='passreza')
         self.client.post(reverse("api:v0:change_password"), {'old_password': 'passreza', 'new_password': 'rezareza'})
@@ -102,4 +102,34 @@ class APIChangePasswordTest(APIJWTTestCase):
         response = self.client.post(reverse("api:v0:login"), {'email': 'reza@admin.com', 'password': 'mamadmamad'})
         self.assertEqual(response.status_code, 400)
         response = self.client.post(reverse("api:v0:login"), {'email': 'reza@admin.com', 'password': 'rezareza'})
+        self.assertEqual(response.status_code, 200)
+    def test_valid_password(self):
+        User.objects.create_user('reza', 'reza@admin.com', 'passreza')
+        self.client.login(email='reza@admin.com', password='passreza')
+        #common_pass
+        try:
+            self.client.post(reverse("api:v0:change_password"), {'old_password': 'passreza', 'new_password': '12345678'})
+        except ValidationError:
+            pass
+        response = self.client.post(reverse("api:v0:login"), {'email': 'reza@admin.com', 'password': '12345678'})
+        self.assertEqual(response.status_code, 400)
+        response = self.client.post(reverse("api:v0:login"), {'email': 'reza@admin.com', 'password': 'passreza'})
+        self.assertEqual(response.status_code, 200)
+        #min_lenght
+        try:
+            self.client.post(reverse("api:v0:change_password"), {'old_password': 'passreza', 'new_password': 'j43n54'})
+        except ValidationError:
+            pass
+        response = self.client.post(reverse("api:v0:login"), {'email': 'reza@admin.com', 'password': 'j43n54'})
+        self.assertEqual(response.status_code, 400)
+        response = self.client.post(reverse("api:v0:login"), {'email': 'reza@admin.com', 'password': 'passreza'})
+        self.assertEqual(response.status_code, 200)
+        #Numerical_pass
+        try:
+            self.client.post(reverse("api:v0:change_password"), {'old_password': 'passreza', 'new_password': '1231423223453'})
+        except ValidationError:
+            pass
+        response = self.client.post(reverse("api:v0:login"), {'email': 'reza@admin.com', 'password': '1231423223453'})
+        self.assertEqual(response.status_code, 400)
+        response = self.client.post(reverse("api:v0:login"), {'email': 'reza@admin.com', 'password': 'passreza'})
         self.assertEqual(response.status_code, 200)
