@@ -1,10 +1,12 @@
 from django.http import JsonResponse
+from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import AllowAny
+
+from api.validators import NameValidator
 from users.serializers import *
-from posts.serializers import postSerializer
+from posts.serializers import PostSerializer
 from rest_framework.views import APIView
 from posts.models import *
-from posts.forms import UploadImageForm
 
 
 class GetProfile(APIView):
@@ -84,25 +86,20 @@ class Tags(APIView):
         })
 
 
-def handle_uploaded_file(f, filename):
-    with open('posts/images/{}'.format(filename), 'wb+') as destination:
-        for chunk in f.chunks():
-            destination.write(chunk)
+class PostView(APIView):
+    parser_classes = (MultiPartParser, FormParser)
 
-
-class CreatePost(APIView):
-    def post(self, request):
-        form = UploadImageForm(request.POST, request.FILES)
-        if form.is_valid():
-            form.save()
-            handle_uploaded_file(request.FILES['file'], request.user.post_set.count())
-            return JsonResponse({"status": "Successful!"})
+    def post(self, request, *args, **kwargs):
+        image_serializer = PostSerializer(data=request.data)
+        if image_serializer.is_valid():
+            image_serializer.save()
+            return JsonResponse({"status": "Successfully created!"})
         else:
-            return JsonResponse({"status": "Failed!"})
+            return JsonResponse({"status": "Post creation failed!"})
 
 
 class GetUserPosts(APIView):
-    def get(self,request ,format=None):
+    def get(self, request, format=None):
         user = User.objects.get(id=request.query_params["user_id"])
         return JsonResponse({
             "posts": [post for post in Post.objects.filter(user=user)]
