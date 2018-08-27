@@ -56,6 +56,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     def email_user(self, subject, message, from_email=None, **kwargs):
         send_mail(subject, message, from_email, [self.email], **kwargs)
 
+    def __str__(self):
+        return str(self.email)
+
 
 def get_profile_image_path(instance, filename):
     return os.path.join('profile_photos', str(instance.user.id), filename)
@@ -67,7 +70,7 @@ class Profile(models.Model):
     name = models.CharField(_('name'), max_length=100, blank=False, validators=[name_validator])
     bio = models.TextField(_('biography'), null=True, blank=True)
     image = models.ImageField(_('image'), upload_to=get_profile_image_path, blank=True, null=True)
-    follows = models.ManyToManyField('Profile', related_name='followed_by', blank=True, verbose_name=_('follows'))
+    following = models.ManyToManyField('Profile', related_name='followers', blank=True, verbose_name=_('follows'))
 
     def __str__(self):
         return str(self.user)
