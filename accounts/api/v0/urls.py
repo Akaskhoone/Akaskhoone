@@ -1,6 +1,6 @@
 from django.urls import path
 from rest_framework_simplejwt.views import token_obtain_pair, token_refresh, token_verify
-from .views import *
+from accounts.api.v0.views import *
 
 app_name = 'api.v0.accounts'
 

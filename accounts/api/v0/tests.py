@@ -1,5 +1,5 @@
 from accounts.api.utils import APIJWTTestCase
-from .serializers import *
+from accounts.api.v0.serializers import *
 from django.urls import reverse
 from django.core.exceptions import *
 
@@ -8,25 +8,27 @@ class APILoginTest(APIJWTTestCase):
     def test_login_with_real_user(self):
         print('>>> test login with real user')
         User.objects.create_user('aasmpro', 'aasmpro@admin.com', 'passaasmpro')
-        result, response = self.client.login(email='aasmpro@admin.com', password='passaasmpro')
+        result, response = self.client.login(url=reverse('api.v0.accounts:login'), email='aasmpro@admin.com',
+                                             password='passaasmpro')
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'access')
 
     def test_login_with_fake_user(self):
         print('>>> test login with fake user')
-        response = self.client.post(reverse("api:v0:login"), {'email': 'aasmpro@admin.com', 'password': 'passaasmpro'})
+        result, response = self.client.login(url=reverse('api.v0.accounts:login'), email='aasmpro@admin.com',
+                                             password='passaasmpro')
         self.assertEqual(response.status_code, 400)
 
 
 class APIAuthorizationTest(APIJWTTestCase):
     def test_authorization_needed(self):
         print('>>> test authorization needed')
-        response = self.client.get(reverse("api:v0:profile"))
+        response = self.client.get(reverse('api.v0.accounts:profile'))
         self.assertEqual(response.status_code, 401)
-        u = User.objects.create_user('aasmpro', 'aasmpro@admin.com', 'passaasmpro')
+        u = User.objects.create_user(email='aasmpro@admin.com', username='aasmpro', password='passaasmpro')
         self.client.login(email='aasmpro@admin.com', password='passaasmpro')
         Profile.objects.create(user_id=u.id, bio='testing profile')
-        response = self.client.get(reverse("api:v0:profile"))
+        response = self.client.get(reverse('api.v0.accounts:profile'))
         self.assertEqual(response.status_code, 200)
 
 
