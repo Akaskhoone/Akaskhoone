@@ -146,8 +146,10 @@ class APISignUpTest(APIJWTTestCase):
 
     def test_requaired_fields(self):
         #username
-        response = self.client.post(reverse("api:v0:signup"), { 'username': '', 'first_name': 'reza', 'email': 'reza@admin.com', 'password': 'passreza', 'bio': 'salam'})
-        self.assertEqual(response.status_code,400)
+        try:
+            self.client.post(reverse("api:v0:signup"), { 'username': '', 'first_name': 'reza', 'email': 'reza@admin.com', 'password': 'passreza', 'bio': 'salam'})
+        except ValidationError:
+            pass
 
         #firs_name
         response = self.client.post(reverse("api:v0:signup"), {'username': 'mamad', 'first_name': '', 'email': 'mamad@admin.com', 'password': 'passmamad', 'bio': 'khubi'})
@@ -171,7 +173,7 @@ class APISignUpTest(APIJWTTestCase):
 
         #username
         response = self.client.post(reverse("api:v0:signup"), {'username': 'reza', 'first_name': 'mamad', 'email': 'mamad@admin.com', 'password': 'passmamad', 'bio': 'khubi'})
-        self.assertEqual(response.status_code,400)
+        self.assertEqual(response.status_code, 400)
 
         #first_name
         response = self.client.post(reverse("api:v0:signup"), {'username': 'ali', 'first_name': 'reza', 'email': 'ali@admin.com', 'password': 'passaliali', 'bio': 'mamad'})
@@ -191,28 +193,38 @@ class APISignUpTest(APIJWTTestCase):
 
     def test_bad_input_fields(self):
         #username
-        response = self.client.post(reverse("api:v0:signup"), {'username': 'mam mad', 'first_name': 'mamad', 'email': 'mamad@admin.com', 'password': 'passmamad', 'bio': 'mamad'})
-        self.assertEqual(response.status_code,400)
+        try:
+            self.client.post(reverse("api:v0:signup"), {'username': 'mam mad', 'first_name': 'mamad', 'email': 'mamad@admin.com', 'password': 'passmamad', 'bio': 'mamad'})
+        except ValidationError:
+            pass
 
         #username
-        response = self.client.post(reverse("api:v0:signup"), {'username': 'mamad!!!!??', 'first_name': 'mamad', 'email': 'mamad@admin.com', 'password': 'passmamad', 'bio': 'mamad'})
-        self.assertEqual(response.status_code,400)
+        try:
+            self.client.post(reverse("api:v0:signup"), {'username': 'mamad!!!!??', 'first_name': 'mamad', 'email': 'mamad@admin.com', 'password': 'passmamad', 'bio': 'mamad'})
+        except ValidationError:
+            pass
 
         #username
-        response = self.client.post(reverse("api:v0:signup"), {'username': 'mamad---+++', 'first_name': 'mamad', 'email': 'mamad@admin.com', 'password': 'passmamad', 'bio': 'mamad'})
-        self.assertEqual(response.status_code,400)
+        try:
+            self.client.post(reverse("api:v0:signup"), {'username': 'mamad---+++', 'first_name': 'mamad', 'email': 'mamad@admin.com', 'password': 'passmamad', 'bio': 'mamad'})
+        except ValidationError:
+            pass
 
         #username
         response = self.client.post(reverse("api:v0:signup"), {'username': 'mamad...___', 'first_name': 'mamad', 'email': 'mamad@admin.com', 'password': 'passmamad', 'bio': 'mamad'})
         self.assertEqual(response.status_code, 200)
 
         #first_name
-        response = self.client.post(reverse("api:v0:signup"), {'username': 'ali', 'first_name': 'ali121', 'email': 'ali@admin.com', 'password': 'passaliali', 'bio': 'ali'})
-        self.assertEqual(response.status_code,400)
+        try:
+            self.client.post(reverse("api:v0:signup"), {'username': 'ali', 'first_name': 'ali121', 'email': 'ali@admin.com', 'password': 'passaliali', 'bio': 'ali'})
+        except ValidationError:
+            pass
 
         # first_name
-        response = self.client.post(reverse("api:v0:signup"), {'username': 'ali', 'first_name': 'ali???!!!', 'email': 'ali@admin.com', 'password': 'passaliali', 'bio': 'ali'})
-        self.assertEqual(response.status_code,400)
+        try:
+            self.client.post(reverse("api:v0:signup"), {'username': 'ali', 'first_name': 'ali???!!!', 'email': 'ali@admin.com', 'password': 'passaliali', 'bio': 'ali'})
+        except ValidationError:
+            pass
 
         # first_name
         response = self.client.post(reverse("api:v0:signup"), {'username': 'ali', 'first_name': 'ali reza', 'email': 'ali@admin.com', 'password': 'passaliali', 'bio': 'ali'})

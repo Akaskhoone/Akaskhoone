@@ -37,6 +37,8 @@ class Signup(APIView):
             "first_name": request.data["first_name"],
             "password": request.data["password"]
         }
+        NameValidator()(request.data["first_name"])
+        UsernameValidator()(request.data["username"])
         user_serializer = UserSerializer(data=dict(new_user_data))
         if user_serializer.is_valid():
             print("validated")
@@ -51,9 +53,9 @@ class Signup(APIView):
                 profile_serializer.save()
                 return JsonResponse({"status": "User created successfully"})
             else:
-                return JsonResponse({"status": "Can not to create a profile with given data"})
+                return JsonResponse({"status": "Can not to create a profile with given data"}, status=400)
         else:
-            return JsonResponse({"status": "Can not to create a user with given data"})
+            return JsonResponse({"status": "Can not to create a user with given data"}, status=400)
 
 
 class EditProfile(APIView):
