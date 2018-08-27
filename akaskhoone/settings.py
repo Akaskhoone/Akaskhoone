@@ -1,21 +1,13 @@
 import os
 from datetime import timedelta
 
-# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/2.1/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = '(dw0fit#4j_55my2+18v=h$cy#3u+)dw*!icm-ogxdxvvl*2tt'
-
-# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
-
 ALLOWED_HOSTS = ['127.0.0.1', '.serveo.net', '192.168.11.190']
 
-# Application definition
+AUTH_USER_MODEL = 'accounts.User'
+ROOT_URLCONF = 'akaskhoone.urls'
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -27,10 +19,9 @@ INSTALLED_APPS = [
 
     'accounts.apps.AccountsConfig',
     'posts.apps.PostsConfig',
+    # 'users.apps.UsersConfig',
     'rest_framework',
 ]
-
-AUTH_USER_MODEL = 'accounts.User'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -41,8 +32,6 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
-
-ROOT_URLCONF = 'akaskhoone.urls'
 
 TEMPLATES = [
     {
@@ -85,21 +74,15 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 LANGUAGE_CODE = 'en-us'
-
 TIME_ZONE = 'UTC'
-
 USE_I18N = True
-
 USE_L10N = True
-
 USE_TZ = True
 
 STATIC_URL = '/static/'
-
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 MEDIA_URL = '/media/'
-
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 REST_FRAMEWORK = {

@@ -28,4 +28,4 @@ class UserManager(DefaultUserManager):
         if extra_fields.get('is_superuser') is not True:
             raise ValueError('Superuser must have is_superuser=True.')
 
-        return self._create_user(username, email, password, **extra_fields)
+        return self._create_user(email, username, password, **extra_fields)
