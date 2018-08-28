@@ -7,7 +7,8 @@ from users.serializers import *
 from posts.serializers import PostSerializer
 from rest_framework.views import APIView
 from posts.models import *
-
+from users.models import Profile
+from django.core import serializers
 
 class GetProfile(APIView):
     def get(self, request):
@@ -91,6 +92,8 @@ class PostView(APIView):
 
     def post(self, request, *args, **kwargs):
         image_serializer = PostSerializer(data=request.data)
+        if str(request.user.pk) != str(request.data["user"]):
+            raise serializers.ValidationError("the author is not validated!")
         if image_serializer.is_valid():
             image_serializer.save()
             return JsonResponse({"status": "Successfully created!"})
@@ -102,5 +105,55 @@ class GetUserPosts(APIView):
     def get(self, request, format=None):
         user = User.objects.get(id=request.query_params["user_id"])
         return JsonResponse({
-            "posts": [post for post in Post.objects.filter(user=user)]
+            "posts": serializers.serialize("json", Post.objects.filter(user=user))
         })
+
+
+class GetUser(APIView):
+    def get(self, request, user_id, format=None):
+        return JsonResponse({
+            'user': serializers.serialize(Profile.objects.get(user_id=user_id))
+        })
+
+
+class FollowUser(APIView):
+    def get(self, request, user_id, format=None):
+        try:
+            from_profile = Profile.objects.get(user_id=request.user.id)
+        except:
+            return JsonResponse({"error": "you don't have profile, sorry!"}, status=403)
+
+        try:
+            to_profile = Profile.objects.get(user_id=user_id)
+        except:
+            return JsonResponse(
+                {"error": "user with user_id: {} does not have profile!".format(user_id).format(user_id)}, status=403)
+
+        if to_profile.user_id == from_profile.user_id:
+            return JsonResponse({"error": "you can not follow yourself!"}, status=403)
+
+        if to_profile in list(from_profile.followings.all()):
+            return JsonResponse({"error": "you have already followed user with user_id: {}".format(user_id)}, status=403)
+
+        from_profile.followings.add(to_profile)
+        return JsonResponse({"status": "Successful!"})
+
+
+class UnFollow(APIView):
+    def get(self, request, user_id, format=None):
+        try:
+            from_profile = Profile.objects.get(user_id=request.user.id)
+        except:
+            return JsonResponse({"error": "you don't have profile, sorry!"}, status=403)
+
+        try:
+            to_profile = Profile.objects.get(user_id=user_id)
+        except:
+            return JsonResponse(
+                {"error": "user with user_id: {} does not have profile!".format(user_id).format(user_id)}, status=403)
+
+        if to_profile not in list(from_profile.followings.all()):
+            return JsonResponse({"error": "you don't follow user with user_id: {}".format(user_id)}, status=403)
+
+        from_profile.followings.remove(to_profile)
+        return JsonResponse({"status": "Successful!"})

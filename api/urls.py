@@ -17,5 +17,8 @@ urlpatterns = [
         path('tags/', views.Tags.as_view(), name="tags"),
         path('createPost/', views.PostView.as_view(), name="createPost"),
         path('posts/', views.GetUserPosts.as_view(), name="getUserPosts"),
+        path('users/<int:user_id>/', views.GetUser.as_view(), name="getUser"),
+        path('users/<int:user_id>/follow', views.FollowUser.as_view(), name="FollowUser"),
+        path('users/<int:user_id>/unfollow', views.UnFollow.as_view(), name="UnFollowUser"),
     ], 'v0'))),
 ]
