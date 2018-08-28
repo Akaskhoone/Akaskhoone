@@ -57,8 +57,7 @@ class APIUsersTest(APIJWTTestCase):
         Profile.objects.create(user_id=u.id, bio='testing profile')
         response = self.client.get(reverse("api:v0:profile"))
         self.assertEqual(response.status_code, 200)
-        self.assertJSONEqual(response.content,
-                             '{"id": 1, "bio": "testing profile", "image": null, "user": 1, "followers": [], "followings": []}')
+        self.assertJSONEqual(response.content, '{"id": 1, "bio": "testing profile", "image": null, "user": 1, "followers": [], "followings": []}')
 
 
 class APITagTest(APIJWTTestCase):
@@ -143,11 +142,13 @@ class APIChangePasswordTest(APIJWTTestCase):
 
 
 class APISignUpTest(APIJWTTestCase):
-    def test_create(self):
+    def test_create_then_login(self):
         response = self.client.post(reverse("api:v0:signup"),
                                     {'username': 'reza', 'first_name': 'reza', 'email': 'reza@admin.com',
                                      'password': 'passreza', 'bio': 'salam'})
         self.assertEqual(response.status_code, 200)
+        response = self.client.login(email='reza@admin.com', password='passreza')
+        self.assertEqual(response[1].status_code, 200)
 
     def test_requaired_fields(self):
         # username
@@ -334,6 +335,7 @@ class APISignUpTest(APIJWTTestCase):
                                      'password': 'passsina', 'bio': 'fatemeh'})
         self.assertEqual(response.status_code, 200)
 
+
 class APIGetUserPosts(APIJWTTestCase):
     def setUp(self):
         User.objects.create_user('aasmpro', 'aasmpro@admin.com', 'passaasmpro')
@@ -409,3 +411,111 @@ class APIfollow(APIJWTTestCase):
         response = self.client.get(reverse('api:v0:UnFollowUser', kwargs={"user_id": "1"}))
         self.assertEqual(response.status_code, 403)
         self.assertEqual(json.loads(response.content), {"error": "you don't have profile, sorry!"})
+
+
+class APIEditProfileTest(APIJWTTestCase):
+    def test_changing_bio(self):
+        # first name is blank at all the tests below
+        # signup and login
+        self.client.post(reverse("api:v0:signup"),  {'username': 'reza', 'first_name': 'reza', 'email': 'reza@admin.com', 'password': 'passreza', 'bio': ''})
+        self.client.login(email='reza@admin.com', password='passreza')
+
+        # just setting the bio
+        response = self.client.post(reverse("api:v0:edit_profile"), {'first_name': '', 'bio': 'salam'})
+        self.assertEqual(response.status_code, 200)
+        response = self.client.get(reverse("api:v0:profile"))
+        self.assertEqual(response.status_code, 200)
+        self.assertJSONEqual(response.content, '{"id" :1, "bio": "salam", "image": null, "user": 1, "followers": [], "followings": []}')
+        self.assertEqual(User.objects.get(id=1).first_name, '')
+
+        # different kind of characters
+        response = self.client.post(reverse("api:v0:edit_profile"), {'first_name': '', 'bio': 'aksdjan 923u48324u ???!!! --- +++ :: () {} []'})
+        self.assertEqual(response.status_code, 200)
+        response = self.client.get(reverse("api:v0:profile"))
+        self.assertEqual(response.status_code, 200)
+        self.assertJSONEqual(response.content, '{"id" :1, "bio": "aksdjan 923u48324u ???!!! --- +++ :: () {} []", "image": null, "user": 1, "followers": [], "followings": []}')
+        self.assertEqual(User.objects.get(id=1).first_name, '')
+
+    def test_changing_first_name(self):
+        # bio is blank at all the tests below
+
+        # signup and login
+        self.client.post(reverse("api:v0:signup"), {'username': 'reza', 'first_name': 'reza', 'email': 'reza@admin.com', 'password': 'passreza', 'bio': ''})
+        self.client.login(email='reza@admin.com', password='passreza')
+
+        # just setting the first name
+        response = self.client.post(reverse("api:v0:edit_profile"), {'first_name': 'mamadreza', 'bio': ''})
+        self.assertEqual(response.status_code, 200)
+        response = self.client.get(reverse("api:v0:profile"))
+        self.assertEqual(response.status_code, 200)
+        self.assertJSONEqual(response.content, '{"id" :1, "bio": "", "image": null, "user": 1, "followers": [], "followings": []}')
+        self.assertEqual(User.objects.get(id=1).first_name, 'mamadreza')
+
+        # testing first names with spaces
+        response = self.client.post(reverse("api:v0:edit_profile"), {'first_name': 'mamad reza', 'bio': ''})
+        self.assertEqual(response.status_code, 200)
+        response = self.client.get(reverse("api:v0:profile"))
+        self.assertEqual(response.status_code, 200)
+        self.assertJSONEqual(response.content, '{"id" :1, "bio": "", "image": null, "user": 1, "followers": [], "followings": []}')
+        self.assertEqual(User.objects.get(id=1).first_name, 'mamad reza')
+
+        # testing invalid first names with numbers
+        try:
+            self.client.post(reverse("api:v0:edit_profile"), {'first_name': 'reza1234', 'bio': ''})
+        except ValidationError:
+            pass
+        response = self.client.get(reverse("api:v0:profile"))
+        self.assertEqual(response.status_code, 200)
+        self.assertJSONEqual(response.content, '{"id" :1, "bio": "", "image": null, "user": 1, "followers": [], "followings": []}')
+        self.assertEqual(User.objects.get(id=1).first_name, 'mamad reza')
+
+        # testing invalid first names with symbols
+        try:
+            self.client.post(reverse("api:v0:edit_profile"), {'first_name': 'reza?!', 'bio': ''})
+        except ValidationError:
+            pass
+        response = self.client.get(reverse("api:v0:profile"))
+        self.assertEqual(response.status_code, 200)
+        self.assertJSONEqual(response.content, '{"id" :1, "bio": "", "image": null, "user": 1, "followers": [], "followings": []}')
+        self.assertEqual(User.objects.get(id=1).first_name, 'mamad reza')
+
+        # testing invalid first names with underline and dot
+        try:
+            self.client.post(reverse("api:v0:edit_profile"), {'first_name': 'reza_reza.a', 'bio': ''})
+        except ValidationError:
+            pass
+        response = self.client.get(reverse("api:v0:profile"))
+        self.assertEqual(response.status_code, 200)
+        self.assertJSONEqual(response.content, '{"id" :1, "bio": "", "image": null, "user": 1, "followers": [], "followings": []}')
+        self.assertEqual(User.objects.get(id=1).first_name, 'mamad reza')
+
+
+    def test_changing_both(self):
+        self.client.post(reverse("api:v0:signup"), {'username': 'reza', 'first_name': 'reza', 'email': 'reza@admin.com', 'password': 'passreza', 'bio': ''})
+        self.client.login(email='reza@admin.com', password='passreza')
+
+        # blank both
+        response = self.client.post(reverse("api:v0:edit_profile"), {'first_name': '', 'bio': ''})
+        self.assertEqual(response.status_code, 200)
+        response = self.client.get(reverse("api:v0:profile"))
+        self.assertEqual(response.status_code, 200)
+        self.assertJSONEqual(response.content, '{"id" :1, "bio": "", "image": null, "user": 1, "followers": [], "followings": []}')
+        self.assertEqual(User.objects.get(id=1).first_name, '')
+
+        # both good
+        response = self.client.post(reverse("api:v0:edit_profile"), {'first_name': 'reza', 'bio': 'salam man reza hastam 18 :)'})
+        self.assertEqual(response.status_code, 200)
+        response = self.client.get(reverse("api:v0:profile"))
+        self.assertEqual(response.status_code, 200)
+        self.assertJSONEqual(response.content, '{"id" :1, "bio": "salam man reza hastam 18 :)", "image": null, "user": 1, "followers": [], "followings": []}')
+        self.assertEqual(User.objects.get(id=1).first_name, 'reza')
+
+        # setting first name badly and bio good
+        try:
+            self.client.post(reverse("api:v0:edit_profile"), {'first_name': 'mamad reza 2000', 'bio': 'salam mamad reza'})
+        except ValidationError:
+            pass
+        response = self.client.get(reverse("api:v0:profile"))
+        self.assertEqual(response.status_code, 200)
+        self.assertJSONEqual(response.content, '{"id" :1, "bio": "salam man reza hastam 18 :)", "image": null, "user": 1, "followers": [], "followings": []}')
+        self.assertEqual(User.objects.get(id=1).first_name, 'reza')
