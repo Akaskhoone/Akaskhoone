@@ -1,0 +1,82 @@
+[
+  {
+    "model": "accounts.user",
+    "pk": 2,
+    "fields": {
+      "password": "pbkdf2_sha256$120000$8XTkM4ZaHVFS$F3UzYT1bGaojH/YM52tOc2TiSDfabTY3YPzbbJ6ZwxM=",
+      "last_login": "2018-08-18T14:31:56.222Z",
+      "is_superuser": true,
+      "username": "aasmpro",
+      "is_staff": true,
+      "is_active": true,
+      "date_joined": "2018-08-18T14:31:28.718Z",
+      "email": "aasmpro@admin.com",
+      "groups": [],
+      "user_permissions": []
+    }
+  },
+  {
+    "model": "accounts.user",
+    "pk": 3,
+    "fields": {
+      "password": "pbkdf2_sha256$120000$HsoVEohpjkxL$4MDMyyav1+6HpKjWw6Ecl/1StQdAGKmVHwkEF6oaWHE=",
+      "last_login": null,
+      "is_superuser": true,
+      "username": "sohrab",
+      "is_staff": true,
+      "is_active": true,
+      "date_joined": "2018-08-18T14:36:09.285Z",
+      "email": "sohrab@admin.com",
+      "groups": [],
+      "user_permissions": []
+    }
+  },
+  {
+    "model": "accounts.user",
+    "pk": 4,
+    "fields": {
+      "password": "pbkdf2_sha256$120000$RC5JkTLkRx1z$AiPaWmFr4+UY4rnhs+ZtTLhyl5g2LH8E9EtMenU/COg=",
+      "last_login": null,
+      "is_superuser": true,
+      "username": "reza",
+      "is_staff": true,
+      "is_active": true,
+      "date_joined": "2018-08-18T14:36:33.696Z",
+      "email": "reza@admin.com",
+      "groups": [],
+      "user_permissions": []
+    }
+  },
+  {
+    "model": "accounts.user",
+    "pk": 5,
+    "fields": {
+      "password": "pbkdf2_sha256$120000$knsks5njDp61$LckY455OdImd7sFtCDvPCURCSNJ19gI5D6DJPt1CRL0=",
+      "last_login": null,
+      "is_superuser": true,
+      "username": "edi",
+      "is_staff": true,
+      "is_active": true,
+      "date_joined": "2018-08-18T14:37:05.474Z",
+      "email": "edi@akaskhoone.com",
+      "groups": [],
+      "user_permissions": []
+    }
+  },
+  {
+    "model": "accounts.user",
+    "pk": 6,
+    "fields": {
+      "password": "pbkdf2_sha256$120000$JcZnwzxBFnWA$dwdUQKFq4SOF8vEesrLhprnSwtDbE9CROfbGjhBrX5Q=",
+      "last_login": null,
+      "is_superuser": true,
+      "username": "fatemeh",
+      "is_staff": true,
+      "is_active": true,
+      "date_joined": "2018-08-18T14:37:36.540Z",
+      "email": "fatemeh@akaskhoone.com",
+      "groups": [],
+      "user_permissions": []
+    }
+  }
+]
