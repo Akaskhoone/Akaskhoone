@@ -1,0 +1,52 @@
+[
+  {
+    "model": "social.Tag",
+    "pk": "bahar",
+    "fields": {}
+  },
+  {
+    "model": "social.Tag",
+    "pk": "tabestoon",
+    "fields": {}
+  },
+  {
+    "model": "social.Tag",
+    "pk": "paeez",
+    "fields": {}
+  },
+  {
+    "model": "social.Tag",
+    "pk": "zemestoon",
+    "fields": {}
+  },
+  {
+    "model": "social.Tag",
+    "pk": "baharan",
+    "fields": {}
+  },
+  {
+    "model": "social.Tag",
+    "pk": "abshar",
+    "fields": {}
+  },
+  {
+    "model": "social.Tag",
+    "pk": "darya",
+    "fields": {}
+  },
+  {
+    "model": "social.Tag",
+    "pk": "kavir",
+    "fields": {}
+  },
+  {
+    "model": "social.Tag",
+    "pk": "kaveh",
+    "fields": {}
+  },
+  {
+    "model": "social.Tag",
+    "pk": "asemoon",
+    "fields": {}
+  }
+]
