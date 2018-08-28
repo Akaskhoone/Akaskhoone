@@ -19,9 +19,9 @@ def get_post_image_path(instance, filename):
 class Post(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='creator')
     image = models.ImageField(upload_to=get_post_image_path, blank=True, null=True, verbose_name='post image')
-    des = models.TextField(verbose_name='description')
+    des = models.TextField(verbose_name='description', null=True, blank=True)
     location = models.CharField(max_length=200, blank=True, null=True, verbose_name='location')
-    tags = models.ManyToManyField(Tag, related_name='Posts', verbose_name='tags')
+    tags = models.ManyToManyField(Tag, related_name='Posts', verbose_name='tags', blank=True)
     date = models.DateTimeField(auto_now_add=True, verbose_name='creation date')
 
     def __str__(self):

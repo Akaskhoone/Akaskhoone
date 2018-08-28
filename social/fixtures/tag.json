@@ -21,22 +21,22 @@
   },
   {
     "model": "social.Tag",
-    "pk": "baharan",
+    "pk": "RahnamaCollege",
     "fields": {}
   },
   {
     "model": "social.Tag",
-    "pk": "abshar",
+    "pk": "Codifferent",
     "fields": {}
   },
   {
     "model": "social.Tag",
-    "pk": "darya",
+    "pk": "we_are_a_team",
     "fields": {}
   },
   {
     "model": "social.Tag",
-    "pk": "kavir",
+    "pk": "programming",
     "fields": {}
   },
   {
