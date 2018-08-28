@@ -21,7 +21,7 @@ class Post(models.Model):
     image = models.ImageField(upload_to=get_user_image_path, blank=True, null=True)
     des = models.TextField()
     location = models.CharField(max_length=255, default="RahnemaCollege")
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=False, blank=False)
 
     def __str__(self):
         return self.des

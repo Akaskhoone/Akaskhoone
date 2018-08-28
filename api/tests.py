@@ -4,7 +4,7 @@ from rest_framework import status
 from rest_framework_simplejwt.settings import api_settings
 import json
 from django.core.exceptions import *
-from posts.models import Tag
+from posts.models import Tag, Post
 from users.serializers import *
 
 
@@ -57,8 +57,7 @@ class APIUsersTest(APIJWTTestCase):
         Profile.objects.create(user_id=u.id, bio='testing profile')
         response = self.client.get(reverse("api:v0:profile"))
         self.assertEqual(response.status_code, 200)
-        self.assertJSONEqual(response.content,
-                             '{"id": 1, "bio": "testing profile", "image": null, "user": 1, "followers": [], "followings": []}')
+        self.assertJSONEqual(response.content, '{"id": 1, "bio": "testing profile", "image": null, "user": 1, "followers": [], "followings": []}')
 
 
 class APITagTest(APIJWTTestCase):
@@ -143,11 +142,13 @@ class APIChangePasswordTest(APIJWTTestCase):
 
 
 class APISignUpTest(APIJWTTestCase):
-    def test_create(self):
+    def test_create_then_login(self):
         response = self.client.post(reverse("api:v0:signup"),
                                     {'username': 'reza', 'first_name': 'reza', 'email': 'reza@admin.com',
                                      'password': 'passreza', 'bio': 'salam'})
         self.assertEqual(response.status_code, 200)
+        response = self.client.login(email='reza@admin.com', password='passreza')
+        self.assertEqual(response[1].status_code, 200)
 
     def test_requaired_fields(self):
         # username
@@ -333,3 +334,188 @@ class APISignUpTest(APIJWTTestCase):
                                     {'username': 'sina', 'first_name': 'sina', 'email': 'sina@admin.com',
                                      'password': 'passsina', 'bio': 'fatemeh'})
         self.assertEqual(response.status_code, 200)
+
+
+class APIGetUserPosts(APIJWTTestCase):
+    def setUp(self):
+        User.objects.create_user('aasmpro', 'aasmpro@admin.com', 'passaasmpro')
+        self.client.login(email='aasmpro@admin.com', password='passaasmpro')
+        Post.objects.create(image="user_photos/4/tanha.jpg", des="I'm Abolfazl", location="rahnema college",
+                            user_id='1')
+        Post.objects.create(image="user_photos/4/tanha.jpg", des="I'm Reza", location="rahnema college", user_id='4')
+
+    def test_get_user_posts(self):
+        print(">>> test user posts ")
+        response = self.client.get(reverse("api:v0:getUserPosts"), {"user_id": "1"})
+        print(json.loads(response.content))
+        # for i in serializers.deserialize("json", response.content):
+        #     print(i)
+        self.assertEqual(response.status_code, 200)
+
+
+class APIfollow(APIJWTTestCase):
+    def setUp(self):
+        abolfazl = User.objects.create_user('aasmpro', 'aasmpro@admin.com', 'passaasmpro')
+        reza = User.objects.create_user('reza', 'reza@admin.com', 'passreza')
+        fatemeh = User.objects.create_user('fatemeh', 'fatemeh@admin.com', 'passfatemeh')
+        sohrab = User.objects.create_user('sohrab', 'sohrab@admin.com', 'passsohrab')
+        edi = User.objects.create_user('edi', 'edi@admin.com', 'passedi')
+        abolfazl_profile = Profile.objects.create(user=abolfazl)
+        reza_profile = Profile.objects.create(user=reza)
+        Profile.objects.create(user=fatemeh)
+        Profile.objects.create(user=sohrab)
+        abolfazl_profile.followings.add(reza_profile)
+
+    def test_follow_someone(self):
+        self.client.login(email='aasmpro@admin.com', password='passaasmpro')
+        response = self.client.get(reverse('api:v0:FollowUser', kwargs={"user_id": "1"}))
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(json.loads(response.content), {"error": "you can not follow yourself!"})
+
+        response = self.client.get(reverse('api:v0:FollowUser', kwargs={"user_id": "5"}))
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(json.loads(response.content), {"error": "user with user_id: 5 does not have profile!"})
+
+        response = self.client.get(reverse('api:v0:FollowUser', kwargs={"user_id": "2"}))
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(json.loads(response.content), {"error": "you have already followed user with user_id: 2"})
+
+        response = self.client.get(reverse('api:v0:FollowUser', kwargs={"user_id": "3"}))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(json.loads(response.content), {"status": "Successful!"})
+
+        self.client.login(email='edi@admin.com', password='passedi')
+        response = self.client.get(reverse('api:v0:FollowUser', kwargs={"user_id": "1"}))
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(json.loads(response.content), {"error": "you don't have profile, sorry!"})
+
+    def test_unfollow(self):
+        self.client.login(email='aasmpro@admin.com', password='passaasmpro')
+        response = self.client.get(reverse('api:v0:UnFollowUser', kwargs={"user_id": "1"}))
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(json.loads(response.content), {"error": "you don't follow user with user_id: 1"})
+
+        response = self.client.get(reverse('api:v0:UnFollowUser', kwargs={"user_id": "3"}))
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(json.loads(response.content), {"error": "you don't follow user with user_id: 3"})
+
+        response = self.client.get(reverse('api:v0:UnFollowUser', kwargs={"user_id": "5"}))
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(json.loads(response.content), {"error": "user with user_id: 5 does not have profile!"})
+
+        response = self.client.get(reverse('api:v0:UnFollowUser', kwargs={"user_id": "2"}))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(json.loads(response.content), {"status": "Successful!"})
+
+        self.client.login(email='edi@admin.com', password='passedi')
+        response = self.client.get(reverse('api:v0:UnFollowUser', kwargs={"user_id": "1"}))
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(json.loads(response.content), {"error": "you don't have profile, sorry!"})
+
+
+class APIEditProfileTest(APIJWTTestCase):
+    def test_changing_bio(self):
+        # first name is blank at all the tests below
+        # signup and login
+        self.client.post(reverse("api:v0:signup"),  {'username': 'reza', 'first_name': 'reza', 'email': 'reza@admin.com', 'password': 'passreza', 'bio': ''})
+        self.client.login(email='reza@admin.com', password='passreza')
+
+        # just setting the bio
+        response = self.client.post(reverse("api:v0:edit_profile"), {'first_name': '', 'bio': 'salam'})
+        self.assertEqual(response.status_code, 200)
+        response = self.client.get(reverse("api:v0:profile"))
+        self.assertEqual(response.status_code, 200)
+        self.assertJSONEqual(response.content, '{"id" :1, "bio": "salam", "image": null, "user": 1, "followers": [], "followings": []}')
+        self.assertEqual(User.objects.get(id=1).first_name, '')
+
+        # different kind of characters
+        response = self.client.post(reverse("api:v0:edit_profile"), {'first_name': '', 'bio': 'aksdjan 923u48324u ???!!! --- +++ :: () {} []'})
+        self.assertEqual(response.status_code, 200)
+        response = self.client.get(reverse("api:v0:profile"))
+        self.assertEqual(response.status_code, 200)
+        self.assertJSONEqual(response.content, '{"id" :1, "bio": "aksdjan 923u48324u ???!!! --- +++ :: () {} []", "image": null, "user": 1, "followers": [], "followings": []}')
+        self.assertEqual(User.objects.get(id=1).first_name, '')
+
+    def test_changing_first_name(self):
+        # bio is blank at all the tests below
+
+        # signup and login
+        self.client.post(reverse("api:v0:signup"), {'username': 'reza', 'first_name': 'reza', 'email': 'reza@admin.com', 'password': 'passreza', 'bio': ''})
+        self.client.login(email='reza@admin.com', password='passreza')
+
+        # just setting the first name
+        response = self.client.post(reverse("api:v0:edit_profile"), {'first_name': 'mamadreza', 'bio': ''})
+        self.assertEqual(response.status_code, 200)
+        response = self.client.get(reverse("api:v0:profile"))
+        self.assertEqual(response.status_code, 200)
+        self.assertJSONEqual(response.content, '{"id" :1, "bio": "", "image": null, "user": 1, "followers": [], "followings": []}')
+        self.assertEqual(User.objects.get(id=1).first_name, 'mamadreza')
+
+        # testing first names with spaces
+        response = self.client.post(reverse("api:v0:edit_profile"), {'first_name': 'mamad reza', 'bio': ''})
+        self.assertEqual(response.status_code, 200)
+        response = self.client.get(reverse("api:v0:profile"))
+        self.assertEqual(response.status_code, 200)
+        self.assertJSONEqual(response.content, '{"id" :1, "bio": "", "image": null, "user": 1, "followers": [], "followings": []}')
+        self.assertEqual(User.objects.get(id=1).first_name, 'mamad reza')
+
+        # testing invalid first names with numbers
+        try:
+            self.client.post(reverse("api:v0:edit_profile"), {'first_name': 'reza1234', 'bio': ''})
+        except ValidationError:
+            pass
+        response = self.client.get(reverse("api:v0:profile"))
+        self.assertEqual(response.status_code, 200)
+        self.assertJSONEqual(response.content, '{"id" :1, "bio": "", "image": null, "user": 1, "followers": [], "followings": []}')
+        self.assertEqual(User.objects.get(id=1).first_name, 'mamad reza')
+
+        # testing invalid first names with symbols
+        try:
+            self.client.post(reverse("api:v0:edit_profile"), {'first_name': 'reza?!', 'bio': ''})
+        except ValidationError:
+            pass
+        response = self.client.get(reverse("api:v0:profile"))
+        self.assertEqual(response.status_code, 200)
+        self.assertJSONEqual(response.content, '{"id" :1, "bio": "", "image": null, "user": 1, "followers": [], "followings": []}')
+        self.assertEqual(User.objects.get(id=1).first_name, 'mamad reza')
+
+        # testing invalid first names with underline and dot
+        try:
+            self.client.post(reverse("api:v0:edit_profile"), {'first_name': 'reza_reza.a', 'bio': ''})
+        except ValidationError:
+            pass
+        response = self.client.get(reverse("api:v0:profile"))
+        self.assertEqual(response.status_code, 200)
+        self.assertJSONEqual(response.content, '{"id" :1, "bio": "", "image": null, "user": 1, "followers": [], "followings": []}')
+        self.assertEqual(User.objects.get(id=1).first_name, 'mamad reza')
+
+
+    def test_changing_both(self):
+        self.client.post(reverse("api:v0:signup"), {'username': 'reza', 'first_name': 'reza', 'email': 'reza@admin.com', 'password': 'passreza', 'bio': ''})
+        self.client.login(email='reza@admin.com', password='passreza')
+
+        # blank both
+        response = self.client.post(reverse("api:v0:edit_profile"), {'first_name': '', 'bio': ''})
+        self.assertEqual(response.status_code, 200)
+        response = self.client.get(reverse("api:v0:profile"))
+        self.assertEqual(response.status_code, 200)
+        self.assertJSONEqual(response.content, '{"id" :1, "bio": "", "image": null, "user": 1, "followers": [], "followings": []}')
+        self.assertEqual(User.objects.get(id=1).first_name, '')
+
+        # both good
+        response = self.client.post(reverse("api:v0:edit_profile"), {'first_name': 'reza', 'bio': 'salam man reza hastam 18 :)'})
+        self.assertEqual(response.status_code, 200)
+        response = self.client.get(reverse("api:v0:profile"))
+        self.assertEqual(response.status_code, 200)
+        self.assertJSONEqual(response.content, '{"id" :1, "bio": "salam man reza hastam 18 :)", "image": null, "user": 1, "followers": [], "followings": []}')
+        self.assertEqual(User.objects.get(id=1).first_name, 'reza')
+
+        # setting first name badly and bio good
+        try:
+            self.client.post(reverse("api:v0:edit_profile"), {'first_name': 'mamad reza 2000', 'bio': 'salam mamad reza'})
+        except ValidationError:
+            pass
+        response = self.client.get(reverse("api:v0:profile"))
+        self.assertEqual(response.status_code, 200)
+        self.assertJSONEqual(response.content, '{"id" :1, "bio": "salam man reza hastam 18 :)", "image": null, "user": 1, "followers": [], "followings": []}')
+        self.assertEqual(User.objects.get(id=1).first_name, 'reza')

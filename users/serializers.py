@@ -7,6 +7,13 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ('email', 'username', 'first_name', 'password')
 
+    def save(self):
+        password = self.validated_data.get('password')
+        user = super(UserSerializer, self).save()
+        user.set_password(password)
+        user.save()
+        return user
+
 
 class ProfileSerializer(serializers.ModelSerializer):
     class Meta:

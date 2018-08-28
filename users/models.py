@@ -20,8 +20,8 @@ class Profile(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     bio = models.TextField('biography', null=True, blank=True)
     image = models.ImageField(upload_to=get_profile_image_path, blank=True, null=True)
-    followers = models.ManyToManyField('Profile', related_name='user_followers', blank=True)
-    followings = models.ManyToManyField('Profile', related_name='user_followings', blank=True)
+    followers = models.ManyToManyField('Profile', related_name='user_followers', blank=True, default=[])
+    followings = models.ManyToManyField('Profile', related_name='user_followings', blank=True, default=[])
 
     def __str__(self):
         return str(self.user)

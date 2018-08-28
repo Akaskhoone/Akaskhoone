@@ -5,17 +5,20 @@ from api import views
 app_name = 'api'
 
 urlpatterns = [
-    # path('api/v0/', include(([
-    #     path('profile/', views.GetProfile.as_view(), name='profile'),
-    #     path('change_pass/', views.UpdatePassword.as_view(), name='change_password'),
-    #     path('login/', token_obtain_pair, name='login'),
-    #     path('signup/', views.Signup.as_view(), name='signup'),
-    #     path('refresh/', token_refresh, name='refresh'),
-    #     path('verify/', token_verify, name='verify'),
-    #     path('edit_profile/', views.EditProfile.as_view(), name="edit_profile"),
-    #     path('allTags/', views.GetAllTags.as_view(), name="getAllTags"),
-    #     path('tags/', views.Tags.as_view(), name="tags"),
-    #     path('createPost/', views.CreatePost.as_view(), name="createPost"),
-    #     path('posts/', views.GetUserPosts.as_view(), name="getUserPosts"),
-    # ], 'v0'))),
+    path('api/v0/', include(([
+        path('profile/', views.GetProfile.as_view(), name='profile'),
+        path('change_pass/', views.UpdatePassword.as_view(), name='change_password'),
+        path('login/', token_obtain_pair, name='login'),
+        path('signup/', views.Signup.as_view(), name='signup'),
+        path('refresh/', token_refresh, name='refresh'),
+        path('verify/', token_verify, name='verify'),
+        path('edit_profile/', views.EditProfile.as_view(), name="edit_profile"),
+        path('allTags/', views.GetAllTags.as_view(), name="getAllTags"),
+        path('tags/', views.Tags.as_view(), name="tags"),
+        path('createPost/', views.PostView.as_view(), name="createPost"),
+        path('posts/', views.GetUserPosts.as_view(), name="getUserPosts"),
+        path('users/<int:user_id>/', views.GetUser.as_view(), name="getUser"),
+        path('users/<int:user_id>/follow', views.FollowUser.as_view(), name="FollowUser"),
+        path('users/<int:user_id>/unfollow', views.UnFollow.as_view(), name="UnFollowUser"),
+    ], 'v0'))),
 ]
