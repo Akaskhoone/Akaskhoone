@@ -4,7 +4,7 @@ from rest_framework import status
 from rest_framework_simplejwt.settings import api_settings
 import json
 from django.core.exceptions import *
-from posts.models import Tag
+from posts.models import Tag, Post
 from users.serializers import *
 
 
@@ -333,3 +333,79 @@ class APISignUpTest(APIJWTTestCase):
                                     {'username': 'sina', 'first_name': 'sina', 'email': 'sina@admin.com',
                                      'password': 'passsina', 'bio': 'fatemeh'})
         self.assertEqual(response.status_code, 200)
+
+class APIGetUserPosts(APIJWTTestCase):
+    def setUp(self):
+        User.objects.create_user('aasmpro', 'aasmpro@admin.com', 'passaasmpro')
+        self.client.login(email='aasmpro@admin.com', password='passaasmpro')
+        Post.objects.create(image="user_photos/4/tanha.jpg", des="I'm Abolfazl", location="rahnema college",
+                            user_id='1')
+        Post.objects.create(image="user_photos/4/tanha.jpg", des="I'm Reza", location="rahnema college", user_id='4')
+
+    def test_get_user_posts(self):
+        print(">>> test user posts ")
+        response = self.client.get(reverse("api:v0:getUserPosts"), {"user_id": "1"})
+        print(json.loads(response.content))
+        # for i in serializers.deserialize("json", response.content):
+        #     print(i)
+        self.assertEqual(response.status_code, 200)
+
+
+class APIfollow(APIJWTTestCase):
+    def setUp(self):
+        abolfazl = User.objects.create_user('aasmpro', 'aasmpro@admin.com', 'passaasmpro')
+        reza = User.objects.create_user('reza', 'reza@admin.com', 'passreza')
+        fatemeh = User.objects.create_user('fatemeh', 'fatemeh@admin.com', 'passfatemeh')
+        sohrab = User.objects.create_user('sohrab', 'sohrab@admin.com', 'passsohrab')
+        edi = User.objects.create_user('edi', 'edi@admin.com', 'passedi')
+        abolfazl_profile = Profile.objects.create(user=abolfazl)
+        reza_profile = Profile.objects.create(user=reza)
+        Profile.objects.create(user=fatemeh)
+        Profile.objects.create(user=sohrab)
+        abolfazl_profile.followings.add(reza_profile)
+
+    def test_follow_someone(self):
+        self.client.login(email='aasmpro@admin.com', password='passaasmpro')
+        response = self.client.get(reverse('api:v0:FollowUser', kwargs={"user_id": "1"}))
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(json.loads(response.content), {"error": "you can not follow yourself!"})
+
+        response = self.client.get(reverse('api:v0:FollowUser', kwargs={"user_id": "5"}))
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(json.loads(response.content), {"error": "user with user_id: 5 does not have profile!"})
+
+        response = self.client.get(reverse('api:v0:FollowUser', kwargs={"user_id": "2"}))
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(json.loads(response.content), {"error": "you have already followed user with user_id: 2"})
+
+        response = self.client.get(reverse('api:v0:FollowUser', kwargs={"user_id": "3"}))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(json.loads(response.content), {"status": "Successful!"})
+
+        self.client.login(email='edi@admin.com', password='passedi')
+        response = self.client.get(reverse('api:v0:FollowUser', kwargs={"user_id": "1"}))
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(json.loads(response.content), {"error": "you don't have profile, sorry!"})
+
+    def test_unfollow(self):
+        self.client.login(email='aasmpro@admin.com', password='passaasmpro')
+        response = self.client.get(reverse('api:v0:UnFollowUser', kwargs={"user_id": "1"}))
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(json.loads(response.content), {"error": "you don't follow user with user_id: 1"})
+
+        response = self.client.get(reverse('api:v0:UnFollowUser', kwargs={"user_id": "3"}))
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(json.loads(response.content), {"error": "you don't follow user with user_id: 3"})
+
+        response = self.client.get(reverse('api:v0:UnFollowUser', kwargs={"user_id": "5"}))
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(json.loads(response.content), {"error": "user with user_id: 5 does not have profile!"})
+
+        response = self.client.get(reverse('api:v0:UnFollowUser', kwargs={"user_id": "2"}))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(json.loads(response.content), {"status": "Successful!"})
+
+        self.client.login(email='edi@admin.com', password='passedi')
+        response = self.client.get(reverse('api:v0:UnFollowUser', kwargs={"user_id": "1"}))
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(json.loads(response.content), {"error": "you don't have profile, sorry!"})
