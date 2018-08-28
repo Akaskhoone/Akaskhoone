@@ -9,8 +9,11 @@ urlpatterns = [
     path('refresh/', token_refresh, name='refresh'),
     path('verify/', token_verify, name='verify'),
 
+    path('signup/', Signup.as_view(), name='signup'),
     path('profile/', GetProfile.as_view(), name='profile'),
     path('change_pass/', UpdatePassword.as_view(), name='change_password'),
-    path('signup/', Signup.as_view(), name='signup'),
     path('edit_profile/', EditProfile.as_view(), name="edit_profile"),
+    path('users/<int:user_id>/', GetUser.as_view(), name="getUser"),
+    path('users/<int:user_id>/follow', FollowUser.as_view(), name="FollowUser"),
+    path('users/<int:user_id>/unfollow', UnFollow.as_view(), name="UnFollowUser"),
 ]

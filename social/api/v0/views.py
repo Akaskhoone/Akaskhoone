@@ -3,6 +3,7 @@ from rest_framework.views import APIView
 from django.http import JsonResponse
 from django.contrib.auth import get_user_model
 from social.forms import CreatePostFrom
+from rest_framework.parsers import FormParser, MultiPartParser
 
 User = get_user_model()
 
@@ -24,26 +25,23 @@ class Tags(APIView):
         })
 
 
-def handle_uploaded_file(f, filename):
-    with open('posts/images/{}'.format(filename), 'wb+') as destination:
-        for chunk in f.chunks():
-            destination.write(chunk)
+class PostView(APIView):
+    parser_classes = (MultiPartParser, FormParser)
 
-
-class CreatePost(APIView):
-    def post(self, request):
-        form = CreatePostFrom(request.POST, request.FILES)
-        if form.is_valid():
-            form.save()
-            handle_uploaded_file(request.FILES['file'], request.user.post_set.count())
-            return JsonResponse({"status": "Successful!"})
+    def post(self, request, *args, **kwargs):
+        image_serializer = PostSerializer(data=request.data)
+        if str(request.user.pk) != str(request.data["user"]):
+            raise serializers.ValidationError("the author is not validated!")
+        if image_serializer.is_valid():
+            image_serializer.save()
+            return JsonResponse({"status": "Successfully created!"})
         else:
-            return JsonResponse({"status": "Failed!"})
+            return JsonResponse({"status": "Post creation failed!"})
 
 
 class GetUserPosts(APIView):
     def get(self, request, format=None):
         user = User.objects.get(id=request.query_params["user_id"])
         return JsonResponse({
-            "posts": [post for post in Post.objects.filter(user=user)]
+            "posts": serializers.serialize("json", Post.objects.filter(user=user))
         })

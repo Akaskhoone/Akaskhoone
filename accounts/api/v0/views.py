@@ -64,3 +64,54 @@ class EditProfile(APIView):
         p.name = request.data["first_name"]
         p.save()
         return JsonResponse({"status": "profile updated"})
+
+
+class GetUser(APIView):
+    def get(self, request, user_id, format=None):
+        return JsonResponse({
+            'user': serializers.serialize(Profile.objects.get(user_id=user_id))
+        })
+
+
+class FollowUser(APIView):
+    def get(self, request, user_id, format=None):
+        try:
+            from_profile = Profile.objects.get(user_id=request.user.id)
+        except:
+            return JsonResponse({"error": "you don't have profile, sorry!"}, status=403)
+
+        try:
+            to_profile = Profile.objects.get(user_id=user_id)
+        except:
+            return JsonResponse(
+                {"error": "user with user_id: {} does not have profile!".format(user_id).format(user_id)}, status=403)
+
+        if to_profile.user_id == from_profile.user_id:
+            return JsonResponse({"error": "you can not follow yourself!"}, status=403)
+
+        if to_profile in list(from_profile.followings.all()):
+            return JsonResponse({"error": "you have already followed user with user_id: {}".format(user_id)},
+                                status=403)
+
+        from_profile.followings.add(to_profile)
+        return JsonResponse({"status": "Successful!"})
+
+
+class UnFollow(APIView):
+    def get(self, request, user_id, format=None):
+        try:
+            from_profile = Profile.objects.get(user_id=request.user.id)
+        except:
+            return JsonResponse({"error": "you don't have profile, sorry!"}, status=403)
+
+        try:
+            to_profile = Profile.objects.get(user_id=user_id)
+        except:
+            return JsonResponse(
+                {"error": "user with user_id: {} does not have profile!".format(user_id).format(user_id)}, status=403)
+
+        if to_profile not in list(from_profile.followings.all()):
+            return JsonResponse({"error": "you don't follow user with user_id: {}".format(user_id)}, status=403)
+
+        from_profile.followings.remove(to_profile)
+        return JsonResponse({"status": "Successful!"})
