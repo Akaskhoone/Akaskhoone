@@ -142,7 +142,7 @@ class APIChangePasswordTest(APIJWTTestCase):
 
 
 class APISignUpTest(APIJWTTestCase):
-    def test_create(self):
+    def test_create_then_login(self):
         response = self.client.post(reverse("api:v0:signup"),
                                     {'username': 'reza', 'first_name': 'reza', 'email': 'reza@admin.com',
                                      'password': 'passreza', 'bio': 'salam'})
