@@ -8,6 +8,8 @@ from django.utils.deconstruct import deconstructible
 class UnicodeNameValidator(validators.RegexValidator):
     regex = r'([a-zA-Z\s])+$|^$'
     message = (
-        'Enter a valid name. This value may contain only English letters '
+        'Enter a valid name. This value may contain only English letters and Spaces'
     )
     flags = 0
+
+# todo adding username validator

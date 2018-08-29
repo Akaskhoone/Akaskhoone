@@ -24,21 +24,23 @@ post:   [access] >> [access:str]
 /accounts/profile/?Q
 ```
 get:    Q:None          >> [user profile data]
-        Q:user_id:int   >> [user {id} profile data]
-post:   [user profile data] >> [status] 
+        Q:user_id:int   >> [user {user_id} profile data]
+post:   [user profile data] >> [status]                 >> signup
 put:
-        [old_password:str, new_password:str] >> [status]
-        [user profile data] >> [status]
+        [old_password:str, new_password:str] >> [status]>> change password
+        [user profile data] >> [status]                 >> update profile
 ```
-/accounts/profile/followers/
+/accounts/profile/followers/?Q
 ```
-get:    [profile followers]
+get:    Q:None          >> [user followers]
+        Q:user_id:int   >> [user {user_id} followers ]
+```
+/accounts/profile/followings/?Q
+```
+get:    Q:None          >> [user followings]
+        Q:user_id:int   >> [user {user_id} followings]
 post:   [follow:int:user_id]    >> [status]
         [unfollow:int:user_id]  >> [status]
-```
-/accounts/profile/followings/
-```
-get:    [profile followings]
 ```
 
 ### Social
