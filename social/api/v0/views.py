@@ -4,6 +4,7 @@ from django.http import JsonResponse
 from django.contrib.auth import get_user_model
 from social.forms import CreatePostFrom
 from rest_framework.parsers import FormParser, MultiPartParser
+from django.utils.datastructures import MultiValueDictKeyError
 
 User = get_user_model()
 
@@ -18,8 +19,16 @@ class GetAllTags(APIView):
 class Tags(APIView):
 
     def get(self, request, formant=None):
-        query = request.query_params['name']
-        matched_tags = [str(t) for t in Tag.objects.filter(name__startswith=query)]
+        try:
+            query = request.query_params['name']
+            matched_tags = [str(t) for t in Tag.objects.filter(name__startswith=query)]
+
+        except MultiValueDictKeyError:
+            if request.query_params == {}:
+                matched_tags = [str(t) for t in Tag.objects.all()]
+            else:
+                return JsonResponse({"error": "invalid"}, status=400)
+
         return JsonResponse({
             "matched_tags": matched_tags
         })
