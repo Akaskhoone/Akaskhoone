@@ -36,11 +36,24 @@ post:   [access:str]    >> [access:str]
 ```
 get:    Q:None          >> JSON [username:str, email:str, name:str, bio:str,
                                  followings:int, followers:int, image:str:url]
-        Q:username      >> JSON [user {user_id} profile data]
-        Q:email         >> JSON [user {user_id} profile data]
+        Q:username      >> JSON [username:str, email:str, name:str, bio:str,
+                                 followings:int, followers:int, image:str:url]
+        Q:email         >> JSON [username:str, email:str, name:str, bio:str,
+                                 followings:int, followers:int, image:str:url]
         ------------------------------
         error:
             profile: [ NotExist ]
+        ------------------------------
+        example:
+            {
+                "username": "aasmpro",
+                "email": "aasmpro@admin.com",
+                "name": "Abolfazl",
+                "bio": "My bio",
+                "followers": 2,
+                "followings": 3,
+                "image": "/media/profile_photos/3/20180422231404.jpg"
+            }
 -----------------------------------------------------------------        
 post:   FORMDATA [email:str, username:str, password:str,
                   name:str, bio:str, image:base64]
@@ -110,7 +123,6 @@ post:   JSON [follow:str:username|email]
             user: [ NotExist ]
         ------------------------------
 ```
-
 ### Social
 /social/posts/?Q
 ```
