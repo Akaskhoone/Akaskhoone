@@ -9,6 +9,7 @@ from accounts.validators import UnicodeNameValidator, UnicodeUsernameValidator
 
 class GetProfile(APIView):
     def get(self, request):
+        print(request.query_params)
         p = Profile.objects.get(user=request.user)
         ps = ProfileSerializer(p)
         return JsonResponse(ps.data)
@@ -49,11 +50,11 @@ class Signup(APIView):
             profile_serializer = ProfileSerializer(data=new_profile_data)
             if profile_serializer.is_valid():
                 profile_serializer.save()
-                return JsonResponse({"status": "User created successfully"})
+                return JsonResponse({"status": "Successful!"})
             else:
-                return JsonResponse({"status": "Can not to create a profile with given data"}, status=400)
+                return JsonResponse({"error": "profileInvalid"}, status=400)
         else:
-            return JsonResponse({"status": "Can not to create a user with given data"}, status=400)
+            return JsonResponse({"status": "userInvalid"}, status=400)
 
 
 class EditProfile(APIView):
