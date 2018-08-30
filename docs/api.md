@@ -4,43 +4,111 @@
 
 base api address: `/api/v0/`
 
-in each endpoint response, there would be always a `msg` key that it's value show what happened.
-so in this doc `[status]` stands for that data.
+in each endpoint response, based on that it was successful or not, there would be a JSON response with `message` or `error` keyword with following structure.
 
+
+successful:
+```
+"message": "SignUp Successful"
+```
+unsuccessful:
+```
+"error" : {
+    "Username": ["Exist"],
+    "Name": ["Numeric", "NotUnicode"]
+}
+```
+also `None` in for queries, mean current user.
 ### Accounts
-
 /accounts/login/
 ```
 post:   [username:str, password:str] >> [access:str, refresh:str]
 ```
 /accounts/refresh/
 ```
-post:   [refresh:str] >> [access:str]
+post:   [refresh:str]   >> [access:str]
 ```
 /accounts/verify/
 ```
-post:   [access] >> [access:str]
+post:   [access:str]    >> [access:str]
 ```
 /accounts/profile/?Q
 ```
-get:    Q:None          >> [user profile data]
-        Q:user_id:int   >> [user {user_id} profile data]
-post:   [user profile data] >> [status]                 >> signup
-put:
-        [old_password:str, new_password:str] >> [status]>> change password
-        [user profile data] >> [status]                 >> update profile
+get:    Q:None          >> JSON [username:str, email:str, name:str, bio:str,
+                                 followings:int, followers:int, image:str:url]
+        Q:username      >> JSON [user {user_id} profile data]
+        Q:email         >> JSON [user {user_id} profile data]
+        ------------------------------
+        error:
+            profile: [ NotExist ]
+-----------------------------------------------------------------        
+post:   FORMDATA [email:str, username:str, password:str,
+                  name:str, bio:str, image:base64]
+        ------------------------------
+        success:
+            message: user created successfully
+        
+        error:
+            email: [ Exist, NotValid ]
+            username: [ Exist, Length, Numeric, NotUnicode ]
+            password: [ Common, Length, Numeric, NotUnicode ]
+            name: [ Length, Numeric ]
+            image: [ Size ]
+-----------------------------------------------------------------
+put:    JSON [old_password:str, new_password:str]
+        ------------------------------
+        success:
+            message: user password changed
+        
+        error:
+            old_password: [ NotMatch ]
+            new_password: [ Common, Length, Numeric, NotUnicode ]
+        ------------------------------
+        
+        FORMDATA [name:str, bio:str, image:base64]
+        ------------------------------
+        success:
+            message: user updated successfully
+        
+        error:
+            name: [ Length, Numeric ]
+            image: [ Size ]
 ```
 /accounts/profile/followers/?Q
 ```
-get:    Q:None          >> [user followers]
-        Q:user_id:int   >> [user {user_id} followers ]
+get:    Q:None          >> JSON [ username:str { name:str, followed:bool }, ... ]
+        Q:username      >> JSON [ username:str { name:str, followed:bool }, ... ]
+        Q:email         >> JSON [ username:str { name:str, followed:bool }, ... ]
+        ------------------------------
+        error:
+            profile: [ NotExist ]
 ```
 /accounts/profile/followings/?Q
 ```
-get:    Q:None          >> [user followings]
-        Q:user_id:int   >> [user {user_id} followings]
-post:   [follow:int:user_id]    >> [status]
-        [unfollow:int:user_id]  >> [status]
+get:    Q:None          >> JSON [ username:str { name:str, followed:bool }, ... ]
+        Q:username      >> JSON [ username:str { name:str, followed:bool }, ... ]
+        Q:email         >> JSON [ username:str { name:str, followed:bool }, ... ]
+        ------------------------------
+        error:
+            profile: [ NotExist ]
+-----------------------------------------------------------------           
+post:   JSON [follow:str:username|email]
+        ------------------------------
+        success:
+            message: followed successfully
+        
+        error:
+            user: [ NotExist ]
+        ------------------------------
+
+        JSON [unfollow:str:username|email]
+        ------------------------------
+        success:
+            message: unfollowed successfully
+        
+        error:
+            user: [ NotExist ]
+        ------------------------------
 ```
 
 ### Social
