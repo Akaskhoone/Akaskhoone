@@ -17,11 +17,10 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
+    'rest_framework',
+
     'accounts.apps.AccountsConfig',
     'social.apps.SocialConfig',
-    # 'posts.apps.PostsConfig',
-    # 'users.apps.UsersConfig',
-    'rest_framework',
 ]
 
 MIDDLEWARE = [
@@ -99,4 +98,5 @@ REST_FRAMEWORK = {
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(hours=1),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=365),
 }
