@@ -8,7 +8,7 @@ import json
 class APILoginTest(APIJWTTestCase):
     def test_login_with_real_user(self):
         print('>>> test login with real user')
-        User.objects.create_user('aasmpro', 'aasmpro@admin.com', 'passaasmpro')
+        User.objects.create_user(email='aasmpro@admin.com', username='aasmpro', password='passaasmpro')
         result, response = self.client.login(email='aasmpro@admin.com', password='passaasmpro')
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'access')

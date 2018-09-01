@@ -9,15 +9,13 @@ from django.utils.datastructures import MultiValueDictKeyError
 User = get_user_model()
 
 
-class GetAllTags(APIView):
-    def get(self, request):
-        return JsonResponse({
-            "tags": [str(t) for t in Tag.objects.all()]
-        })
-
-
 class Tags(APIView):
-
+    """
+    This view handles request related to tags.
+    It returns all the previously stored tags if the query part is empty,
+    or tags starting with the string specified in the name field at the query part.
+    It returns error with message 'invalid' if the query part contains other fields.
+    """
     def get(self, request, formant=None):
         try:
             query = request.query_params['name']
