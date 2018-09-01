@@ -55,6 +55,18 @@ class ProfileAPIView(APIView):
         }
         return JsonResponse(data)
 
+    # def put(self, request):
+    #     user = request.user
+    #     if user.check_password(request.data['old_password']):
+    #         try:
+    #             validate_password(request.data['new_password'], user=user, password_validators=None)
+    #         except Exception as e:
+    #             return JsonResponse({"error": {"new_password": ["Common, Length, Numeric, NotUnicode"]}})
+    #         user.set_password(request.data['new_password'])
+    #         user.save()
+    #         return JsonResponse({"success": {"message": ["user password changed"]}})
+    #     else:
+    #         return JsonResponse({"error": {"old_password": ["NotMatch"]}})
 
 class UpdatePassword(APIView):
     def post(self, request):
