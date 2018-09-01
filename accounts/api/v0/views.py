@@ -7,66 +7,65 @@ from django.contrib.auth.password_validation import validate_password
 from accounts.validators import UnicodeNameValidator, UnicodeUsernameValidator
 
 
+def get_user(request):
+    username = request.query_params.get('username')
+    if username:
+        return User.objects.get(username=username)
+    email = request.query_params.get('email')
+    if email:
+        return User.objects.get(email=email)
+    return request.user
+
+
 class ProfileAPIView(APIView):
     def get(self, request):
-        username = request.query_params.get('username')
-        if username:
-            try:
-                user = User.objects.get(username=username)
-                data = {
-                    "username": username,
-                    "email": user.email,
-                    "name": user.profile.name,
-                    "bio": user.profile.bio,
-                    "followers": user.profile.followers.count(),
-                    "followings": user.profile.followings.count(),
-                    "image": user.profile.image.url
-                }
-                return JsonResponse(data)
-            except Exception as e:
-                return JsonResponse({"error": {"Profile":["NotExist"]}})
+        user = get_user(request)
+        try:
+            data = {
+                "username": user.username,
+                "email": user.email,
+                "name": user.profile.name,
+                "bio": user.profile.bio,
+                "followers": user.profile.followers.count(),
+                "followings": user.profile.followings.count(),
+                "image": user.profile.image.url if user.profile.image else "/media/profile_photos/default.jpg"
+            }
+            return JsonResponse(data)
+        except Exception as e:
+            return JsonResponse({"error": {"Profile": ["NotExist"]}})
 
-        email = request.query_params.get('email')
-        if email:
-            try:
-                user = User.objects.get(email=email)
-                data = {
-                    "username": user.username,
-                    "email": email,
-                    "name": user.profile.name,
-                    "bio": user.profile.bio,
-                    "followers": user.profile.followers.count(),
-                    "followings": user.profile.followings.count(),
-                    "image": user.profile.image.url
-                }
-                return JsonResponse(data)
-            except Exception as e:
-                return JsonResponse({"error": {"Profile": ["NotExist"]}})
-
+    def put(self, request):
         user = request.user
-        data = {
-            "username": user.username,
-            "email": user.email,
-            "name": user.profile.name,
-            "bio": user.profile.bio,
-            "followers": user.profile.followers.count(),
-            "followings": user.profile.followings.count(),
-            "image": user.profile.image.url
-        }
-        return JsonResponse(data)
+        old_password = request.data.get('old_password')
+        if old_password:
+            if user.check_password(old_password):
+                new_password = request.data.get('new_password')
+                if new_password:
+                    try:
+                        validate_password(new_password, user=user, password_validators=None)
+                        user.set_password(new_password)
+                        user.save()
+                        return JsonResponse({"message": "user password changed"}, status=200)
+                    except Exception as e:
+                        errors = []
+                        print(e)
+                        for i in e.args[0]:
+                            if str(list(i)[0]).__contains__('similar'):
+                                errors.append("Similar")
+                            elif str(list(i)[0]).__contains__('short'):
+                                errors.append("Length")
+                            elif str(list(i)[0]).__contains__('numeric'):
+                                errors.append("Numeric")
+                            elif str(list(i)[0]).__contains__('common'):
+                                errors.append("Common")
+                        return JsonResponse({"error": {"new_password": errors}})
+                else:
+                    return JsonResponse({"error": {"new_password": ["Required"]}})
+            else:
+                return JsonResponse({"error": {"old_password": ["NotMatch"]}})
+        else:
+            return JsonResponse({"error": {"old_password": ["Required"]}})
 
-    # def put(self, request):
-    #     user = request.user
-    #     if user.check_password(request.data['old_password']):
-    #         try:
-    #             validate_password(request.data['new_password'], user=user, password_validators=None)
-    #         except Exception as e:
-    #             return JsonResponse({"error": {"new_password": ["Common, Length, Numeric, NotUnicode"]}})
-    #         user.set_password(request.data['new_password'])
-    #         user.save()
-    #         return JsonResponse({"success": {"message": ["user password changed"]}})
-    #     else:
-    #         return JsonResponse({"error": {"old_password": ["NotMatch"]}})
 
 class UpdatePassword(APIView):
     def post(self, request):
@@ -118,7 +117,6 @@ class EditProfile(APIView):
         p.name = request.data["first_name"]
         p.save()
         return JsonResponse({"status": "profile updated"})
-
 
 
 class FollowUser(APIView):

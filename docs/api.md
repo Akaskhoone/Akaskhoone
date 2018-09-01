@@ -73,8 +73,8 @@ put:    JSON { old_password:str, new_password:str }
             message: user password changed
         
         error:
-            old_password: [ NotMatch ]
-            new_password: [ Common, Length, Numeric, NotUnicode ]
+            old_password: [ NotMatch, Required ]
+            new_password: [ Common, Length, Numeric, Similar ]
         ------------------------------
         
         FORMDATA { name:str, bio:str, image:base64 }
