@@ -7,13 +7,66 @@ from django.contrib.auth.password_validation import validate_password
 from accounts.validators import UnicodeNameValidator, UnicodeUsernameValidator
 
 
-class GetProfile(APIView):
+class ProfileAPIView(APIView):
     def get(self, request):
-        print(request.query_params)
-        p = Profile.objects.get(user=request.user)
-        ps = ProfileSerializer(p)
-        return JsonResponse(ps.data)
+        username = request.query_params.get('username')
+        if username:
+            try:
+                user = User.objects.get(username=username)
+                data = {
+                    "username": username,
+                    "email": user.email,
+                    "name": user.profile.name,
+                    "bio": user.profile.bio,
+                    "followers": user.profile.followers.count(),
+                    "followings": user.profile.followings.count(),
+                    "image": user.profile.image.url
+                }
+                return JsonResponse(data)
+            except Exception as e:
+                return JsonResponse({"error": {"Profile":["NotExist"]}})
 
+        email = request.query_params.get('email')
+        if email:
+            try:
+                user = User.objects.get(email=email)
+                data = {
+                    "username": user.username,
+                    "email": email,
+                    "name": user.profile.name,
+                    "bio": user.profile.bio,
+                    "followers": user.profile.followers.count(),
+                    "followings": user.profile.followings.count(),
+                    "image": user.profile.image.url
+                }
+                return JsonResponse(data)
+            except Exception as e:
+                return JsonResponse({"error": {"Profile": ["NotExist"]}})
+
+        user = request.user
+        data = {
+            "username": user.username,
+            "email": user.email,
+            "name": user.profile.name,
+            "bio": user.profile.bio,
+            "followers": user.profile.followers.count(),
+            "followings": user.profile.followings.count(),
+            "image": user.profile.image.url
+        }
+        return JsonResponse(data)
+
+    # def put(self, request):
+    #     user = request.user
+    #     if user.check_password(request.data['old_password']):
+    #         try:
+    #             validate_password(request.data['new_password'], user=user, password_validators=None)
+    #         except Exception as e:
+    #             return JsonResponse({"error": {"new_password": ["Common, Length, Numeric, NotUnicode"]}})
+    #         user.set_password(request.data['new_password'])
+    #         user.save()
+    #         return JsonResponse({"success": {"message": ["user password changed"]}})
+    #     else:
+    #         return JsonResponse({"error": {"old_password": ["NotMatch"]}})
 
 class UpdatePassword(APIView):
     def post(self, request):
@@ -66,12 +119,6 @@ class EditProfile(APIView):
         p.save()
         return JsonResponse({"status": "profile updated"})
 
-
-class GetUser(APIView):
-    def get(self, request, user_id, format=None):
-        return JsonResponse({
-            'user': serializers.serialize(Profile.objects.get(user_id=user_id))
-        })
 
 
 class FollowUser(APIView):
