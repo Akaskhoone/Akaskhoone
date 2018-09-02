@@ -2,41 +2,10 @@ from accounts.api.v0.serializers import *
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
 from django.http import JsonResponse
-
+from accounts.api.utils import get_user, get_password_errors
 from django.contrib.auth.password_validation import validate_password
-from accounts.validators import UnicodeNameValidator, UnicodeUsernameValidator
 from accounts.forms import SignUpForm, ProfileEditForm
 import json
-
-
-def get_user(request):
-    username = request.query_params.get('username')
-    if username:
-        try:
-            return User.objects.get(username=username)
-        except:
-            return None
-    email = request.query_params.get('email')
-    if email:
-        try:
-            return User.objects.get(email=email)
-        except:
-            return None
-    return request.user
-
-
-def get_password_errors(e):
-    errors = []
-    for i in e.args[0]:
-        if str(list(i)[0]).__contains__('similar'):
-            errors.append("Similar")
-        elif str(list(i)[0]).__contains__('short'):
-            errors.append("Length")
-        elif str(list(i)[0]).__contains__('numeric'):
-            errors.append("Numeric")
-        elif str(list(i)[0]).__contains__('common'):
-            errors.append("Common")
-    return errors
 
 
 class ProfileAPIView(APIView):
@@ -117,9 +86,7 @@ class Signup(APIView):
                     return JsonResponse({"message": "user can be created"}, status=200)
             else:
                 return JsonResponse({"error": {"email": ["Required"]}}, status=400)
-        print("Done")
         signup_form = SignUpForm(data=request.POST, files=request.FILES)
-        print("Done2")
         if signup_form.is_valid():
             signup_form.save()
             return JsonResponse({"message": "user created successfully"})
@@ -156,7 +123,7 @@ class Signup(APIView):
 
 class FollowersAPIView(APIView):
     def get(self, request):
-        if get_user(request) == None:
+        if get_user(request):
             return JsonResponse({"error": {"Profile": ["NotExist"]}}, status=400)
         user = get_user(request)
         requester = request.user
@@ -165,14 +132,14 @@ class FollowersAPIView(APIView):
             try:
                 requester.profile.followings.get(pk=item.pk)
                 ret.update({item.user.username: {'name': item.name, 'followed': True}})
-            except:
+            except Exception as e:
                 ret.update({item.user.username: {'name': item.name, 'followed': False}})
         return JsonResponse(ret)
 
 
 class FollowingsAPIView(APIView):
     def get(self, request):
-        if get_user(request) == None:
+        if get_user(request):
             return JsonResponse({"error": {"Profile": ["NotExist"]}}, status=400)
         user = get_user(request)
         requester = request.user
@@ -181,7 +148,7 @@ class FollowingsAPIView(APIView):
             try:
                 requester.profile.followings.get(pk=item.pk)
                 ret.update({item.user.username: {'name': item.name, 'followed': True}})
-            except:
+            except Exception as e:
                 ret.update({item.user.username: {'name': item.name, 'followed': False}})
         return JsonResponse(ret)
 
@@ -196,7 +163,7 @@ class FollowingsAPIView(APIView):
                 try:
                     requester.profile.followings.get(username=user)
                     return JsonResponse({"success": {"message": ["followed successfully"]}}, status=200)
-                except:
+                except Exception as e:
                     requester.profile.followings.add(user)
                     return JsonResponse({"success": {"message": ["followed successfully"]}}, status=200)
             except Exception as e:
@@ -207,11 +174,11 @@ class FollowingsAPIView(APIView):
             user = User.objects.get(username=username)
             requester = request.user
             if user == requester:
-               return JsonResponse({"error": {"Profile": ["NotExist"]}}, status=400)
+                return JsonResponse({"error": {"Profile": ["NotExist"]}}, status=400)
             try:
                 requester.profile.followings.remove(user.profile.id)
                 return JsonResponse({"success": {"message": ["unfollowed successfully"]}}, status=200)
-            except:
+            except Exception as e:
                 return JsonResponse({"success": {"message": ["unfollowed successfully"]}}, status=200)
         except Exception as e:
             return JsonResponse({"error": {"user": ["NotExist"]}}, status=400)
