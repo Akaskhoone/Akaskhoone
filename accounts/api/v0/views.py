@@ -170,45 +170,48 @@ class FollowersAPIView(APIView):
         return JsonResponse(ret)
 
 
-class FollowUser(APIView):
-    def get(self, request, user_id, format=None):
+class FollowingsAPIView(APIView):
+    def get(self, request):
+        if get_user(request) == None:
+            return JsonResponse({"error": {"Profile": ["NotExist"]}}, status=400)
+        user = get_user(request)
+        requester = request.user
+        ret = {}
+        for item in user.profile.followings.all():
+            try:
+                requester.profile.followings.get(pk=item.pk)
+                ret.update({item.user.username: {'name': item.name, 'followed': True}})
+            except:
+                ret.update({item.user.username: {'name': item.name, 'followed': False}})
+        return JsonResponse(ret)
+
+    def post(self, request):
+        username = request.data.get('follow')
+        if username:
+            try:
+                user = User.objects.get(username=username)
+                requester = request.user
+                if user == requester:
+                    return JsonResponse({"error": {"Profile": ["NotExist"]}}, status=400)
+                try:
+                    requester.profile.followings.get(username=user)
+                    return JsonResponse({"success": {"message": ["followed successfully"]}}, status=200)
+                except:
+                    requester.profile.followings.add(user)
+                    return JsonResponse({"success": {"message": ["followed successfully"]}}, status=200)
+            except Exception as e:
+                return JsonResponse({"error": {"user": ["NotExist"]}}, status=400)
+
+        username = request.data.get('unfollow')
         try:
-            from_profile = Profile.objects.get(user_id=request.user.id)
-        except:
-            return JsonResponse({"error": "you don't have profile, sorry!"}, status=403)
-
-        try:
-            to_profile = Profile.objects.get(user_id=user_id)
-        except:
-            return JsonResponse(
-                {"error": "user with user_id: {} does not have profile!".format(user_id).format(user_id)}, status=403)
-
-        if to_profile.user_id == from_profile.user_id:
-            return JsonResponse({"error": "you can not follow yourself!"}, status=403)
-
-        if to_profile in list(from_profile.followings.all()):
-            return JsonResponse({"error": "you have already followed user with user_id: {}".format(user_id)},
-                                status=403)
-
-        from_profile.followings.add(to_profile)
-        return JsonResponse({"status": "Successful!"})
-
-
-class UnFollow(APIView):
-    def get(self, request, user_id, format=None):
-        try:
-            from_profile = Profile.objects.get(user_id=request.user.id)
-        except:
-            return JsonResponse({"error": "you don't have profile, sorry!"}, status=403)
-
-        try:
-            to_profile = Profile.objects.get(user_id=user_id)
-        except:
-            return JsonResponse(
-                {"error": "user with user_id: {} does not have profile!".format(user_id).format(user_id)}, status=403)
-
-        if to_profile not in list(from_profile.followings.all()):
-            return JsonResponse({"error": "you don't follow user with user_id: {}".format(user_id)}, status=403)
-
-        from_profile.followings.remove(to_profile)
-        return JsonResponse({"status": "Successful!"})
+            user = User.objects.get(username=username)
+            requester = request.user
+            if user == requester:
+               return JsonResponse({"error": {"Profile": ["NotExist"]}}, status=400)
+            try:
+                requester.profile.followings.remove(user.profile.id)
+                return JsonResponse({"success": {"message": ["unfollowed successfully"]}}, status=200)
+            except:
+                return JsonResponse({"success": {"message": ["unfollowed successfully"]}}, status=200)
+        except Exception as e:
+            return JsonResponse({"error": {"user": ["NotExist"]}}, status=400)
