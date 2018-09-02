@@ -5,6 +5,7 @@ from django.http import JsonResponse
 
 from django.contrib.auth.password_validation import validate_password
 from accounts.validators import UnicodeNameValidator, UnicodeUsernameValidator
+from accounts.forms import ProfileEditForm
 
 
 def get_user(request):
@@ -56,6 +57,14 @@ class ProfileAPIView(APIView):
 
     def put(self, request):
         user = request.user
+        if request.FILES:
+            profile_edit_form = ProfileEditForm(data=request.POST, files=request.FILES)
+            if profile_edit_form.is_valid():
+                profile_edit_form.save(user=request.user)
+                return JsonResponse({"message": "user updated successfully"}, status=200)
+            else:
+                return JsonResponse({"error": {"image": ["Size"]}}, status=400)
+
         old_password = request.data.get('old_password')
         new_password = request.data.get('new_password')
         if old_password and new_password:
@@ -66,17 +75,7 @@ class ProfileAPIView(APIView):
                     user.save()
                     return JsonResponse({"message": "user password changed"}, status=200)
                 except Exception as e:
-                    errors = []
-                    for i in e.args[0]:
-                        if str(list(i)[0]).__contains__('similar'):
-                            errors.append("Similar")
-                        elif str(list(i)[0]).__contains__('short'):
-                            errors.append("Length")
-                        elif str(list(i)[0]).__contains__('numeric'):
-                            errors.append("Numeric")
-                        elif str(list(i)[0]).__contains__('common'):
-                            errors.append("Common")
-                    return JsonResponse({"error": {"new_password": errors}}, status=400)
+                    return JsonResponse({"error": {"new_password": get_password_errors(e)}}, status=400)
             else:
                 return JsonResponse({"error": {"old_password": ["NotMatch"]}}, status=400)
         else:
@@ -95,16 +94,24 @@ class Signup(APIView):
         if not request.FILES:
             email = request.data.get('email')
             password = request.data.get('password')
-            if email and password:
-                pass
-            else:
+            if email:
                 errors = {}
-                if not email:
-                    errors.update({"email": ["Required"]})
-                if not password:
-                    errors.update({"password": ["Required"]})
-                return JsonResponse({"error": errors}, status=400)
-
+                try:
+                    User.objects.get(email=email)
+                    errors.update({"email": ["Exist"]})
+                except Exception as e:
+                    pass
+                if password:
+                    try:
+                        validate_password(password)
+                    except Exception as e:
+                        errors.update({"password": get_password_errors(e)})
+                if errors:
+                    return JsonResponse({"error": errors}, status=400)
+                else:
+                    return JsonResponse({"message": "user can be created"}, status=200)
+            else:
+                return JsonResponse({"error": {"email": ["Required"]}}, status=400)
 
 # class EditProfile(APIView):
 #     def post(self, request):
