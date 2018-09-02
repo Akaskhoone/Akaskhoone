@@ -9,7 +9,7 @@ class ProfileEditForm(forms.Form):
     name_validator = UnicodeNameValidator()
     name = forms.CharField(max_length=100, validators=[name_validator])
     bio = forms.CharField()
-    image = forms.ImageField()
+    image = forms.ImageField(required=False)
 
     def save(self, user):
         user.profile.name = self.cleaned_data["name"]

@@ -70,21 +70,22 @@ class ProfileAPIView(APIView):
                     return JsonResponse({"error": {"new_password": get_password_errors(e)}}, status=400)
             else:
                 return JsonResponse({"error": {"old_password": ["NotMatch"]}}, status=400)
-        elif not request.FILES:
-            errors = {}
-            if not old_password:
-                errors.update({"old_password": ["Required"]})
-            if not new_password:
-                errors.update({"new_password": ["Required"]})
-            return JsonResponse({"error": errors}, status=400)
 
-        else:
+        elif request.POST['name']:
             profile_edit_form = ProfileEditForm(data=request.POST, files=request.FILES)
             if profile_edit_form.is_valid():
                 profile_edit_form.save(user=request.user)
                 return JsonResponse({"message": "user updated successfully"}, status=200)
             else:
                 return JsonResponse({"error": {"image": ["Size"]}}, status=400)
+
+        else:
+            errors = {}
+            if not old_password:
+                errors.update({"old_password": ["Required"]})
+            if not new_password:
+                errors.update({"new_password": ["Required"]})
+            return JsonResponse({"error": errors}, status=400)
 
 
 class Signup(APIView):
