@@ -57,14 +57,6 @@ class ProfileAPIView(APIView):
 
     def put(self, request):
         user = request.user
-        if request.FILES:
-            profile_edit_form = ProfileEditForm(data=request.POST, files=request.FILES)
-            if profile_edit_form.is_valid():
-                profile_edit_form.save(user=request.user)
-                return JsonResponse({"message": "user updated successfully"}, status=200)
-            else:
-                return JsonResponse({"error": {"image": ["Size"]}}, status=400)
-
         old_password = request.data.get('old_password')
         new_password = request.data.get('new_password')
         if old_password and new_password:
@@ -78,13 +70,21 @@ class ProfileAPIView(APIView):
                     return JsonResponse({"error": {"new_password": get_password_errors(e)}}, status=400)
             else:
                 return JsonResponse({"error": {"old_password": ["NotMatch"]}}, status=400)
-        else:
+        elif not request.FILES:
             errors = {}
             if not old_password:
                 errors.update({"old_password": ["Required"]})
             if not new_password:
                 errors.update({"new_password": ["Required"]})
             return JsonResponse({"error": errors}, status=400)
+
+        else:
+            profile_edit_form = ProfileEditForm(data=request.POST, files=request.FILES)
+            if profile_edit_form.is_valid():
+                profile_edit_form.save(user=request.user)
+                return JsonResponse({"message": "user updated successfully"}, status=200)
+            else:
+                return JsonResponse({"error": {"image": ["Size"]}}, status=400)
 
 
 class Signup(APIView):
@@ -112,6 +112,7 @@ class Signup(APIView):
                     return JsonResponse({"message": "user can be created"}, status=200)
             else:
                 return JsonResponse({"error": {"email": ["Required"]}}, status=400)
+
 
 # class EditProfile(APIView):
 #     def post(self, request):
