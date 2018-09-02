@@ -23,6 +23,20 @@ def get_user(request):
     return request.user
 
 
+def get_password_errors(e):
+    errors = []
+    for i in e.args[0]:
+        if str(list(i)[0]).__contains__('similar'):
+            errors.append("Similar")
+        elif str(list(i)[0]).__contains__('short'):
+            errors.append("Length")
+        elif str(list(i)[0]).__contains__('numeric'):
+            errors.append("Numeric")
+        elif str(list(i)[0]).__contains__('common'):
+            errors.append("Common")
+    return errors
+
+
 class ProfileAPIView(APIView):
     def get(self, request):
         user = get_user(request)
@@ -43,63 +57,53 @@ class ProfileAPIView(APIView):
     def put(self, request):
         user = request.user
         old_password = request.data.get('old_password')
-        if old_password:
+        new_password = request.data.get('new_password')
+        if old_password and new_password:
             if user.check_password(old_password):
-                new_password = request.data.get('new_password')
-                if new_password:
-                    try:
-                        validate_password(new_password, user=user, password_validators=None)
-                        user.set_password(new_password)
-                        user.save()
-                        return JsonResponse({"message": "user password changed"}, status=200)
-                    except Exception as e:
-                        errors = []
-                        for i in e.args[0]:
-                            if str(list(i)[0]).__contains__('similar'):
-                                errors.append("Similar")
-                            elif str(list(i)[0]).__contains__('short'):
-                                errors.append("Length")
-                            elif str(list(i)[0]).__contains__('numeric'):
-                                errors.append("Numeric")
-                            elif str(list(i)[0]).__contains__('common'):
-                                errors.append("Common")
-                        return JsonResponse({"error": {"new_password": errors}}, status=400)
-                else:
-                    return JsonResponse({"error": {"new_password": ["Required"]}}, status=400)
+                try:
+                    validate_password(new_password, user=user, password_validators=None)
+                    user.set_password(new_password)
+                    user.save()
+                    return JsonResponse({"message": "user password changed"}, status=200)
+                except Exception as e:
+                    errors = []
+                    for i in e.args[0]:
+                        if str(list(i)[0]).__contains__('similar'):
+                            errors.append("Similar")
+                        elif str(list(i)[0]).__contains__('short'):
+                            errors.append("Length")
+                        elif str(list(i)[0]).__contains__('numeric'):
+                            errors.append("Numeric")
+                        elif str(list(i)[0]).__contains__('common'):
+                            errors.append("Common")
+                    return JsonResponse({"error": {"new_password": errors}}, status=400)
             else:
                 return JsonResponse({"error": {"old_password": ["NotMatch"]}}, status=400)
         else:
-            return JsonResponse({"error": {"old_password": ["Required"]}}, status=400)
+            errors = {}
+            if not old_password:
+                errors.update({"old_password": ["Required"]})
+            if not new_password:
+                errors.update({"new_password": ["Required"]})
+            return JsonResponse({"error": errors}, status=400)
 
 
-# class Signup(APIView):
-#     permission_classes = (AllowAny,)
-#
-#     def post(self, request):
-#         new_user_data = {
-#             "email": request.data["email"],
-#             "username": request.data["username"],
-#             "password": request.data["password"]
-#         }
-#         UnicodeUsernameValidator()(request.data["username"])
-#         user_serializer = UserSerializer(data=dict(new_user_data))
-#         if user_serializer.is_valid():
-#             UnicodeNameValidator()(request.data["name"])
-#             user = user_serializer.save()
-#             new_profile_data = {
-#                 "user": user.id,
-#                 "name": request.data["name"],
-#                 "bio": request.data["bio"],
-#                 # "image": request.data["image"],
-#             }
-#             profile_serializer = ProfileSerializer(data=new_profile_data)
-#             if profile_serializer.is_valid():
-#                 profile_serializer.save()
-#                 return JsonResponse({"status": "Successful!"})
-#             else:
-#                 return JsonResponse({"error": "profileInvalid"}, status=400)
-#         else:
-#             return JsonResponse({"status": "userInvalid"}, status=400)
+class Signup(APIView):
+    permission_classes = (AllowAny,)
+
+    def post(self, request):
+        if not request.FILES:
+            email = request.data.get('email')
+            password = request.data.get('password')
+            if email and password:
+                pass
+            else:
+                errors = {}
+                if not email:
+                    errors.update({"email": ["Required"]})
+                if not password:
+                    errors.update({"password": ["Required"]})
+                return JsonResponse({"error": errors}, status=400)
 
 
 # class EditProfile(APIView):

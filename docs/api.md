@@ -74,7 +74,7 @@ put:    JSON { old_password:str, new_password:str }
         
         error:
             old_password: [ NotMatch, Required ]
-            new_password: [ Common, Length, Numeric, Similar ]
+            new_password: [ Common, Length, Numeric, Similar, Required ]
         ------------------------------
         
         FORMDATA { name:str, bio:str, image:base64 }
