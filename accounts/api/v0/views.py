@@ -5,7 +5,8 @@ from django.http import JsonResponse
 
 from django.contrib.auth.password_validation import validate_password
 from accounts.validators import UnicodeNameValidator, UnicodeUsernameValidator
-from accounts.forms import ProfileEditForm
+from accounts.forms import SignUpForm, ProfileEditForm
+import json
 
 
 def get_user(request):
@@ -113,6 +114,64 @@ class Signup(APIView):
                     return JsonResponse({"message": "user can be created"}, status=200)
             else:
                 return JsonResponse({"error": {"email": ["Required"]}}, status=400)
+        # new_user_data = {
+        #     "email": request.data["email"],
+        #     "username": request.data["username"],
+        #     "password": request.data["password"]
+        # }
+        # UnicodeUsernameValidator()(request.data["username"])
+        # user_serializer = UserSerializer(data=dict(new_user_data))
+        # if user_serializer.is_valid():
+        #     UnicodeNameValidator()(request.data["name"])
+        #     user = user_serializer.save()
+        #     new_profile_data = {
+        #         "user": user.id,
+        #         "name": request.data["name"],
+        #         "bio": request.data["bio"],
+        #         # "image": request.data["image"],
+        #     }
+        #     profile_serializer = ProfileSerializer(data=new_profile_data)
+        #     if profile_serializer.is_valid():
+        #         profile_serializer.save()
+        #         return JsonResponse({"status": "Successful!"})
+        #     else:
+        #         return JsonResponse({"error": "profileInvalid"}, status=400)
+        # else:
+        #     return JsonResponse({"status": "userInvalid"}, status=400)
+
+        signup_form = SignUpForm(data=request.POST, files=request.FILES)
+        if signup_form.is_valid():
+            signup_form.save()
+            return JsonResponse({"message": "user created successfully"})
+        else:
+            errors = {}
+            errors_as_json = json.loads(signup_form.errors.as_json())
+
+            email_errors = errors_as_json.get("email")
+            email_errors_set = set()
+            if email_errors:
+                temp = []
+                for email_error in email_errors:
+                    email_errors_set.add(email_error["code"])
+                if "invalid" in email_errors_set:
+                    temp.append("NotValid")
+                if "Exists" in email_errors_set:
+                    temp.append("Exists")
+                errors["email"] = temp
+
+            username_errors = errors_as_json.get("username")
+            username_errors_set = set()
+            if username_errors:
+                temp = []
+                for username_error in username_errors:
+                    username_errors_set.add(username_error["code"])
+                if "invalid" in username_errors_set:
+                    temp.append("NotValid")
+                if "Exists" in username_errors_set:
+                    temp.append("Exists")
+                errors["username"] = temp
+
+        return JsonResponse({"error": errors}, status=400)
 
 
 # class EditProfile(APIView):
