@@ -74,5 +74,10 @@ class Profile(models.Model):
     followings = models.ManyToManyField('Profile', related_name='followers', blank=True, verbose_name=_('followings'),
                                         symmetrical=False)
 
+    def clean(self):
+        super().clean()
+        if not self.image:
+            self.image = '/profile_photos/default.jpg'
+
     def __str__(self):
         return str(self.user)
