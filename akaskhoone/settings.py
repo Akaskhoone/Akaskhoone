@@ -4,7 +4,7 @@ from datetime import timedelta
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = '(dw0fit#4j_55my2+18v=h$cy#3u+)dw*!icm-ogxdxvvl*2tt'
 DEBUG = True
-ALLOWED_HOSTS = ['127.0.0.1', '.serveo.net', '192.168.11.190']
+ALLOWED_HOSTS = ['127.0.0.1', '.serveo.net', '192.168.11.190', '192.168.11.85']
 
 AUTH_USER_MODEL = 'accounts.User'
 ROOT_URLCONF = 'akaskhoone.urls'

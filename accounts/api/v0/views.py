@@ -93,7 +93,10 @@ class Signup(APIView):
     permission_classes = (AllowAny,)
 
     def post(self, request):
-        if not request.FILES:
+        print("man injam")
+        print(request)
+        print(request.POST)
+        if not request.POST:
             email = request.data.get('email')
             password = request.data.get('password')
             if email:
@@ -114,32 +117,9 @@ class Signup(APIView):
                     return JsonResponse({"message": "user can be created"}, status=200)
             else:
                 return JsonResponse({"error": {"email": ["Required"]}}, status=400)
-        # new_user_data = {
-        #     "email": request.data["email"],
-        #     "username": request.data["username"],
-        #     "password": request.data["password"]
-        # }
-        # UnicodeUsernameValidator()(request.data["username"])
-        # user_serializer = UserSerializer(data=dict(new_user_data))
-        # if user_serializer.is_valid():
-        #     UnicodeNameValidator()(request.data["name"])
-        #     user = user_serializer.save()
-        #     new_profile_data = {
-        #         "user": user.id,
-        #         "name": request.data["name"],
-        #         "bio": request.data["bio"],
-        #         # "image": request.data["image"],
-        #     }
-        #     profile_serializer = ProfileSerializer(data=new_profile_data)
-        #     if profile_serializer.is_valid():
-        #         profile_serializer.save()
-        #         return JsonResponse({"status": "Successful!"})
-        #     else:
-        #         return JsonResponse({"error": "profileInvalid"}, status=400)
-        # else:
-        #     return JsonResponse({"status": "userInvalid"}, status=400)
-
+        print("Done")
         signup_form = SignUpForm(data=request.POST, files=request.FILES)
+        print("Done2")
         if signup_form.is_valid():
             signup_form.save()
             return JsonResponse({"message": "user created successfully"})
@@ -173,15 +153,6 @@ class Signup(APIView):
 
         return JsonResponse({"error": errors}, status=400)
 
-
-# class EditProfile(APIView):
-#     def post(self, request):
-#         p = Profile.objects.get(user=request.user)
-#         p.bio = request.data["bio"]
-#         UnicodeNameValidator()(request.data["name"])
-#         p.name = request.data["first_name"]
-#         p.save()
-#         return JsonResponse({"status": "profile updated"})
 
 class FollowersAPIView(APIView):
     def get(self, request):

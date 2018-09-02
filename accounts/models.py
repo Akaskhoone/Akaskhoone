@@ -69,7 +69,8 @@ class Profile(models.Model):
     name_validator = UnicodeNameValidator()
     name = models.CharField(_('name'), max_length=100, blank=False, validators=[name_validator])
     bio = models.TextField(_('biography'), null=True, blank=True)
-    image = models.ImageField(_('image'), upload_to=get_profile_image_path, blank=True, null=True)
+    image = models.ImageField(_('image'), upload_to=get_profile_image_path, blank=True, null=True,
+                              default='/media/profile_photos/default.jpg')
     followings = models.ManyToManyField('Profile', related_name='followers', blank=True, verbose_name=_('followings'),
                                         symmetrical=False)
 

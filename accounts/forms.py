@@ -32,8 +32,8 @@ class SignUpForm(forms.Form):
     password = forms.CharField(max_length=128)
     name_validator = UnicodeNameValidator()
     name = forms.CharField(max_length=100, validators=[name_validator])
-    bio = forms.CharField()
-    image = forms.ImageField()
+    bio = forms.CharField(required=False)
+    image = forms.ImageField(required=False)
 
     def save(self):
         user = User.objects.create_user(email=self.cleaned_data["email"], username=self.cleaned_data["username"],
@@ -43,28 +43,19 @@ class SignUpForm(forms.Form):
 
     def is_valid(self):
         is_valid = super(SignUpForm, self).is_valid()
-        if not is_valid:
-            return is_valid
+        return is_valid
+        # if not is_valid:
+        #     return is_valid
         # try:
-        #     User.objects.get(email=self.cleaned_data["email"])
-        #     return False
-        # except User.DoesNotExist:
-        #     pass
+        #     unique_email_validator = UniqueEmailValidator(User=User)
+        #     unique_email_validator.validate(self.data["email"])
+        # except Exception as e:
+        #     self.add_error(field="email", error=e)
+        #     is_valid = False
+        #
         # try:
-        #     User.objects.get(username=self.cleaned_data["username"])
-        #     return False
-        # except User.DoesNotExist:
-        #     pass
-        try:
-            unique_email_validator = UniqueEmailValidator(User=User)
-            unique_email_validator.validate(self.data["email"])
-        except Exception as e:
-            self.add_error(field="email", error=e)
-            is_valid = False
-
-        try:
-            unique_username_validator = UniqueUsernameValidator(User=User)
-            unique_username_validator.validate(self.data["username"])
-        except Exception as e:
-            self.add_error(field="username", error=e)
-            is_valid = False
+        #     unique_username_validator = UniqueUsernameValidator(User=User)
+        #     unique_username_validator.validate(self.data["username"])
+        # except Exception as e:
+        #     self.add_error(field="username", error=e)
+        #     is_valid = False
