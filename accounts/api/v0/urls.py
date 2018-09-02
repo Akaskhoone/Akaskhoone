@@ -11,6 +11,8 @@ urlpatterns = [
     path('signup/', Signup.as_view(), name='signup'),
 
     path('profile/', ProfileAPIView.as_view(), name='profile'),
+    path('profile/followers/', FollowersAPIView.as_view(), name='followers'),
+ #   path('profile/followings/', .as_view(), name='followings'),
 
     path('users/<int:user_id>/follow', FollowUser.as_view(), name="FollowUser"),
     path('users/<int:user_id>/unfollow', UnFollow.as_view(), name="UnFollowUser"),

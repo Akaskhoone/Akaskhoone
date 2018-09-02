@@ -122,6 +122,21 @@ class Signup(APIView):
 #         p.save()
 #         return JsonResponse({"status": "profile updated"})
 
+class FollowersAPIView(APIView):
+    def get(self, request):
+        if get_user(request) == None:
+            return JsonResponse({"error": {"Profile": ["NotExist"]}}, status=400)
+        user = get_user(request)
+        requester = request.user
+        ret = {}
+        for item in user.profile.followers.all():
+            try:
+                requester.profile.followings.get(pk=item.pk)
+                ret.update({item.user.username: {'name': item.name, 'followed': True}})
+            except:
+                ret.update({item.user.username: {'name': item.name, 'followed': False}})
+        return JsonResponse(ret)
+
 
 class FollowUser(APIView):
     def get(self, request, user_id, format=None):
