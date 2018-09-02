@@ -5,6 +5,7 @@ from django.http import JsonResponse
 
 from django.contrib.auth.password_validation import validate_password
 from accounts.validators import UnicodeNameValidator, UnicodeUsernameValidator
+from accounts.forms import SignUpForm
 
 
 class GetProfile(APIView):
@@ -31,30 +32,36 @@ class Signup(APIView):
     permission_classes = (AllowAny,)
 
     def post(self, request):
-        new_user_data = {
-            "email": request.data["email"],
-            "username": request.data["username"],
-            "password": request.data["password"]
-        }
-        UnicodeUsernameValidator()(request.data["username"])
-        user_serializer = UserSerializer(data=dict(new_user_data))
-        if user_serializer.is_valid():
-            UnicodeNameValidator()(request.data["name"])
-            user = user_serializer.save()
-            new_profile_data = {
-                "user": user.id,
-                "name": request.data["name"],
-                "bio": request.data["bio"],
-                # "image": request.data["image"],
-            }
-            profile_serializer = ProfileSerializer(data=new_profile_data)
-            if profile_serializer.is_valid():
-                profile_serializer.save()
-                return JsonResponse({"status": "Successful!"})
-            else:
-                return JsonResponse({"error": "profileInvalid"}, status=400)
+        # new_user_data = {
+        #     "email": request.data["email"],
+        #     "username": request.data["username"],
+        #     "password": request.data["password"]
+        # }
+        # UnicodeUsernameValidator()(request.data["username"])
+        # user_serializer = UserSerializer(data=dict(new_user_data))
+        # if user_serializer.is_valid():
+        #     UnicodeNameValidator()(request.data["name"])
+        #     user = user_serializer.save()
+        #     new_profile_data = {
+        #         "user": user.id,
+        #         "name": request.data["name"],
+        #         "bio": request.data["bio"],
+        #         # "image": request.data["image"],
+        #     }
+        #     profile_serializer = ProfileSerializer(data=new_profile_data)
+        #     if profile_serializer.is_valid():
+        #         profile_serializer.save()
+        #         return JsonResponse({"status": "Successful!"})
+        #     else:
+        #         return JsonResponse({"error": "profileInvalid"}, status=400)
+        # else:
+        #     return JsonResponse({"status": "userInvalid"}, status=400)
+        signup_form = SignUpForm(data=request.POST, files=request.FILES)
+        if signup_form.is_valid():
+            signup_form.save()
+            return JsonResponse({"message": "user created successfully"})
         else:
-            return JsonResponse({"status": "userInvalid"}, status=400)
+            return JsonResponse({"error": "error!"})
 
 
 class EditProfile(APIView):
