@@ -6,6 +6,7 @@ from django.http import JsonResponse
 from django.contrib.auth.password_validation import validate_password
 from accounts.validators import UnicodeNameValidator, UnicodeUsernameValidator
 from accounts.forms import SignUpForm
+import json
 
 
 class GetProfile(APIView):
@@ -56,12 +57,40 @@ class Signup(APIView):
         #         return JsonResponse({"error": "profileInvalid"}, status=400)
         # else:
         #     return JsonResponse({"status": "userInvalid"}, status=400)
+
         signup_form = SignUpForm(data=request.POST, files=request.FILES)
         if signup_form.is_valid():
             signup_form.save()
             return JsonResponse({"message": "user created successfully"})
         else:
-            return JsonResponse({"error": "error!"})
+            errors = {}
+            errors_as_json = json.loads(signup_form.errors.as_json())
+
+            email_errors = errors_as_json.get("email")
+            email_errors_set = set()
+            if email_errors:
+                temp = []
+                for email_error in email_errors:
+                    email_errors_set.add(email_error["code"])
+                if "invalid" in email_errors_set:
+                    temp.append("NotValid")
+                if "Exists" in email_errors_set:
+                    temp.append("Exists")
+                errors["email"] = temp
+
+            username_errors = errors_as_json.get("username")
+            username_errors_set = set()
+            if username_errors:
+                temp = []
+                for username_error in username_errors:
+                    username_errors_set.add(username_error["code"])
+                if "invalid" in username_errors_set:
+                    temp.append("NotValid")
+                if "Exists" in username_errors_set:
+                    temp.append("Exists")
+                errors["username"] = temp
+
+        return JsonResponse({"error": errors}, status=400)
 
 
 class EditProfile(APIView):
