@@ -10,10 +10,16 @@ from accounts.validators import UnicodeNameValidator, UnicodeUsernameValidator
 def get_user(request):
     username = request.query_params.get('username')
     if username:
-        return User.objects.get(username=username)
+        try:
+            return User.objects.get(username=username)
+        except:
+            return None
     email = request.query_params.get('email')
     if email:
-        return User.objects.get(email=email)
+        try:
+            return User.objects.get(email=email)
+        except:
+            return None
     return request.user
 
 
@@ -30,9 +36,9 @@ class ProfileAPIView(APIView):
                 "followings": user.profile.followings.count(),
                 "image": user.profile.image.url if user.profile.image else "/media/profile_photos/default.jpg"
             }
-            return JsonResponse(data)
+            return JsonResponse(data, status=200)
         except Exception as e:
-            return JsonResponse({"error": {"Profile": ["NotExist"]}})
+            return JsonResponse({"error": {"Profile": ["NotExist"]}}, status=400)
 
     def put(self, request):
         user = request.user
@@ -48,7 +54,6 @@ class ProfileAPIView(APIView):
                         return JsonResponse({"message": "user password changed"}, status=200)
                     except Exception as e:
                         errors = []
-                        print(e)
                         for i in e.args[0]:
                             if str(list(i)[0]).__contains__('similar'):
                                 errors.append("Similar")
@@ -58,65 +63,53 @@ class ProfileAPIView(APIView):
                                 errors.append("Numeric")
                             elif str(list(i)[0]).__contains__('common'):
                                 errors.append("Common")
-                        return JsonResponse({"error": {"new_password": errors}})
+                        return JsonResponse({"error": {"new_password": errors}}, status=400)
                 else:
-                    return JsonResponse({"error": {"new_password": ["Required"]}})
+                    return JsonResponse({"error": {"new_password": ["Required"]}}, status=400)
             else:
-                return JsonResponse({"error": {"old_password": ["NotMatch"]}})
+                return JsonResponse({"error": {"old_password": ["NotMatch"]}}, status=400)
         else:
-            return JsonResponse({"error": {"old_password": ["Required"]}})
+            return JsonResponse({"error": {"old_password": ["Required"]}}, status=400)
 
 
-class UpdatePassword(APIView):
-    def post(self, request):
-        user = request.user
-        if user.check_password(request.data['old_password']):
-            validate_password(request.data['new_password'], user=user, password_validators=None)
-            user.set_password(request.data['new_password'])
-            user.save()
-            return JsonResponse({"status": "Password changed successfully"})
-        else:
-            return JsonResponse({"status": "The given old password is not true"})
+# class Signup(APIView):
+#     permission_classes = (AllowAny,)
+#
+#     def post(self, request):
+#         new_user_data = {
+#             "email": request.data["email"],
+#             "username": request.data["username"],
+#             "password": request.data["password"]
+#         }
+#         UnicodeUsernameValidator()(request.data["username"])
+#         user_serializer = UserSerializer(data=dict(new_user_data))
+#         if user_serializer.is_valid():
+#             UnicodeNameValidator()(request.data["name"])
+#             user = user_serializer.save()
+#             new_profile_data = {
+#                 "user": user.id,
+#                 "name": request.data["name"],
+#                 "bio": request.data["bio"],
+#                 # "image": request.data["image"],
+#             }
+#             profile_serializer = ProfileSerializer(data=new_profile_data)
+#             if profile_serializer.is_valid():
+#                 profile_serializer.save()
+#                 return JsonResponse({"status": "Successful!"})
+#             else:
+#                 return JsonResponse({"error": "profileInvalid"}, status=400)
+#         else:
+#             return JsonResponse({"status": "userInvalid"}, status=400)
 
 
-class Signup(APIView):
-    permission_classes = (AllowAny,)
-
-    def post(self, request):
-        new_user_data = {
-            "email": request.data["email"],
-            "username": request.data["username"],
-            "password": request.data["password"]
-        }
-        UnicodeUsernameValidator()(request.data["username"])
-        user_serializer = UserSerializer(data=dict(new_user_data))
-        if user_serializer.is_valid():
-            UnicodeNameValidator()(request.data["name"])
-            user = user_serializer.save()
-            new_profile_data = {
-                "user": user.id,
-                "name": request.data["name"],
-                "bio": request.data["bio"],
-                # "image": request.data["image"],
-            }
-            profile_serializer = ProfileSerializer(data=new_profile_data)
-            if profile_serializer.is_valid():
-                profile_serializer.save()
-                return JsonResponse({"status": "Successful!"})
-            else:
-                return JsonResponse({"error": "profileInvalid"}, status=400)
-        else:
-            return JsonResponse({"status": "userInvalid"}, status=400)
-
-
-class EditProfile(APIView):
-    def post(self, request):
-        p = Profile.objects.get(user=request.user)
-        p.bio = request.data["bio"]
-        UnicodeNameValidator()(request.data["name"])
-        p.name = request.data["first_name"]
-        p.save()
-        return JsonResponse({"status": "profile updated"})
+# class EditProfile(APIView):
+#     def post(self, request):
+#         p = Profile.objects.get(user=request.user)
+#         p.bio = request.data["bio"]
+#         UnicodeNameValidator()(request.data["name"])
+#         p.name = request.data["first_name"]
+#         p.save()
+#         return JsonResponse({"status": "profile updated"})
 
 
 class FollowUser(APIView):

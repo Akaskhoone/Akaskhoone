@@ -42,8 +42,8 @@ post:   FORMDATA { email:str, username:str, password:str, name:str, bio:str, ima
         
         error:
             email:      [ Exist, NotValid ]
-            username:   [ Exist, Length, Numeric, NotUnicode ]
-            password:   [ Common, Length, Numeric, NotUnicode ]
+            username:   [ Exist, Length, Numeric ]
+            password:   [ Common, Length, Numeric, Similar ]
             name:       [ Length, Numeric ]
             image:      [ Size ]
 ```

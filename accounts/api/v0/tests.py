@@ -5,42 +5,65 @@ from django.core.exceptions import *
 import json
 
 
-class APILoginTest(APIJWTTestCase):
-    def test_login_with_real_user(self):
-        print('>>> test login with real user')
+class APIAuthTest(APIJWTTestCase):
+    def test_login_real_user(self):
         User.objects.create_user(email='aasmpro@admin.com', username='aasmpro', password='passaasmpro')
         result, response = self.client.login(email='aasmpro@admin.com', password='passaasmpro')
-        print(result, response.content)
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'access')
 
-    # def test_login_with_fake_user(self):
-    #     print('>>> test login with fake user')
-    #     response = self.client.post(reverse("api:v0:login"), {'email': 'aasmpro@admin.com', 'password': 'passaasmpro'})
-    #     self.assertEqual(response.status_code, 400)
+    def test_login_fake_user(self):
+        result, response = self.client.login(email='aasmpro@admin.com', password='passaasmpro')
+        self.assertEqual(response.status_code, 400)
 
-# class APIAuthorizationTest(APIJWTTestCase):
-#     def test_authorization_needed(self):
-#         print('>>> test authorization needed')
-#         response = self.client.get(reverse("api:v0:profile"))
-#         self.assertEqual(response.status_code, 401)
-#         u = User.objects.create_user('aasmpro', 'aasmpro@admin.com', 'passaasmpro')
-#         self.client.login(email='aasmpro@admin.com', password='passaasmpro')
-#         Profile.objects.create(user_id=u.id, bio='testing profile')
-#         response = self.client.get(reverse("api:v0:profile"))
-#         self.assertEqual(response.status_code, 200)
-#
-#
-# class APIUsersTest(APIJWTTestCase):
-#     def test_getting_user_profile(self):
-#         print('>>> test getting user profile')
-#         u = User.objects.create_user('aasmpro', 'aasmpro@admin.com', 'passaasmpro')
-#         self.client.login(email='aasmpro@admin.com', password='passaasmpro')
-#         Profile.objects.create(user_id=u.id, bio='testing profile')
-#         response = self.client.get(reverse("api:v0:profile"))
-#         self.assertEqual(response.status_code, 200)
-#         self.assertJSONEqual(response.content,
-#                              '{"id": 1, "bio": "testing profile", "image": null, "user": 1, "followers": [], "followings": []}')
+    def test_authorization_real_user(self):
+        u = User.objects.create_user('aasmpro@admin.com', 'aasmpro', 'passaasmpro')
+        Profile.objects.create(user_id=u.id, bio='testing profile')
+        self.client.login(email='aasmpro@admin.com', password='passaasmpro')
+        response = self.client.get(reverse("api.v0.accounts:profile"))
+        self.assertEqual(response.status_code, 200)
+
+    def test_authorization_fake_user(self):
+        response = self.client.get(reverse("api.v0.accounts:profile"))
+        self.assertEqual(response.status_code, 401)
+
+
+class APIProfilesTest(APIJWTTestCase):
+    def setUp(self):
+        u = User.objects.create_user('aasmpro@admin.com', 'aasmpro', 'passaasmpro')
+        u2 = User.objects.create_user('sohrab@admin.com', 'sohrab', 'passsohrab')
+        User.objects.create_user('noprofile@admin.com', 'noprofile', 'passnoprofile')
+        Profile.objects.create(user=u, name='aasmpro name', bio='aasmpro bio')
+        Profile.objects.create(user=u2, name='sohrab name', bio='sohrab bio')
+
+    def test_getting_authorized_user_profile(self):
+        self.client.login(email='aasmpro@admin.com', password='passaasmpro')
+        response = self.client.get(reverse("api.v0.accounts:profile"))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('aasmpro', str(response.content))
+
+    def test_getting_authorized_user_without_profile(self):
+        self.client.login(email='noprofile@admin.com', password='passnoprofile')
+        response = self.client.get(reverse("api.v0.accounts:profile"))
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('NotExist', str(response.content))
+
+    def test_getting_profile_with_username(self):
+        self.client.login(email='aasmpro@admin.com', password='passaasmpro')
+        response = self.client.get(path="{}{}".format(reverse("api.v0.accounts:profile"), "?username=sohrab"))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('sohrab', str(response.content))
+        response = self.client.get(path="{}{}".format(reverse("api.v0.accounts:profile"), "?username=sohrabi"))
+        self.assertEqual(response.status_code, 400)
+
+    def test_getting_profile_with_email(self):
+        self.client.login(email='aasmpro@admin.com', password='passaasmpro')
+        response = self.client.get(path="{}{}".format(reverse("api.v0.accounts:profile"), "?email=sohrab@admin.com"))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('sohrab', str(response.content))
+        response = self.client.get(path="{}{}".format(reverse("api.v0.accounts:profile"), "?email=abi@admin.com"))
+        self.assertEqual(response.status_code, 400)
+
 #
 #
 # class APIChangePasswordTest(APIJWTTestCase):
