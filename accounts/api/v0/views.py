@@ -21,8 +21,12 @@ class ProfileAPIView(APIView):
                 "followings": user.profile.followings.count(),
                 "image": user.profile.image.url if user.profile.image else "/media/profile_photos/default.jpg"
             }
+            print("status: 200")
+            print(data)
             return JsonResponse(data, status=200)
         except Exception as e:
+            print("status: 400")
+            print({"error": {"Profile": ["NotExist"]}})
             return JsonResponse({"error": {"Profile": ["NotExist"]}}, status=400)
 
     def put(self, request):
@@ -35,18 +39,38 @@ class ProfileAPIView(APIView):
                     validate_password(new_password, user=user, password_validators=None)
                     user.set_password(new_password)
                     user.save()
+                    print("status: 200")
+                    print({"message": "user password changed"})
                     return JsonResponse({"message": "user password changed"}, status=200)
                 except Exception as e:
+                    print("status: 400")
+                    print({"error": {"new_password": get_password_errors(e)}})
                     return JsonResponse({"error": {"new_password": get_password_errors(e)}}, status=400)
             else:
+                print("status: 400")
+                print({"error": {"old_password": ["NotMatch"]}})
                 return JsonResponse({"error": {"old_password": ["NotMatch"]}}, status=400)
 
         elif request.POST['name']:
             profile_edit_form = ProfileEditForm(data=request.POST, files=request.FILES)
             if profile_edit_form.is_valid():
                 profile_edit_form.save(user=request.user)
-                return JsonResponse({"message": "user updated successfully"}, status=200)
+                user = request.user
+                data = {
+                    "username": user.username,
+                    "email": user.email,
+                    "name": user.profile.name,
+                    "bio": user.profile.bio,
+                    "followers": user.profile.followers.count(),
+                    "followings": user.profile.followings.count(),
+                    "image": user.profile.image.url if user.profile.image else "/media/profile_photos/default.jpg"
+                }
+                print("status: 200")
+                print(data)
+                return JsonResponse(data, status=200)
             else:
+                print("status: 400")
+                print({"error": {"image": ["Size"]}})
                 return JsonResponse({"error": {"image": ["Size"]}}, status=400)
 
         else:
@@ -55,6 +79,9 @@ class ProfileAPIView(APIView):
                 errors.update({"old_password": ["Required"]})
             if not new_password:
                 errors.update({"new_password": ["Required"]})
+
+            print("status: 400")
+            print({"error": errors})
             return JsonResponse({"error": errors}, status=400)
 
 
@@ -79,16 +106,24 @@ class Signup(APIView):
                     except Exception as e:
                         errors.update({"password": get_password_errors(e)})
                 if errors:
+                    print("status: 400")
+                    print({"error": errors})
                     return JsonResponse({"error": errors}, status=400)
                 else:
+                    print("status: 200")
+                    print({"message": "user can be created"})
                     return JsonResponse({"message": "user can be created"}, status=200)
             else:
+                print("status: 400")
+                print({"error": {"email": ["Required"]}})
                 return JsonResponse({"error": {"email": ["Required"]}}, status=400)
 
         signup_form = SignUpForm(data=request.POST, files=request.FILES)
         if signup_form.is_valid():
             signup_form.save()
-            return JsonResponse({"message": "user created successfully"})
+            print("status: 200")
+            print({"message": "user created successfully"})
+            return JsonResponse({"message": "user created successfully"}, status=200)
         else:
             errors = {}
             errors_as_json = json.loads(signup_form.errors.as_json())
@@ -120,7 +155,6 @@ class Signup(APIView):
                 errors["name"] = temp
 
             password_errors = errors_as_json.get("password")
-            print(password_errors)
             password_errors_set = set()
             if password_errors:
                 temp = []
@@ -134,12 +168,16 @@ class Signup(APIView):
                     temp.append("Numeric")
                 errors["password"] = temp
 
+            print("status: 400")
+            print({"error": errors})
             return JsonResponse({"error": errors}, status=400)
 
 
 class FollowersAPIView(APIView):
     def get(self, request):
         if get_user(request):
+            print("status: 400")
+            print({"error": {"Profile": ["NotExist"]}})
             return JsonResponse({"error": {"Profile": ["NotExist"]}}, status=400)
         user = get_user(request)
         requester = request.user
