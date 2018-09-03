@@ -62,9 +62,6 @@ class Signup(APIView):
     permission_classes = (AllowAny,)
 
     def post(self, request):
-        print("man injam")
-        print(request)
-        print(request.POST)
         if not request.POST:
             email = request.data.get('email')
             password = request.data.get('password')
@@ -86,6 +83,7 @@ class Signup(APIView):
                     return JsonResponse({"message": "user can be created"}, status=200)
             else:
                 return JsonResponse({"error": {"email": ["Required"]}}, status=400)
+
         signup_form = SignUpForm(data=request.POST, files=request.FILES)
         if signup_form.is_valid():
             signup_form.save()
@@ -107,16 +105,33 @@ class Signup(APIView):
                 errors["email"] = temp
 
             username_errors = errors_as_json.get("username")
-            username_errors_set = set()
             if username_errors:
                 temp = []
                 for username_error in username_errors:
-                    username_errors_set.add(username_error["code"])
-                if "invalid" in username_errors_set:
-                    temp.append("NotValid")
-                if "Exists" in username_errors_set:
-                    temp.append("Exists")
+                    temp.append(username_error["code"])
                 errors["username"] = temp
+
+            name_errors = errors_as_json.get("name")
+            if name_errors:
+                temp = []
+                for name_error in name_errors:
+                    temp.append(name_error["code"])
+                errors["name"] = temp
+
+            password_errors = errors_as_json.get("password")
+            print(password_errors)
+            password_errors_set = set()
+            if password_errors:
+                temp = []
+                for password_error in password_errors:
+                    password_errors_set.add(password_error["code"])
+                if "password_too_short" in password_errors_set:
+                    temp.append("Length")
+                if "password_too_common" in password_errors_set:
+                    temp.append("Common")
+                if "password_entirely_numeric" in password_errors_set:
+                    temp.append("Numeric")
+                errors["password"] = temp
 
         return JsonResponse({"error": errors}, status=400)
 
