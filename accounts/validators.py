@@ -4,6 +4,7 @@ from django.contrib.auth.validators import UnicodeUsernameValidator, ASCIIUserna
 from django.utils.deconstruct import deconstructible
 from django.core.exceptions import ObjectDoesNotExist
 
+
 @deconstructible
 class UnicodeNameValidator(validators.RegexValidator):
     regex = r'([a-zA-Z\s])+$|^$'
@@ -28,6 +29,7 @@ class UniqueEmailValidator:
         except ObjectDoesNotExist as e:
             print(e)
 
+
 @deconstructible
 class UniqueUsernameValidator:
     message = 'User already exists!'
@@ -42,3 +44,32 @@ class UniqueUsernameValidator:
             raise validators.ValidationError(self.message, self.code)
         except ObjectDoesNotExist as e:
             print(e)
+
+
+@deconstructible
+class LengthValidator:
+    message = '{} has invalid length'
+    code = "Length"
+
+    def __init__(self, field):
+        self.message = self.message.format(field)
+
+    def validate(self, value):
+        print(self.message)
+        print(value)
+        if not 4 < len(value) < 150:
+            raise validators.ValidationError(self.message, self.code)
+
+
+@deconstructible
+class NotNumericValidator:
+    message = "{} is entirely numeric!"
+    code = "Numeric"
+    regex = r'^[\d]*$'
+
+    def __init__(self, field):
+        self.message = self.message.format(field)
+
+    def validate(self, value):
+        if re.match(self.regex, value):
+            raise validators.ValidationError(self.message, self.code)

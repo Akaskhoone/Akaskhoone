@@ -1,8 +1,9 @@
 from django.contrib.auth.forms import AdminPasswordChangeForm, UserChangeForm, UserCreationForm
 import os
 from django import forms
-from .validators import UnicodeNameValidator, UnicodeUsernameValidator, UniqueEmailValidator, UniqueUsernameValidator
+from .validators import *
 from .models import User, Profile
+from django.contrib.auth.password_validation import validate_password
 
 
 class ProfileEditForm(forms.Form):
@@ -30,8 +31,7 @@ class SignUpForm(forms.Form):
         validators=[UnicodeUsernameValidator],
     )
     password = forms.CharField(max_length=128)
-    name_validator = UnicodeNameValidator()
-    name = forms.CharField(max_length=100, validators=[name_validator])
+    name = forms.CharField(max_length=100)
     bio = forms.CharField(required=False)
     image = forms.ImageField(required=False)
 
@@ -43,19 +43,53 @@ class SignUpForm(forms.Form):
 
     def is_valid(self):
         is_valid = super(SignUpForm, self).is_valid()
+
+        try:
+            unique_email_validator = UniqueEmailValidator(User=User)
+            unique_email_validator.validate(self.data["email"])
+        except Exception as e:
+            self.add_error(field="email", error=e)
+            is_valid = False
+
+        try:
+            unique_username_validator = UniqueUsernameValidator(User=User)
+            unique_username_validator.validate(self.data["username"])
+        except Exception as e:
+            self.add_error(field="username", error=e)
+            is_valid = False
+
+        try:
+            username_length_validator = LengthValidator("username")
+            username_length_validator.validate(self.data["username"])
+        except Exception as e:
+            self.add_error(field="username", error=e)
+            is_valid = False
+
+        try:
+            username_not_numeric_validator = NotNumericValidator("username")
+            username_not_numeric_validator.validate(value=self.data["username"])
+        except Exception as e:
+            self.add_error(field="username", error=e)
+            is_valid = False
+
+        try:
+            username_length_validator = LengthValidator("name")
+            username_length_validator.validate(self.data["name"])
+        except Exception as e:
+            self.add_error(field="name", error=e)
+            is_valid = False
+
+        try:
+            username_not_numeric_validator = NotNumericValidator("name")
+            username_not_numeric_validator.validate(value=self.data["name"])
+        except Exception as e:
+            self.add_error(field="name", error=e)
+            is_valid = False
+
+        try:
+            validate_password(self.data["password"])
+        except Exception as e:
+            self.add_error(field="password", error=e)
+            is_valid = False
+
         return is_valid
-        # if not is_valid:
-        #     return is_valid
-        # try:
-        #     unique_email_validator = UniqueEmailValidator(User=User)
-        #     unique_email_validator.validate(self.data["email"])
-        # except Exception as e:
-        #     self.add_error(field="email", error=e)
-        #     is_valid = False
-        #
-        # try:
-        #     unique_username_validator = UniqueUsernameValidator(User=User)
-        #     unique_username_validator.validate(self.data["username"])
-        # except Exception as e:
-        #     self.add_error(field="username", error=e)
-        #     is_valid = False
