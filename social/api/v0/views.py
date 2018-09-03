@@ -1,3 +1,5 @@
+from django.core.exceptions import ObjectDoesNotExist
+
 from social.api.v0.serializers import *
 from rest_framework.views import APIView
 from django.http import JsonResponse
@@ -5,6 +7,7 @@ from django.contrib.auth import get_user_model
 from social.forms import CreatePostFrom
 from rest_framework.parsers import FormParser, MultiPartParser
 from django.utils.datastructures import MultiValueDictKeyError
+from social.models import Post, Tag
 
 User = get_user_model()
 
@@ -16,6 +19,7 @@ class Tags(APIView):
     or tags starting with the string specified in the name field at the query part.
     It returns error with message 'invalid' if the query part contains other fields.
     """
+
     def get(self, request, formant=None):
         try:
             query = request.query_params['name']
@@ -32,8 +36,35 @@ class Tags(APIView):
         })
 
 
-class PostView(APIView):
+class PostWithID(APIView):
+    """
+    This class handles requests sent to /api/v0/social/posts/<int: post_id>.
+    Get method returns a post in json form if a post with given post_id is available,
+    and an error if there is no post with that post_is.
+    Put method updates a post with given post_id if available, and an error if not.
+    Delete method deletes a post with given post_id if available, and an error if not.
+    """
     parser_classes = (MultiPartParser, FormParser)
+
+    def get(self, request, post_id):
+        try:
+            post = Post.objects.get(pk=post_id)
+            return JsonResponse({
+                "creator": post.user.username,
+                "image": str(post.image),
+                "des": post.des,
+                "location": post.location,
+                "date": str(post.date),
+                "tags": [tag.name for tag in post.tags.all()]
+            })
+        except ObjectDoesNotExist as e:
+            return JsonResponse({"post": ["NotExist"]}, status=400)
+
+    def put(self, request, post_id):
+        pass
+
+    def delete(self, request, post_id):
+        pass
 
     def post(self, request, *args, **kwargs):
         image_serializer = PostSerializer(data=request.data)
@@ -46,7 +77,7 @@ class PostView(APIView):
             return JsonResponse({"status": "Post creation failed!"})
 
 
-class GetUserPosts(APIView):
+class Posts(APIView):
     def get(self, request, format=None):
         user = User.objects.get(id=request.query_params["user_id"])
         return JsonResponse({
