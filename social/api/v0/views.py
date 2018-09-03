@@ -61,7 +61,23 @@ class PostWithID(APIView):
             return JsonResponse({"post": ["NotExist"]}, status=400)
 
     def put(self, request, post_id):
-        pass
+        try:
+            post = Post.objects.get(pk=post_id)
+            post.des = request.data.get("des")
+            post.location = request.data.get("location")
+            post.tags = request.data.get("tags")
+            post.save()
+            post = Post.objects.get(pk=post_id)
+            return JsonResponse({
+                "creator": post.user.username,
+                "image": str(post.image),
+                "des": post.des,
+                "location": post.location,
+                "date": str(post.date),
+                "tags": [tag.name for tag in post.tags.all()]
+            })
+        except ObjectDoesNotExist as e:
+            return JsonResponse({"post": ["NotExist"]}, status=400)
 
     def delete(self, request, post_id):
         pass
