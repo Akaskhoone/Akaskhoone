@@ -63,9 +63,6 @@ class Signup(APIView):
     permission_classes = (AllowAny,)
 
     def post(self, request):
-        print("man injam")
-        print(request)
-        print(request.POST)
         if not request.POST:
             email = request.data.get('email')
             password = request.data.get('password')
@@ -87,6 +84,7 @@ class Signup(APIView):
                     return JsonResponse({"message": "user can be created"}, status=200)
             else:
                 return JsonResponse({"error": {"email": ["Required"]}}, status=400)
+
         signup_form = SignUpForm(data=request.POST, files=request.FILES)
         if signup_form.is_valid():
             signup_form.save()
@@ -119,7 +117,7 @@ class Signup(APIView):
                     temp.append("Exists")
                 errors["username"] = temp
 
-        return JsonResponse({"error": errors}, status=400)
+            return JsonResponse({"error": errors}, status=400)
 
 
 class FollowersAPIView(APIView):
