@@ -80,7 +80,12 @@ class PostWithID(APIView):
             return JsonResponse({"post": ["NotExist"]}, status=400)
 
     def delete(self, request, post_id):
-        pass
+        try:
+            post = Post.objects.get(pk=post_id)
+            post.delete()
+            return JsonResponse({"message": "Deleted!"})
+        except ObjectDoesNotExist as e:
+            return JsonResponse({"post": ["NotExist"]}, status=400)
 
     def post(self, request, *args, **kwargs):
         image_serializer = PostSerializer(data=request.data)
