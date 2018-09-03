@@ -59,6 +59,7 @@ class ProfileAPIView(APIView):
 
 
 class Signup(APIView):
+    authentication_classes = ()
     permission_classes = (AllowAny,)
 
     def post(self, request):
@@ -133,7 +134,7 @@ class Signup(APIView):
                     temp.append("Numeric")
                 errors["password"] = temp
 
-        return JsonResponse({"error": errors}, status=400)
+            return JsonResponse({"error": errors}, status=400)
 
 
 class FollowersAPIView(APIView):
