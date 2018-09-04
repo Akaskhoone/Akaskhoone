@@ -26,11 +26,31 @@ class TokenObtainPairView(TOPW):
 
 
 class TokenRefreshView(TRV):
-    pass
+    def post(self, request, *args, **kwargs):
+        try:
+            return super(TokenRefreshView, self).post(request)
+        except Exception as e:
+            errors = {}
+            for i in e.args[0]:
+                if i == 'refresh':
+                    errors.update({"Refresh": ["Required"]})
+            return JsonResponse({"error": errors}, status=400)
 
 
 class TokenVerifyView(TVW):
-    pass
+    def post(self, request, *args, **kwargs):
+        try:
+            return super(TokenVerifyView, self).post(request)
+        except Exception as e:
+            print(e)
+            errors = {}
+            for i in e.args:
+                print(i)
+                if str(i).__contains__('invalid'):
+                    errors.update({"access": ["Expired"]})
+                elif str(i).__contains__('required'):
+                    errors.update({"token": ["Required"]})
+            return JsonResponse({"error": errors}, status=400)
 
 
 class ProfileAPIView(APIView):
