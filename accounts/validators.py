@@ -55,8 +55,6 @@ class LengthValidator:
         self.message = self.message.format(field)
 
     def validate(self, value):
-        print(self.message)
-        print(value)
         if not 4 < len(value) < 150:
             raise validators.ValidationError(self.message, self.code)
 
