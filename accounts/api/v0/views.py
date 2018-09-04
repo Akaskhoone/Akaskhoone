@@ -5,7 +5,32 @@ from django.http import JsonResponse
 from accounts.api.utils import get_user, get_password_errors
 from django.contrib.auth.password_validation import validate_password
 from accounts.forms import SignUpForm, ProfileEditForm
+from rest_framework_simplejwt.views import TokenObtainPairView as TOPW, TokenRefreshView as TRV, TokenVerifyView as TVW
 import json
+
+
+class TokenObtainPairView(TOPW):
+    def post(self, request, *args, **kwargs):
+        try:
+            return super(TokenObtainPairView, self).post(request)
+        except Exception as e:
+            errors = {}
+            for i in e.args[0]:
+                if i == 'non_field_errors':
+                    errors.update({"RequestError": ["WrongCredentials"]})
+                elif i == 'email':
+                    errors.update({"email": ["Required"]})
+                elif i == 'password':
+                    errors.update({"password": ["Required"]})
+            return JsonResponse({"error": errors}, status=400)
+
+
+class TokenRefreshView(TRV):
+    pass
+
+
+class TokenVerifyView(TVW):
+    pass
 
 
 class ProfileAPIView(APIView):
