@@ -174,6 +174,15 @@ class Signup(APIView):
 
 
 class FollowersAPIView(APIView):
+    """
+    This class return a list of JSONs that contain a string, name (as 'name'), and a boolean, followed (as 'followed)
+    that determines whether the requester followed the USER or not.
+
+    Target (if it gives a username or email , user is the User object that having the given email or the given username,
+    else it returns the requester`s own User object)
+    USERs are chosen from the Target Following List in DateBase
+
+    """
     def get(self, request):
         if get_user(request):
             print("status: 400")
@@ -192,7 +201,17 @@ class FollowersAPIView(APIView):
 
 
 class FollowingsAPIView(APIView):
+    """
+    This class got two parts, first one is gonna return Followings list to GET requests and second one serves follow
+    and Unfollow requests that comes as a POST request.
+    """
     def get(self, request):
+        """
+        This def return a list of JSONs that contain a string, name (as 'name'), and a boolean, followed (as 'followed)
+        that determines whether the requester followed the USER or not.
+
+        USERs are chosen from the Requester Following List in DateBase
+        """
         if get_user(request):
             return JsonResponse({"error": {"Profile": ["NotExist"]}}, status=400)
         user = get_user(request)
@@ -206,7 +225,12 @@ class FollowingsAPIView(APIView):
                 ret.update({item.user.username: {'name': item.name, 'followed': False}})
         return JsonResponse(ret)
 
+
     def post(self, request):
+        """
+        This def handles two functions, first is Follow Request and Second is Unfollow request
+        and both returns a message and a key that shows weather the request served successfully or not
+        """
         username = request.data.get('follow')
         if username:
             try:

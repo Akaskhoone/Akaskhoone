@@ -9,7 +9,6 @@ urlpatterns = [
     path('refresh/', token_refresh, name='refresh'),
     path('verify/', token_verify, name='verify'),
     path('signup/', Signup.as_view(), name='signup'),
-
     path('profile/', ProfileAPIView.as_view(), name='profile'),
     path('profile/followers/', FollowersAPIView.as_view(), name='followers'),
     path('profile/followings/', FollowingsAPIView.as_view(), name='followings'),
