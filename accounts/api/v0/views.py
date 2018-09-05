@@ -42,10 +42,8 @@ class TokenVerifyView(TVW):
         try:
             return super(TokenVerifyView, self).post(request)
         except Exception as e:
-            print(e)
             errors = {}
             for i in e.args:
-                print(i)
                 if str(i).__contains__('invalid'):
                     errors.update({"access": ["Expired"]})
                 elif str(i).__contains__('required'):
@@ -135,7 +133,7 @@ class Signup(APIView):
     permission_classes = (AllowAny,)
 
     def post(self, request):
-        if not request.POST:
+        if not request.META.get('CONTENT_TYPE').__contains__('form-data'):
             email = request.data.get('email')
             password = request.data.get('password')
             if email:
@@ -171,6 +169,7 @@ class Signup(APIView):
             return JsonResponse({"message": "user created successfully"}, status=200)
         else:
             errors = {}
+            # fixme removing json, signup_form.errors is Dict type
             errors_as_json = json.loads(signup_form.errors.as_json())
 
             email_errors = errors_as_json.get("email")
