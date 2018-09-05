@@ -133,7 +133,12 @@ class Signup(APIView):
     permission_classes = (AllowAny,)
 
     def post(self, request):
-        if not request.META.get('CONTENT_TYPE').__contains__('form-data'):
+        check_exist = False
+        try:
+            check_exist = request.META.get('CONTENT_TYPE').__contains__('form-data')
+        except Exception as e:
+            pass
+        if not check_exist:
             email = request.data.get('email')
             password = request.data.get('password')
             if email:
@@ -227,6 +232,7 @@ class FollowersAPIView(APIView):
     USERs are chosen from the Target Following List in DateBase
 
     """
+
     def get(self, request):
         if get_user(request):
             print("status: 400")
@@ -249,6 +255,7 @@ class FollowingsAPIView(APIView):
     This class got two parts, first one is gonna return Followings list to GET requests and second one serves follow
     and Unfollow requests that comes as a POST request.
     """
+
     def get(self, request):
         """
         This def return a list of JSONs that contain a string, name (as 'name'), and a boolean, followed (as 'followed)
@@ -268,7 +275,6 @@ class FollowingsAPIView(APIView):
             except Exception as e:
                 ret.update({item.user.username: {'name': item.name, 'followed': False}})
         return JsonResponse(ret)
-
 
     def post(self, request):
         """
