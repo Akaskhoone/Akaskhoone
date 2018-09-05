@@ -1,7 +1,7 @@
 import json
 
 from django.core.exceptions import ObjectDoesNotExist
-from django.core.paginator import Paginator
+from django.core.paginator import Paginator, EmptyPage, InvalidPage
 from social.api.v0.serializers import *
 from rest_framework.views import APIView
 from django.http import JsonResponse
@@ -41,11 +41,14 @@ class Tags(APIView):
 
 class HomeAPIView(APIView):
     def get(self, request):
+        limit = request.query_params.get('limit') or 2
+        page = request.query_params.get('page') or 1
+        page = int(page)
         posts_list = []
         followings = request.user.profile.followings.all().values('user')
         posts = Post.objects.filter(user__in=followings).order_by('date').reverse()
-        posts_paginated = Paginator(posts, 2)
-        for post in posts:
+        posts_paginated = Paginator(posts, limit)
+        for post in posts_paginated.object_list:
             posts_list.append({
                 "post_id": post.id,
                 "creator": post.user.username,
@@ -55,7 +58,17 @@ class HomeAPIView(APIView):
                 "date": str(post.date),
                 "tags": [tag.name for tag in post.tags.all()]
             })
-        return JsonResponse(posts_list, status=200, safe=False)
+        posts_paginated.object_list = posts_list
+        next_page = (page + 1) if (page + 1) <= posts_paginated.num_pages else None
+        try:
+            posts_list = list(posts_paginated.page(page))
+        except EmptyPage or InvalidPage:
+            posts_list = None
+        data = {
+            "posts": posts_list,
+            "next": F"/social/home/?page={next_page}" if next_page else None
+        }
+        return JsonResponse(data, status=200, safe=False)
 
 
 class PostWithID(APIView):
