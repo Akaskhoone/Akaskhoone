@@ -17,7 +17,7 @@ class UnicodeNameValidator(validators.RegexValidator):
 @deconstructible
 class UniqueEmailValidator:
     message = 'Email already exists!'
-    code = 'Exists'
+    code = 'Exist'
 
     def __init__(self, User):
         self.User = User
@@ -33,7 +33,7 @@ class UniqueEmailValidator:
 @deconstructible
 class UniqueUsernameValidator:
     message = 'User already exists!'
-    code = 'Exists'
+    code = 'Exist'
 
     def __init__(self, User):
         self.User = User
