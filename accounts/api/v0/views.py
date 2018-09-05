@@ -94,7 +94,7 @@ class ProfileAPIView(APIView):
                 print({"error": {"old_password": ["NotMatch"]}})
                 return JsonResponse({"error": {"old_password": ["NotMatch"]}}, status=400)
 
-        elif request.POST['name']:
+        elif request.POST.get('name'):
             profile_edit_form = ProfileEditForm(data=request.POST, files=request.FILES)
             if profile_edit_form.is_valid():
                 profile_edit_form.save(user=request.user)
