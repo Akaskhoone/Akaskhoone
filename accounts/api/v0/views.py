@@ -22,6 +22,9 @@ class TokenObtainPairView(TOPW):
                     errors.update({"email": ["Required"]})
                 elif i == 'password':
                     errors.update({"password": ["Required"]})
+
+            print("status: 400")
+            print({"error": errors})
             return JsonResponse({"error": errors}, status=400)
 
 
@@ -34,6 +37,9 @@ class TokenRefreshView(TRV):
             for i in e.args[0]:
                 if i == 'refresh':
                     errors.update({"Refresh": ["Required"]})
+
+            print("status: 400")
+            print({"error": errors})
             return JsonResponse({"error": errors}, status=400)
 
 
@@ -48,6 +54,9 @@ class TokenVerifyView(TVW):
                     errors.update({"access": ["Expired"]})
                 elif str(i).__contains__('required'):
                     errors.update({"token": ["Required"]})
+
+            print("status: 400")
+            print({"error": errors})
             return JsonResponse({"error": errors}, status=400)
 
 
