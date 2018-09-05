@@ -61,6 +61,30 @@ class ProfileAPIView(APIView):
 class Signup(APIView):
     permission_classes = (AllowAny,)
 
+    def get_errors(self, errors_as_json, key):
+        errors = errors_as_json.get(key)
+        errors_set = set()
+        temp = []
+        if errors:
+            temp[:] = []
+            for error in errors:
+                errors_set.add(error["code"])
+            if "invalid" in errors_set:
+                temp.append("NotValid")
+            if "Exist" in errors_set:
+                temp.append("Exist")
+            if 'required' in errors_set:
+                temp.append("required")
+            if "Length" in errors_set:
+                temp.append("Length")
+            if "Numeric" in errors_set:
+                temp.append("Numeric")
+            if "Common" in errors_set:
+                temp.append("Common")
+            if "Similar" in errors_set:
+                temp.append("similar")
+        return temp
+
     def post(self, request):
         if not request.POST:
             email = request.data.get('email')
@@ -91,47 +115,10 @@ class Signup(APIView):
         else:
             errors = {}
             errors_as_json = json.loads(signup_form.errors.as_json())
-
-            email_errors = errors_as_json.get("email")
-            email_errors_set = set()
-            if email_errors:
-                temp = []
-                for email_error in email_errors:
-                    email_errors_set.add(email_error["code"])
-                if "invalid" in email_errors_set:
-                    temp.append("NotValid")
-                if "Exists" in email_errors_set:
-                    temp.append("Exists")
-                errors["email"] = temp
-
-            username_errors = errors_as_json.get("username")
-            if username_errors:
-                temp = []
-                for username_error in username_errors:
-                    temp.append(username_error["code"])
-                errors["username"] = temp
-
-            name_errors = errors_as_json.get("name")
-            if name_errors:
-                temp = []
-                for name_error in name_errors:
-                    temp.append(name_error["code"])
-                errors["name"] = temp
-
-            password_errors = errors_as_json.get("password")
-            print(password_errors)
-            password_errors_set = set()
-            if password_errors:
-                temp = []
-                for password_error in password_errors:
-                    password_errors_set.add(password_error["code"])
-                if "password_too_short" in password_errors_set:
-                    temp.append("Length")
-                if "password_too_common" in password_errors_set:
-                    temp.append("Common")
-                if "password_entirely_numeric" in password_errors_set:
-                    temp.append("Numeric")
-                errors["password"] = temp
+            for error_type in ["email", "username", "password", "name"]:
+                all_erros_of_the_type = self.get_errors(errors_as_json, error_type)
+                if all_erros_of_the_type:
+                    errors[error_type] = all_erros_of_the_type
 
         return JsonResponse({"error": errors}, status=400)
 
