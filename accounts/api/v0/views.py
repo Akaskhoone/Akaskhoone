@@ -5,7 +5,50 @@ from django.http import JsonResponse
 from accounts.api.utils import get_user, get_password_errors
 from django.contrib.auth.password_validation import validate_password
 from accounts.forms import SignUpForm, ProfileEditForm
+from rest_framework_simplejwt.views import TokenObtainPairView as TOPW, TokenRefreshView as TRV, TokenVerifyView as TVW
 import json
+
+
+class TokenObtainPairView(TOPW):
+    def post(self, request, *args, **kwargs):
+        try:
+            return super(TokenObtainPairView, self).post(request)
+        except Exception as e:
+            errors = {}
+            for i in e.args[0]:
+                if i == 'non_field_errors':
+                    errors.update({"RequestError": ["WrongCredentials"]})
+                elif i == 'email':
+                    errors.update({"email": ["Required"]})
+                elif i == 'password':
+                    errors.update({"password": ["Required"]})
+            return JsonResponse({"error": errors}, status=400)
+
+
+class TokenRefreshView(TRV):
+    def post(self, request, *args, **kwargs):
+        try:
+            return super(TokenRefreshView, self).post(request)
+        except Exception as e:
+            errors = {}
+            for i in e.args[0]:
+                if i == 'refresh':
+                    errors.update({"Refresh": ["Required"]})
+            return JsonResponse({"error": errors}, status=400)
+
+
+class TokenVerifyView(TVW):
+    def post(self, request, *args, **kwargs):
+        try:
+            return super(TokenVerifyView, self).post(request)
+        except Exception as e:
+            errors = {}
+            for i in e.args:
+                if str(i).__contains__('invalid'):
+                    errors.update({"access": ["Expired"]})
+                elif str(i).__contains__('required'):
+                    errors.update({"token": ["Required"]})
+            return JsonResponse({"error": errors}, status=400)
 
 
 class ProfileAPIView(APIView):
@@ -90,7 +133,7 @@ class Signup(APIView):
     permission_classes = (AllowAny,)
 
     def post(self, request):
-        if not request.POST:
+        if not request.META.get('CONTENT_TYPE').__contains__('form-data'):
             email = request.data.get('email')
             password = request.data.get('password')
             if email:
@@ -126,6 +169,7 @@ class Signup(APIView):
             return JsonResponse({"message": "user created successfully"}, status=200)
         else:
             errors = {}
+            # fixme removing json, signup_form.errors is Dict type
             errors_as_json = json.loads(signup_form.errors.as_json())
 
             email_errors = errors_as_json.get("email")
