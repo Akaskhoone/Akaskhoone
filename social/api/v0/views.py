@@ -1,7 +1,7 @@
 import json
 
 from django.core.exceptions import ObjectDoesNotExist
-
+from django.core.paginator import Paginator
 from social.api.v0.serializers import *
 from rest_framework.views import APIView
 from django.http import JsonResponse
@@ -11,7 +11,6 @@ from rest_framework.parsers import FormParser, MultiPartParser
 from django.utils.datastructures import MultiValueDictKeyError
 from social.models import Post, Tag
 from social.forms import *
-
 
 User = get_user_model()
 
@@ -38,6 +37,25 @@ class Tags(APIView):
         return JsonResponse({
             "matched_tags": matched_tags
         })
+
+
+class HomeAPIView(APIView):
+    def get(self, request):
+        posts_list = []
+        followings = request.user.profile.followings.all().values('user')
+        posts = Post.objects.filter(user__in=followings).order_by('date').reverse()
+        posts_paginated = Paginator(posts, 2)
+        for post in posts:
+            posts_list.append({
+                "post_id": post.id,
+                "creator": post.user.username,
+                "image": str(post.image),
+                "des": post.des,
+                "location": post.location,
+                "date": str(post.date),
+                "tags": [tag.name for tag in post.tags.all()]
+            })
+        return JsonResponse(posts_list, status=200, safe=False)
 
 
 class PostWithID(APIView):
