@@ -18,7 +18,7 @@
       "name": "edi",
       "bio": "edi bio",
       "image": "",
-      "followings": [1, 3]
+      "followings": [3, 1]
     }
   },
   {
@@ -29,7 +29,7 @@
       "name": "fatemeh",
       "bio": "",
       "image": "profile_photos/3/photo_2018-08-16_22-11-55.jpg",
-      "followings": []
+      "followings": [2]
     }
   }
 ]

@@ -1,0 +1,223 @@
+[
+  {
+    "model": "social.board",
+    "pk": 1,
+    "fields": {
+      "user": 6,
+      "name": "Board 1",
+      "posts": [
+        1,
+        2,
+        5,
+        11,
+        12,
+        17,
+        19
+      ]
+    }
+  },
+  {
+    "model": "social.board",
+    "pk": 2,
+    "fields": {
+      "user": 6,
+      "name": "Board 2",
+      "posts": [
+        1,
+        2,
+        5,
+        3,
+        9,
+        13,
+        16,
+        19
+      ]
+    }
+  },
+  {
+    "model": "social.board",
+    "pk": 3,
+    "fields": {
+      "user": 6,
+      "name": "Board 3",
+      "posts": [
+        16,
+        17,
+        18,
+        19,
+        20
+      ]
+    }
+  },
+  {
+    "model": "social.board",
+    "pk": 4,
+    "fields": {
+      "user": 6,
+      "name": "Board 4",
+      "posts": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ]
+    }
+  },
+  {
+    "model": "social.board",
+    "pk": 5,
+    "fields": {
+      "user": 6,
+      "name": "Board 5",
+      "posts": [
+        1,
+        2
+      ]
+    }
+  },
+  {
+    "model": "social.board",
+    "pk": 6,
+    "fields": {
+      "user": 6,
+      "name": "Board 6",
+      "posts": [
+        6,
+        9,
+        10,
+        19
+      ]
+    }
+  },
+  {
+    "model": "social.board",
+    "pk": 7,
+    "fields": {
+      "user": 6,
+      "name": "Board 7",
+      "posts": [
+        4,
+        5,
+        6
+      ]
+    }
+  },
+  {
+    "model": "social.board",
+    "pk": 8,
+    "fields": {
+      "user": 5,
+      "name": "Board 8",
+      "posts": [
+        3,
+        4,
+        6,
+        9,
+        10,
+        13,
+        16,
+        18,
+        20
+      ]
+    }
+  },
+  {
+    "model": "social.board",
+    "pk": 9,
+    "fields": {
+      "user": 5,
+      "name": "Board 9",
+      "posts": [
+        1,
+        2,
+        3,
+        4,
+        6,
+        9,
+        18,
+        20
+      ]
+    }
+  },
+  {
+    "model": "social.board",
+    "pk": 10,
+    "fields": {
+      "user": 5,
+      "name": "Board 10",
+      "posts": [
+        3,
+        4,
+        6,
+        9,
+        10,
+        13,
+        16,
+        5,
+        11,
+        12,
+        17,
+        19
+      ]
+    }
+  },
+  {
+    "model": "social.board",
+    "pk": 11,
+    "fields": {
+      "user": 4,
+      "name": "Board 11",
+      "posts": [
+        7,
+        21,
+        3,
+        4,
+        6,
+        20,
+        1,
+        2,
+        5,
+        11
+      ]
+    }
+  },
+  {
+    "model": "social.board",
+    "pk": 12,
+    "fields": {
+      "user": 4,
+      "name": "Board 12",
+      "posts": [
+        3,
+        4,
+        6,
+        1,
+        2,
+        17,
+        19
+      ]
+    }
+  },
+  {
+    "model": "social.board",
+    "pk": 13,
+    "fields": {
+      "user": 4,
+      "name": "Board 13",
+      "posts": [
+        21,
+        3,
+        4,
+        1,
+        2,
+        5,
+        11,
+        12,
+        17,
+        19
+      ]
+    }
+  }
+]
