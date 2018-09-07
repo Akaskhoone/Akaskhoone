@@ -71,7 +71,7 @@ class ProfileAPIView(APIView):
                 "bio": user.profile.bio,
                 "followers": user.profile.followers.count(),
                 "followings": user.profile.followings.count(),
-                "image": user.profile.image.url if user.profile.image else "/media/profile_photos/default.jpg"
+                "image": user.profile.image if user.profile.image else "/profile_photos/default.jpg"
             }
             print("status: 200")
             print(data)
