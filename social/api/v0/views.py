@@ -6,10 +6,9 @@ from social.api.v0.serializers import *
 from rest_framework.views import APIView
 from django.http import JsonResponse
 from django.contrib.auth import get_user_model
-from social.forms import CreatePostFrom
 from rest_framework.parsers import FormParser, MultiPartParser
 from django.utils.datastructures import MultiValueDictKeyError
-from social.models import Post, Tag
+from social.models import Post, Tag, Board
 from social.forms import *
 from accounts.api.utils import get_user
 
@@ -76,16 +75,17 @@ class BoardsAPIView(APIView):
     def get(self, request):
         user = get_user(request)
         if user:
-            boards = user.boards.objects.all()
+            boards = user.boards.all()
             boards_list = []
             for board in boards:
                 posts = []
                 for post in board.posts.all():
                     posts.append({
                         "post_id": post.id,
-                        "image": post.image
+                        "image": str(post.image)
                     })
                 boards_list.append({
+                    "board_id": board.id,
                     "name": board.name,
                     "count": board.posts.count(),
                     "posts": posts
@@ -94,18 +94,138 @@ class BoardsAPIView(APIView):
                 "count": len(boards),
                 "boards": boards_list
             }
+            print("status: 200 >> board objects returned for user {}".format(user))
             return JsonResponse(data, status=200, safe=False)
         else:
+            print("status: 400")
+            print({"error": {"Profile": ["NotExist"]}})
             return JsonResponse({"error": {"Profile": ["NotExist"]}}, status=400)
 
     def post(self, request):
-        return JsonResponse({"method": "post"}, status=200, safe=False)
+        name = request.data.get('name')
+        posts = request.data.get('posts')
+        if name and posts:
+            try:
+                board = Board.objects.create(user=request.user, name=name)
+                for post in posts:
+                    try:
+                        board.posts.add(post)
+                    except Exception as e:
+                        pass
+                if board.posts.count() == 0:
+                    board.delete()
+                    print("status: 400")
+                    print({"error": {"posts": ["NotValid"]}})
+                    return JsonResponse({"error": {"posts": ["NotValid"]}}, status=400)
+                posts = []
+                for post in board.posts.all():
+                    posts.append({
+                        "post_id": post.id,
+                        "image": str(post.image)
+                    })
+                data = {
+                    "board_id": board.id,
+                    "name": board.name,
+                    "count": board.posts.count(),
+                    "posts": posts
+                }
+                print("status: 200")
+                print(data)
+                return JsonResponse(data, status=200)
+            except Exception as e:
+                print("status: 400")
+                print({"error": {"RequestError": ["InternalError"]}})
+                return JsonResponse({"error": {"RequestError": ["InternalError"]}}, status=400)
+        else:
+            errors = {}
+            if not name:
+                errors.update({"name": ["Required"]})
+            if not posts:
+                errors.update({"posts": ["Required"]})
+            print("status: 400")
+            print({"error": errors})
+            return JsonResponse({"error": errors}, status=400)
 
-    def put(self, request):
-        return JsonResponse({"method": "put"}, status=200, safe=False)
 
-    def delete(self, request):
-        return JsonResponse({"method": "delete"}, status=200, safe=False)
+class BoardDetailAPIView(APIView):
+    def get(self, request, board_id):
+        try:
+            board = Board.objects.get(pk=board_id)
+            posts = []
+            for post in board.posts.all():
+                posts.append({
+                    "post_id": post.id,
+                    "image": str(post.image)
+                })
+            data = {
+                "board_id": board.id,
+                "name": board.name,
+                "count": board.posts.count(),
+                "posts": posts
+            }
+            print("status: 200")
+            print(data)
+            return JsonResponse(data, status=200)
+
+        except Exception as e:
+            print("status: 400")
+            print({"error": {"board": ["NotExist"]}})
+            return JsonResponse({"error": {"board": ["NotExist"]}}, status=400)
+
+    def put(self, request, board_id):
+        try:
+            board = Board.objects.get(pk=board_id)
+            name = request.data.get('name')
+            add_posts = request.data.get('add_posts')
+            remove_posts = request.data.get('remove_posts')
+            if name:
+                board.name = name
+            if add_posts:
+                for post in add_posts:
+                    try:
+                        board.posts.add(post)
+                    except Exception as e:
+                        pass
+            if remove_posts:
+                for post in remove_posts:
+                    try:
+                        board.posts.remove(post)
+                    except Exception as e:
+                        pass
+            board.save()
+            posts = []
+            for post in board.posts.all():
+                posts.append({
+                    "post_id": post.id,
+                    "image": str(post.image)
+                })
+            data = {
+                "board_id": board.id,
+                "name": board.name,
+                "count": board.posts.count(),
+                "posts": posts
+            }
+            print("status: 200")
+            print(data)
+            return JsonResponse(data, status=200)
+
+        except Exception as e:
+            print("status: 400")
+            print({"error": {"board": ["NotExist"]}})
+            return JsonResponse({"error": {"board": ["NotExist"]}}, status=400)
+
+    def delete(self, request, board_id):
+        try:
+            board = Board.objects.get(pk=board_id)
+            board.delete()
+            print("status: 200")
+            print({"message": "board deleted"})
+            return JsonResponse({"message": "board deleted"}, status=200)
+
+        except Exception as e:
+            print("status: 400")
+            print({"error": {"board": ["NotExist"]}})
+            return JsonResponse({"error": {"board": ["NotExist"]}}, status=400)
 
 
 class PostWithID(APIView):
