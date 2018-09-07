@@ -11,6 +11,7 @@ from rest_framework.parsers import FormParser, MultiPartParser
 from django.utils.datastructures import MultiValueDictKeyError
 from social.models import Post, Tag
 from social.forms import *
+from accounts.api.utils import get_user
 
 User = get_user_model()
 
@@ -71,6 +72,42 @@ class HomeAPIView(APIView):
         return JsonResponse(data, status=200, safe=False)
 
 
+class BoardsAPIView(APIView):
+    def get(self, request):
+        user = get_user(request)
+        if user:
+            boards = user.boards.objects.all()
+            boards_list = []
+            for board in boards:
+                posts = []
+                for post in board.posts.all():
+                    posts.append({
+                        "post_id": post.id,
+                        "image": post.image
+                    })
+                boards_list.append({
+                    "name": board.name,
+                    "count": board.posts.count(),
+                    "posts": posts
+                })
+            data = {
+                "count": len(boards),
+                "boards": boards_list
+            }
+            return JsonResponse(data, status=200, safe=False)
+        else:
+            return JsonResponse({"error": {"Profile": ["NotExist"]}}, status=400)
+
+    def post(self, request):
+        return JsonResponse({"method": "post"}, status=200, safe=False)
+
+    def put(self, request):
+        return JsonResponse({"method": "put"}, status=200, safe=False)
+
+    def delete(self, request):
+        return JsonResponse({"method": "delete"}, status=200, safe=False)
+
+
 class PostWithID(APIView):
     """
     This class handles requests sent to /api/v0/social/posts/<int: post_id>.
@@ -85,6 +122,7 @@ class PostWithID(APIView):
         try:
             post = Post.objects.get(pk=post_id)
             return JsonResponse({
+                "post_id": post.id,
                 "creator": post.user.username,
                 "image": str(post.image),
                 "des": post.des,
