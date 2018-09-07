@@ -122,12 +122,22 @@ post:   JSON { follow:str:username|email }
             user:       [ NotExist ]
 ```
 ### Social
+/social/home/?Q `protected`
+```
+get:    Q:None          >> JSON { posts: [ { post_id:int creator:str, image:str:url, des:str, location:str, date:str, tags:[ name1, name2, ... ] } , { ... } ] , next: '/posts/<int>/<image>' } 
+        Q:page          >> JSON { posts: [ { post_id:int creator:str, image:str:url, des:str, location:str, date:str, tags:[ name1, name2, ... ] } , { ... } ] , next: '/posts/<int>/<image>' }
+        Q:limit         >> JSON { posts: [ { post_id:int creator:str, image:str:url, des:str, location:str, date:str, tags:[ name1, name2, ... ] } , { ... } ] , next: '/posts/<int>/<image>' }
+        ------------------------------        
+        in case of wrong page or limited data:
+            page:       null
+            limit:      null        
+```
 /social/posts/?Q `protected`
 ```
-get:    Q:None          >> JSON { post_id:int { creator:str, image:str:url, des:str, location:str, date:str, tags:[ name1, name2, ... ] } , ... } 
-        Q:tag           >> JSON { post_id:int { creator:str, image:str:url, des:str, location:str, date:str, tags:[ name1, name2, ... ] } , ... }
-        Q:username      >> JSON { post_id:int { creator:str, image:str:url, des:str, location:str, date:str, tags:[ name1, name2, ... ] } , ... }
-        Q:email         >> JSON { post_id:int { creator:str, image:str:url, des:str, location:str, date:str, tags:[ name1, name2, ... ] } , ... }
+get:    Q:None          >> JSON { [ { post_id:int creator:str, image:str:url, des:str, location:str, date:str, tags:[ name1, name2, ... ] } , { ... } ] } 
+        Q:tag           >> JSON { [ { post_id:int creator:str, image:str:url, des:str, location:str, date:str, tags:[ name1, name2, ... ] } , { ... } ] }
+        Q:username      >> JSON { [ { post_id:int creator:str, image:str:url, des:str, location:str, date:str, tags:[ name1, name2, ... ] } , { ... } ] }
+        Q:email         >> JSON { [ { post_id:int creator:str, image:str:url, des:str, location:str, date:str, tags:[ name1, name2, ... ] } , { ... } ] }
         ------------------------------        
         error:
             tag:        [ NotExist ]
