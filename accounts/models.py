@@ -73,6 +73,7 @@ class Profile(models.Model):
                               default='/profile_photos/default.jpg')
     followings = models.ManyToManyField('Profile', related_name='followers', blank=True, verbose_name=_('followings'),
                                         symmetrical=False)
+    private = models.BooleanField(_('private'), default=True)
 
     def clean(self):
         super().clean()
