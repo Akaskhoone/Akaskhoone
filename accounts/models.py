@@ -86,16 +86,16 @@ class Profile(models.Model):
 
 class Contact(models.Model):
     email = models.EmailField(primary_key=True)
-    users = models.ManyToManyField(User, related_name='contacts', through="Invitation")
+    users = models.ManyToManyField(User, related_name='contacts', through='Invitation')
 
     def __str__(self):
         return self.email
 
 
 class Invitation(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    contact = models.ForeignKey(Contact, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='invitations')
+    contact = models.ForeignKey(Contact, on_delete=models.CASCADE, related_name='invited_by')
     invited = models.BooleanField(default=False)
 
     def __str__(self):
-        return F"[{self.user}] {'invited' if self.invited else 'not invited'}"
+        return F"{self.user.email} {'invited' if self.invited else 'not invited'} {self.contact.email}"
