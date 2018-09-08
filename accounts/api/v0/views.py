@@ -61,25 +61,91 @@ class TokenVerifyView(TVW):
 
 
 class ProfileAPIView(APIView):
+
     def get(self, request):
-        user = get_user(request)
-        try:
-            data = {
-                "username": user.username,
-                "email": user.email,
-                "name": user.profile.name,
-                "bio": user.profile.bio,
-                "followers": user.profile.followers.count(),
-                "followings": user.profile.followings.count(),
-                "image": str(user.profile.image) if user.profile.image else "profile_photos/default.jpg"
-            }
-            print("status: 200")
-            print(data)
-            return JsonResponse(data, status=200)
-        except Exception as e:
-            print("status: 400")
-            print({"error": {"Profile": ["NotExist"]}})
-            return JsonResponse({"error": {"Profile": ["NotExist"]}}, status=400)
+        user = request.user
+        if request.query_params == {}:
+            try:
+                data = {
+                    "username": user.username,
+                    "email": user.email,
+                    "name": user.profile.name,
+                    "bio": user.profile.bio,
+                    "followers": user.profile.followers.count(),
+                    "followings": user.profile.followings.count(),
+                    "image": user.profile.image.url if user.profile.image else "profile_photos/default.jpg"
+                }
+                return JsonResponse(data, status=200)
+            except:
+                return JsonResponse({"error": {"Profile": ["NotExist"]}}, status=400)
+
+        username = request.query_params.get("username")
+        email = request.query_params.get("email")
+        search = request.query_params.get("search")
+        if username:
+            if search and eval(search):
+                results = []
+                for result in User.objects.filter(username__contains=username):
+                    results.append({
+                        "username": result.username,
+                        "name": result.profile.name,
+                        "image": str(result.profile.image),
+                        "isFollowing": result.profile in user.profile.followers.all(),
+                        "isFollowed": user.profile in result.profile.followers.all()
+                    })
+                return JsonResponse({"profiles": results})
+            else:
+                try:
+                    target_user = User.objects.get(username=username)
+                    data = {
+                        "username": target_user.username,
+                        "email": target_user.email,
+                        "name": target_user.profile.name,
+                        "bio": target_user.profile.bio,
+                        "followers": target_user.profile.followers.count(),
+                        "followings": target_user.profile.followings.count(),
+                        "image": target_user.profile.image.url if target_user.profile.image else
+                        "profile_photos/default.jpg",
+
+                        "isFollowing": target_user.profile in user.profile.followers.all(),
+                        "isFollowed": user.profile in target_user.profile.followers.all()
+                    }
+                    return JsonResponse(data, status=200)
+                except Exception as e:
+                    print(e)
+                    return JsonResponse({"error": {"Profile": ["NotExist"]}}, status=400)
+        elif email:
+            if search and eval(search):
+                results = []
+                for result in User.objects.filter(email__contains=email):
+                    results.append({
+                        "username": result.username,
+                        "isFollowing": result.profile in user.profile.followers.all(),
+                        "isFollowed": user.profile in result.profile.followers.all()
+                    })
+                return JsonResponse({"profiles": results})
+
+            else:
+                try:
+                    target_user = User.objects.get(email=email)
+                    data = {
+                        "username": target_user.username,
+                        "email": target_user.email,
+                        "name": target_user.profile.name,
+                        "bio": target_user.profile.bio,
+                        "followers": target_user.profile.followers.count(),
+                        "followings": target_user.profile.followings.count(),
+                        "image": target_user.profile.image.url if target_user.profile.image else
+                        "/media/profile_photos/default.jpg",
+
+                        "isFollowed": user.profile in target_user.profile.followings.all(),
+                        "isFollowing": target_user.profile in user.profile.followers.all()
+                    }
+                    return JsonResponse(data, status=200)
+                except:
+                    return JsonResponse({"error": {"Profile": ["NotExist"]}}, status=400)
+        else:
+            return JsonResponse({"error": "invalid"}, status=400)
 
     def put(self, request):
         user = request.user

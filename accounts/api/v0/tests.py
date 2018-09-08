@@ -503,3 +503,10 @@ class APISignUpTest(APIJWTTestCase):
 #         self.assertJSONEqual(response.content,
 #                              '{"id" :1, "bio": "salam man reza hastam 18 :)", "image": null, "user": 1, "followers": [], "followings": []}')
 #         self.assertEqual(User.objects.get(id=1).name, 'reza')
+
+# class APIProfileTest(APIJWTTestCase):
+#     def setUp(self):
+#         User.objects.create_user('aasmpro', 'aasmpro@admin.com', 'passaasmpro')
+#         self.client.login(email='aasmpro@admin.com', password='passaasmpro')
+#
+#     def
