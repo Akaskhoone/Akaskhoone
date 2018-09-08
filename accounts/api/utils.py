@@ -2,6 +2,8 @@ from rest_framework.test import APITestCase, APIClient
 from rest_framework import status
 from rest_framework_simplejwt.settings import api_settings
 from django.contrib.auth import get_user_model
+import json
+import requests
 
 User = get_user_model()
 
@@ -35,6 +37,16 @@ def get_password_errors(e):
             errors.append("Common")
     return errors
 
+
+def send_mail(to,subject,body):
+    maildata = {
+        "to": to,
+        "subject": subject,
+        "body": body
+    }
+    headers = {"Agent-Key": "3Q0gRe22zp", "content-type": "application/json"}
+    requests.post(url='http://192.168.10.66:80/api/send/mail', data=json.dumps(maildata), headers=headers)
+    return
 
 class APIJWTClient(APIClient):
     def login(self, url="/api/v0/accounts/login/", get_response=True, token="access", auth_header_type=0,
