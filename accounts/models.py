@@ -70,7 +70,7 @@ class Profile(models.Model):
     name = models.CharField(_('name'), max_length=100, blank=False, validators=[name_validator])
     bio = models.TextField(_('biography'), null=True, blank=True)
     image = models.ImageField(_('image'), upload_to=get_profile_image_path, blank=True, null=True,
-                              default='/profile_photos/default.jpg')
+                              default='profile_photos/default.jpg')
     followings = models.ManyToManyField('Profile', related_name='followers', blank=True, verbose_name=_('followings'),
                                         symmetrical=False)
     private = models.BooleanField(_('private'), default=True)
@@ -78,7 +78,24 @@ class Profile(models.Model):
     def clean(self):
         super().clean()
         if not self.image:
-            self.image = '/profile_photos/default.jpg'
+            self.image = 'profile_photos/default.jpg'
 
     def __str__(self):
         return str(self.user)
+
+
+class Contact(models.Model):
+    email = models.EmailField(primary_key=True)
+    users = models.ManyToManyField(User, related_name='contacts', through='Invitation')
+
+    def __str__(self):
+        return self.email
+
+
+class Invitation(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='invitations')
+    contact = models.ForeignKey(Contact, on_delete=models.CASCADE, related_name='invited_by')
+    invited = models.BooleanField(default=False)
+
+    def __str__(self):
+        return F"{self.user.email} {'invited' if self.invited else 'not invited'} {self.contact.email}"

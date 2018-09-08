@@ -7,7 +7,10 @@
       "name": "reza",
       "bio": "reza bio",
       "image": "profile_photos/1/photo_2018-08-16_22-11-55.jpg",
-      "followings": [2, 3]
+      "followings": [
+        2,
+        3
+      ]
     }
   },
   {
@@ -17,8 +20,11 @@
       "user": 5,
       "name": "edi",
       "bio": "edi bio",
-      "image": "",
-      "followings": [3, 1]
+      "image": "profile_photos/default.jpg",
+      "followings": [
+        3,
+        1
+      ]
     }
   },
   {
@@ -29,7 +35,9 @@
       "name": "fatemeh",
       "bio": "",
       "image": "profile_photos/3/photo_2018-08-16_22-11-55.jpg",
-      "followings": [2]
+      "followings": [
+        2
+      ]
     }
   }
 ]
