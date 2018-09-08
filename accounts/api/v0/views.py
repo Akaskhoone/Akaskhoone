@@ -8,7 +8,6 @@ from accounts.forms import SignUpForm, ProfileEditForm
 from rest_framework_simplejwt.views import TokenObtainPairView as TOPW, TokenRefreshView as TRV, TokenVerifyView as TVW
 from accounts.api.utils import send_mail
 import json
-import requests
 
 
 class TokenObtainPairView(TOPW):
