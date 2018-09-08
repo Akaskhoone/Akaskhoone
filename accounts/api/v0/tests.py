@@ -2,7 +2,7 @@ from accounts.api.utils import APIJWTTestCase
 from accounts.api.v0.serializers import *
 from django.urls import reverse
 from django.core.exceptions import *
-import json
+import requests
 
 
 class APIAuthTest(APIJWTTestCase):
@@ -70,11 +70,14 @@ class APIChangePasswordTest(APIJWTTestCase):
         User.objects.create_user(username='reza', email='reza@admin.com', password='passreza')
         self.client.login(email='reza@admin.com', password='passreza')
         self.client.put(reverse("api.v0.accounts:profile"), {'old_password': 'passreza', 'new_password': 'rezareza'})
-        response = self.client.post(reverse("api.v0.accounts:login"), {'email': 'reza@admin.com', 'password': 'passreza'})
+        response = self.client.post(reverse("api.v0.accounts:login"),
+                                    {'email': 'reza@admin.com', 'password': 'passreza'})
         self.assertEqual(response.status_code, 400)
-        response = self.client.post(reverse("api.v0.accounts:login"), {'email': 'reza@admin.com', 'password': 'mamadmamad'})
+        response = self.client.post(reverse("api.v0.accounts:login"),
+                                    {'email': 'reza@admin.com', 'password': 'mamadmamad'})
         self.assertEqual(response.status_code, 400)
-        response = self.client.post(reverse("api.v0.accounts:login"), {'email': 'reza@admin.com', 'password': 'rezareza'})
+        response = self.client.post(reverse("api.v0.accounts:login"),
+                                    {'email': 'reza@admin.com', 'password': 'rezareza'})
         self.assertEqual(response.status_code, 200)
 
     def test_valid_password(self):
@@ -85,238 +88,251 @@ class APIChangePasswordTest(APIJWTTestCase):
         try:
             self.client.post(reverse("api.v0.accounts:profile"),
                              {'old_password': 'passreza', 'new_password': '12345678'})
-            print ("SSSSSSSSSSHHHHHHHHHHIIIIIIIIIITTTTTTTTTT  wher are the validators ??!! at line 88")
+            print("SSSSSSSSSSHHHHHHHHHHIIIIIIIIIITTTTTTTTTT  wher are the validators ??!! at line 88")
         except ValidationError as e:
             # print(E.messages)
             self.assertListEqual(e.messages, ['This password is too common.', 'This password is entirely numeric.'])
-        response = self.client.post(reverse("api.v0.accounts:login"), {'email': 'reza@admin.com', 'password': '12345678'})
+        response = self.client.post(reverse("api.v0.accounts:login"),
+                                    {'email': 'reza@admin.com', 'password': '12345678'})
         self.assertEqual(response.status_code, 400)
-        response = self.client.post(reverse("api.v0.accounts:login"), {'email': 'reza@admin.com', 'password': 'passreza'})
+        response = self.client.post(reverse("api.v0.accounts:login"),
+                                    {'email': 'reza@admin.com', 'password': 'passreza'})
         self.assertEqual(response.status_code, 200)
 
         # min_lenght
         try:
             self.client.post(reverse("api.v0.accounts:profile"), {'old_password': 'passreza', 'new_password': 'j43n54'})
-            print ("SSSSSSSSSSHHHHHHHHHHIIIIIIIIIITTTTTTTTTT  wher are the validators ??!! at line 100")
+            print("SSSSSSSSSSHHHHHHHHHHIIIIIIIIIITTTTTTTTTT  wher are the validators ??!! at line 100")
         except ValidationError:
             pass
         response = self.client.post(reverse("api.v0.accounts:login"), {'email': 'reza@admin.com', 'password': 'j43n54'})
         self.assertEqual(response.status_code, 400)
-        response = self.client.post(reverse("api.v0.accounts:login"), {'email': 'reza@admin.com', 'password': 'passreza'})
+        response = self.client.post(reverse("api.v0.accounts:login"),
+                                    {'email': 'reza@admin.com', 'password': 'passreza'})
         self.assertEqual(response.status_code, 200)
 
         # Numerical_pass
         try:
             self.client.post(reverse("api.v0.accounts:profile"),
                              {'old_password': 'passreza', 'new_password': '1231423223453'})
-            print ("SSSSSSSSSSHHHHHHHHHHIIIIIIIIIITTTTTTTTTT  wher are the validators ??!! at line 112")
+            print("SSSSSSSSSSHHHHHHHHHHIIIIIIIIIITTTTTTTTTT  wher are the validators ??!! at line 112")
         except ValidationError:
             pass
-        response = self.client.post(reverse("api.v0.accounts:login"), {'email': 'reza@admin.com', 'password': '1231423223453'})
+        response = self.client.post(reverse("api.v0.accounts:login"),
+                                    {'email': 'reza@admin.com', 'password': '1231423223453'})
         self.assertEqual(response.status_code, 400)
-        response = self.client.post(reverse("api.v0.accounts:login"), {'email': 'reza@admin.com', 'password': 'passreza'})
+        response = self.client.post(reverse("api.v0.accounts:login"),
+                                    {'email': 'reza@admin.com', 'password': 'passreza'})
         self.assertEqual(response.status_code, 200)
 
 
-class APISignUpTest(APIJWTTestCase):
-    def test_create_then_login(self):
-        response = self.client.post(reverse("api.v0.accounts:signup"),
-                                    {'username': 'reza', 'name': 'reza', 'email': 'reza@admin.com',
-                                     'password': 'passreza', 'bio': 'salam'})
-        self.assertEqual(response.status_code, 200)
-        response = self.client.login(email='reza@admin.com', password='passreza')
-        self.assertEqual(response[1].status_code, 200)
+# class APISignUpTest(APIJWTTestCase):
+# def test_create_then_login(self):
+#     response = self.client.post(reverse("api.v0.accounts:signup"),
+#                                 {'username': 'reza', 'name': 'reza', 'email': 'reza@admin.com',
+#                                  'password': 'passreza', 'bio': 'salam'})
+#     self.assertEqual(response.status_code, 200)
+#     response = self.client.login(email='reza@admin.com', password='passreza')
+#     self.assertEqual(response[1].status_code, 200)
+#
+# def test_requaired_fields(self):
+#     # username
+#     try:
+#         self.client.post(reverse("api.v0.accounts:signup"),
+#                          {'username': '', 'name': 'reza', 'email': 'reza@admin.com', 'password': 'passreza',
+#                           'bio': 'salam'})
+#         print("SSSSSSSSSSHHHHHHHHHHIIIIIIIIIITTTTTTTTTT (in former api , it must return ValidationError) at line 136")
+#     except ValidationError:
+#         pass
+#
+#     # firs_name
+#     response = self.client.post(reverse("api.v0.accounts:signup"),
+#                                 {'username': 'mamad', 'name': '', 'email': 'mamad@admin.com',
+#                                  'password': 'passmamad', 'bio': 'khubi'})
+#     self.assertEqual(response.status_code, 200)
+#
+#     # email
+#     response = self.client.post(reverse("api.v0.accounts:signup"),
+#                                 {'username': 'fatemeh', 'name': 'fatemeh', 'email': '',
+#                                  'password': 'passfatemeh', 'bio': 'mamad'})
+#     self.assertEqual(response.status_code, 400)
+#
+#     # password
+#     response = self.client.post(reverse("api.v0.accounts:signup"),
+#                                 {'username': 'sina', 'name': 'sina', 'email': 'sina@admin.com',
+#                                  'password': '', 'bio': 'reza'})
+#     self.assertEqual(response.status_code, 400)
+#
+#     # bio
+#     response = self.client.post(reverse("api.v0.accounts:signup"),
+#                                 {'username': 'ali', 'name': 'ali', 'email': 'ali@admin.com',
+#                                  'password': 'passaliali', 'bio': ''})
+#     self.assertEqual(response.status_code, 200)
+#
+# def test_uique_fields(self):
+#     response = self.client.post(reverse("api.v0.accounts:signup"),
+#                                 {'username': 'reza', 'name': 'reza', 'email': 'reza@admin.com',
+#                                  'password': 'passreza', 'bio': 'salam'})
+#     self.assertEqual(response.status_code, 200)
+#
+#     # username
+#     response = self.client.post(reverse("api.v0.accounts:signup"),
+#                                 {'username': 'reza', 'name': 'mamad', 'email': 'mamad@admin.com',
+#                                  'password': 'passmamad', 'bio': 'khubi'})
+#     self.assertEqual(response.status_code, 400)
+#
+#     # name
+#     response = self.client.post(reverse("api.v0.accounts:signup"),
+#                                 {'username': 'ali', 'name': 'reza', 'email': 'ali@admin.com',
+#                                  'password': 'passaliali', 'bio': 'mamad'})
+#     self.assertEqual(response.status_code, 200)
+#
+#     # email
+#     response = self.client.post(reverse("api.v0.accounts:signup"),
+#                                 {'username': 'fatemeh', 'name': 'fatemeh', 'email': 'reza@admin.com',
+#                                  'password': 'passfatemeh', 'bio': 'reza'})
+#     self.assertEqual(response.status_code, 400)
+#
+#     # password
+#     response = self.client.post(reverse("api.v0.accounts:signup"),
+#                                 {'username': 'sina', 'name': 'sina', 'email': 'sina@admin.com',
+#                                  'password': 'passreza', 'bio': 'are'})
+#     self.assertEqual(response.status_code, 200)
+#
+#     # bio
+#     response = self.client.post(reverse("api.v0.accounts:signup"),
+#                                 {'username': 'sohrab', 'name': 'sohrab', 'email': 'sohrab@admin.com',
+#                                  'password': 'passsohrab', 'bio': 'salam'})
+#     self.assertEqual(response.status_code, 200)
+#
+# def test_bad_input_fields(self):
+#     # username
+#     try:
+#         self.client.post(reverse("api.v0.accounts:signup"),
+#                          {'username': 'mam mad', 'name': 'mamad', 'email': 'mamad@admin.com',
+#                           'password': 'passmamad', 'bio': 'mamad'})
+#         print ("SSSSSSSSSSHHHHHHHHHHIIIIIIIIIITTTTTTTTTT  wher are the validators ??!! at line 206")
+#     except ValidationError:
+#         pass
+#
+#     # username
+#     try:
+#         self.client.post(reverse("api.v0.accounts:signup"),
+#                          {'username': 'mamad!!!!??', 'name': 'mamad', 'email': 'mamad@admin.com',
+#                           'password': 'passmamad', 'bio': 'mamad'})
+#         print ("SSSSSSSSSSHHHHHHHHHHIIIIIIIIIITTTTTTTTTT  wher are the validators ??!! at line 215")
+#     except ValidationError:
+#         pass
+#
+#     # username
+#     try:
+#         self.client.post(reverse("api.v0.accounts:signup"),
+#                          {'username': 'mamad---+++', 'name': 'mamad', 'email': 'mamad@admin.com',
+#                           'password': 'passmamad', 'bio': 'mamad'})
+#         print ("SSSSSSSSSSHHHHHHHHHHIIIIIIIIIITTTTTTTTTT  wher are the validators ??!! at line 224")
+#     except ValidationError:
+#         pass
+#
+#     # username
+#     response = self.client.post(reverse("api.v0.accounts:signup"),
+#                                 {'username': 'mamad...___', 'name': 'mamad', 'email': 'mamad@admin.com',
+#                                  'password': 'passmamad', 'bio': 'mamad'})
+#     self.assertEqual(response.status_code, 200)
+#
+#     # name
+#     try:
+#         self.client.post(reverse("api.v0.accounts:signup"),
+#                          {'username': 'ali', 'name': 'ali121', 'email': 'ali@admin.com',
+#                           'password': 'passaliali', 'bio': 'ali'})
+#         print ("SSSSSSSSSSHHHHHHHHHHIIIIIIIIIITTTTTTTTTT  wher are the validators ??!! at line 239")
+#     except ValidationError:
+#         pass
+#
+#     # name
+#     try:
+#         self.client.post(reverse("api.v0.accounts:signup"),
+#                          {'username': 'ali', 'name': 'ali???!!!', 'email': 'ali@admin.com',
+#                           'password': 'passaliali', 'bio': 'ali'})
+#         print ("SSSSSSSSSSHHHHHHHHHHIIIIIIIIIITTTTTTTTTT  wher are the validators ??!! at line 248")
+#     except ValidationError:
+#         pass
+#
+#     # name
+#     response = self.client.post(reverse("api.v0.accounts:signup"),
+#                                 {'username': 'ali', 'name': 'ali reza', 'email': 'ali@admin.com',
+#                                  'password': 'passaliali', 'bio': 'ali'})
+#     self.assertEqual(response.status_code, 200)
+#
+#     # email
+#     response = self.client.post(reverse("api.v0.accounts:signup"),
+#                                 {'username': 'fatemeh', 'name': 'fatemeh', 'email': 'fatemeh @admin.com',
+#                                  'password': 'passfatemeh', 'bio': 'fatemeh'})
+#     self.assertEqual(response.status_code, 400)
+#
+#     # email
+#     response = self.client.post(reverse("api.v0.accounts:signup"),
+#                                 {'username': 'fatemeh', 'name': 'fatemeh', 'email': 'fatemeh@ admin.com',
+#                                  'password': 'passfatemeh', 'bio': 'fatemeh'})
+#     self.assertEqual(response.status_code, 400)
+#
+#     # email
+#     response = self.client.post(reverse("api.v0.accounts:signup"),
+#                                 {'username': 'fatemeh', 'name': 'fatemeh', 'email': 'fatemeh@admin. com',
+#                                  'password': 'passfatemeh', 'bio': 'fatemeh'})
+#     self.assertEqual(response.status_code, 400)
+#
+#     # email -------> without .com
+#     response = self.client.post(reverse("api.v0.accounts:signup"),
+#                                 {'username': 'fatemeh', 'name': 'fatemeh', 'email': 'fatemeh@admin',
+#                                  'password': 'passfatemeh', 'bio': 'fatemeh'})
+#     self.assertEqual(response.status_code, 400)
+#
+#     # email ------> without @
+#     response = self.client.post(reverse("api.v0.accounts:signup"),
+#                                 {'username': 'fatemeh', 'name': 'fatemeh', 'email': 'fatemeh.com',
+#                                  'password': 'passfatemeh', 'bio': 'fatemeh'})
+#     self.assertEqual(response.status_code, 400)
+#
+#     # email -------> without domain
+#     response = self.client.post(reverse("api.v0.accounts:signup"),
+#                                 {'username': 'fatemeh', 'name': 'fatemeh', 'email': 'fatemeh@.com',
+#                                  'password': 'passfatemeh', 'bio': 'fatemeh'})
+#     self.assertEqual(response.status_code, 400)
+#
+#     # email -------> without name
+#     response = self.client.post(reverse("api.v0.accounts:signup"),
+#                                 {'username': 'fatemeh', 'name': 'fatemeh', 'email': '@admin.com',
+#                                  'password': 'passfatemeh', 'bio': 'fatemeh'})
+#     self.assertEqual(response.status_code, 400)
 
-    def test_requaired_fields(self):
-        # username
-        try:
-            self.client.post(reverse("api.v0.accounts:signup"),
-                             {'username': '', 'name': 'reza', 'email': 'reza@admin.com', 'password': 'passreza',
-                              'bio': 'salam'})
-            print("SSSSSSSSSSHHHHHHHHHHIIIIIIIIIITTTTTTTTTT (in former api , it must return ValidationError) at line 136")
-        except ValidationError:
-            pass
-
-        # firs_name
-        response = self.client.post(reverse("api.v0.accounts:signup"),
-                                    {'username': 'mamad', 'name': '', 'email': 'mamad@admin.com',
-                                     'password': 'passmamad', 'bio': 'khubi'})
-        self.assertEqual(response.status_code, 200)
-
-        # email
-        response = self.client.post(reverse("api.v0.accounts:signup"),
-                                    {'username': 'fatemeh', 'name': 'fatemeh', 'email': '',
-                                     'password': 'passfatemeh', 'bio': 'mamad'})
-        self.assertEqual(response.status_code, 400)
-
-        # password
-        response = self.client.post(reverse("api.v0.accounts:signup"),
-                                    {'username': 'sina', 'name': 'sina', 'email': 'sina@admin.com',
-                                     'password': '', 'bio': 'reza'})
-        self.assertEqual(response.status_code, 400)
-
-        # bio
-        response = self.client.post(reverse("api.v0.accounts:signup"),
-                                    {'username': 'ali', 'name': 'ali', 'email': 'ali@admin.com',
-                                     'password': 'passaliali', 'bio': ''})
-        self.assertEqual(response.status_code, 200)
-
-    def test_uique_fields(self):
-        response = self.client.post(reverse("api.v0.accounts:signup"),
-                                    {'username': 'reza', 'name': 'reza', 'email': 'reza@admin.com',
-                                     'password': 'passreza', 'bio': 'salam'})
-        self.assertEqual(response.status_code, 200)
-
-        # username
-        response = self.client.post(reverse("api.v0.accounts:signup"),
-                                    {'username': 'reza', 'name': 'mamad', 'email': 'mamad@admin.com',
-                                     'password': 'passmamad', 'bio': 'khubi'})
-        self.assertEqual(response.status_code, 400)
-
-        # name
-        response = self.client.post(reverse("api.v0.accounts:signup"),
-                                    {'username': 'ali', 'name': 'reza', 'email': 'ali@admin.com',
-                                     'password': 'passaliali', 'bio': 'mamad'})
-        self.assertEqual(response.status_code, 200)
-
-        # email
-        response = self.client.post(reverse("api.v0.accounts:signup"),
-                                    {'username': 'fatemeh', 'name': 'fatemeh', 'email': 'reza@admin.com',
-                                     'password': 'passfatemeh', 'bio': 'reza'})
-        self.assertEqual(response.status_code, 400)
-
-        # password
-        response = self.client.post(reverse("api.v0.accounts:signup"),
-                                    {'username': 'sina', 'name': 'sina', 'email': 'sina@admin.com',
-                                     'password': 'passreza', 'bio': 'are'})
-        self.assertEqual(response.status_code, 200)
-
-        # bio
-        response = self.client.post(reverse("api.v0.accounts:signup"),
-                                    {'username': 'sohrab', 'name': 'sohrab', 'email': 'sohrab@admin.com',
-                                     'password': 'passsohrab', 'bio': 'salam'})
-        self.assertEqual(response.status_code, 200)
-
-    def test_bad_input_fields(self):
-        # username
-        try:
-            self.client.post(reverse("api.v0.accounts:signup"),
-                             {'username': 'mam mad', 'name': 'mamad', 'email': 'mamad@admin.com',
-                              'password': 'passmamad', 'bio': 'mamad'})
-            print ("SSSSSSSSSSHHHHHHHHHHIIIIIIIIIITTTTTTTTTT  wher are the validators ??!! at line 206")
-        except ValidationError:
-            pass
-
-        # username
-        try:
-            self.client.post(reverse("api.v0.accounts:signup"),
-                             {'username': 'mamad!!!!??', 'name': 'mamad', 'email': 'mamad@admin.com',
-                              'password': 'passmamad', 'bio': 'mamad'})
-            print ("SSSSSSSSSSHHHHHHHHHHIIIIIIIIIITTTTTTTTTT  wher are the validators ??!! at line 215")
-        except ValidationError:
-            pass
-
-        # username
-        try:
-            self.client.post(reverse("api.v0.accounts:signup"),
-                             {'username': 'mamad---+++', 'name': 'mamad', 'email': 'mamad@admin.com',
-                              'password': 'passmamad', 'bio': 'mamad'})
-            print ("SSSSSSSSSSHHHHHHHHHHIIIIIIIIIITTTTTTTTTT  wher are the validators ??!! at line 224")
-        except ValidationError:
-            pass
-
-        # username
-        response = self.client.post(reverse("api.v0.accounts:signup"),
-                                    {'username': 'mamad...___', 'name': 'mamad', 'email': 'mamad@admin.com',
-                                     'password': 'passmamad', 'bio': 'mamad'})
-        self.assertEqual(response.status_code, 200)
-
-        # name
-        try:
-            self.client.post(reverse("api.v0.accounts:signup"),
-                             {'username': 'ali', 'name': 'ali121', 'email': 'ali@admin.com',
-                              'password': 'passaliali', 'bio': 'ali'})
-            print ("SSSSSSSSSSHHHHHHHHHHIIIIIIIIIITTTTTTTTTT  wher are the validators ??!! at line 239")
-        except ValidationError:
-            pass
-
-        # name
-        try:
-            self.client.post(reverse("api.v0.accounts:signup"),
-                             {'username': 'ali', 'name': 'ali???!!!', 'email': 'ali@admin.com',
-                              'password': 'passaliali', 'bio': 'ali'})
-            print ("SSSSSSSSSSHHHHHHHHHHIIIIIIIIIITTTTTTTTTT  wher are the validators ??!! at line 248")
-        except ValidationError:
-            pass
-
-        # name
-        response = self.client.post(reverse("api.v0.accounts:signup"),
-                                    {'username': 'ali', 'name': 'ali reza', 'email': 'ali@admin.com',
-                                     'password': 'passaliali', 'bio': 'ali'})
-        self.assertEqual(response.status_code, 200)
-
-        # email
-        response = self.client.post(reverse("api.v0.accounts:signup"),
-                                    {'username': 'fatemeh', 'name': 'fatemeh', 'email': 'fatemeh @admin.com',
-                                     'password': 'passfatemeh', 'bio': 'fatemeh'})
-        self.assertEqual(response.status_code, 400)
-
-        # email
-        response = self.client.post(reverse("api.v0.accounts:signup"),
-                                    {'username': 'fatemeh', 'name': 'fatemeh', 'email': 'fatemeh@ admin.com',
-                                     'password': 'passfatemeh', 'bio': 'fatemeh'})
-        self.assertEqual(response.status_code, 400)
-
-        # email
-        response = self.client.post(reverse("api.v0.accounts:signup"),
-                                    {'username': 'fatemeh', 'name': 'fatemeh', 'email': 'fatemeh@admin. com',
-                                     'password': 'passfatemeh', 'bio': 'fatemeh'})
-        self.assertEqual(response.status_code, 400)
-
-        # email -------> without .com
-        response = self.client.post(reverse("api.v0.accounts:signup"),
-                                    {'username': 'fatemeh', 'name': 'fatemeh', 'email': 'fatemeh@admin',
-                                     'password': 'passfatemeh', 'bio': 'fatemeh'})
-        self.assertEqual(response.status_code, 400)
-
-        # email ------> without @
-        response = self.client.post(reverse("api.v0.accounts:signup"),
-                                    {'username': 'fatemeh', 'name': 'fatemeh', 'email': 'fatemeh.com',
-                                     'password': 'passfatemeh', 'bio': 'fatemeh'})
-        self.assertEqual(response.status_code, 400)
-
-        # email -------> without domain
-        response = self.client.post(reverse("api.v0.accounts:signup"),
-                                    {'username': 'fatemeh', 'name': 'fatemeh', 'email': 'fatemeh@.com',
-                                     'password': 'passfatemeh', 'bio': 'fatemeh'})
-        self.assertEqual(response.status_code, 400)
-
-        # email -------> without name
-        response = self.client.post(reverse("api.v0.accounts:signup"),
-                                    {'username': 'fatemeh', 'name': 'fatemeh', 'email': '@admin.com',
-                                     'password': 'passfatemeh', 'bio': 'fatemeh'})
-        self.assertEqual(response.status_code, 400)
-
-    def test_uniqe_signup(self):
-        # user
-        response = self.client.post(reverse("api.v0.accounts:signup"),
-                                    {'username': 'reza', 'name': 'reza', 'email': 'reza@admin.com',
-                                     'password': 'passreza', 'bio': 'salam'})
-        self.assertEqual(response.status_code, 200)
-        response = self.client.post(reverse("api.v0.accounts:signup"),
-                                    {'username': 'reza', 'name': 'reza', 'email': 'reza@admin.com',
-                                     'password': 'passreza', 'bio': 'mamad'})
-        self.assertEqual(response.status_code, 400)
-
-        # profile
-        response = self.client.post(reverse("api.v0.accounts:signup"),
-                                    {'username': 'fatemeh', 'name': 'fatemeh', 'email': 'fatemeh@admin.com',
-                                     'password': 'passfatemeh', 'bio': 'fatemeh'})
-        self.assertEqual(response.status_code, 200)
-        response = self.client.post(reverse("api.v0.accounts:signup"),
-                                    {'username': 'sina', 'name': 'sina', 'email': 'sina@admin.com',
-                                     'password': 'passsina', 'bio': 'fatemeh'})
-        self.assertEqual(response.status_code, 200)
+# def test_uniqe_signup(self):
+#     # user
+#
+#     ################################### problem: how to work with form data !!!
+#     response = self.client.post(path=reverse("api.v0.accounts:signup"),
+#                                 data={'username': 'reza', 'name': 'reza', 'email': 'reza@admin.com',
+#                                  'password': 'passreza', 'bio': 'salam'}, content_type='multipart/form-data')
+#     print("*****************")
+#     print(response.content)
+#     print("*****************")
+#
+#
+#
+#     self.assertEqual(response.status_code, 200)
+#     response = self.client.post(reverse("api.v0.accounts:signup"),
+#                                 {'username': 'reza', 'name': 'reza', 'email': 'reza@admin.com',
+#                                  'password': 'passreza', 'bio': 'mamad'})
+#     self.assertEqual(response.status_code, 400)
+#
+#     # profile
+#     response = self.client.post(reverse("api.v0.accounts:signup"),
+#                                 {'username': 'fatemeh', 'name': 'fatemeh', 'email': 'fatemeh@admin.com',
+#                                  'password': 'passfatemeh', 'bio': 'fatemeh'})
+#     self.assertEqual(response.status_code, 200)
+#     response = self.client.post(reverse("api.v0.accounts:signup"),
+#                                 {'username': 'sina', 'name': 'sina', 'email': 'sina@admin.com',
+#                                  'password': 'passsina', 'bio': 'fatemeh'})
+#     self.assertEqual(response.status_code, 200)
 
 
 # class APIfollow(APIJWTTestCase):
@@ -332,51 +348,51 @@ class APISignUpTest(APIJWTTestCase):
 #         Profile.objects.create(user=sohrab)
 #         abolfazl_profile.followings.add(reza_profile)
 #
-    # def test_follow_someone(self):
-    #     self.client.login(email='aasmpro@admin.com', password='passaasmpro')
-    #     response = self.client.get(reverse('api:v0:FollowUser', kwargs={"user_id": "1"}))
-    #     self.assertEqual(response.status_code, 403)
-    #     self.assertEqual(json.loads(response.content), {"error": "you can not follow yourself!"})
-    #
-    #     response = self.client.get(reverse('api:v0:FollowUser', kwargs={"user_id": "5"}))
-    #     self.assertEqual(response.status_code, 403)
-    #     self.assertEqual(json.loads(response.content), {"error": "user with user_id: 5 does not have profile!"})
-    #
-    #     response = self.client.get(reverse('api:v0:FollowUser', kwargs={"user_id": "2"}))
-    #     self.assertEqual(response.status_code, 403)
-    #     self.assertEqual(json.loads(response.content), {"error": "you have already followed user with user_id: 2"})
-    #
-    #     response = self.client.get(reverse('api:v0:FollowUser', kwargs={"user_id": "3"}))
-    #     self.assertEqual(response.status_code, 200)
-    #     self.assertEqual(json.loads(response.content), {"status": "Successful!"})
-    #
-    #     self.client.login(email='edi@admin.com', password='passedi')
-    #     response = self.client.get(reverse('api:v0:FollowUser', kwargs={"user_id": "1"}))
-    #     self.assertEqual(response.status_code, 403)
-    #     self.assertEqual(json.loads(response.content), {"error": "you don't have profile, sorry!"})
-    #
-    # def test_unfollow(self):
-    #     self.client.login(email='aasmpro@admin.com', password='passaasmpro')
-    #     response = self.client.get(reverse('api:v0:UnFollowUser', kwargs={"user_id": "1"}))
-    #     self.assertEqual(response.status_code, 403)
-    #     self.assertEqual(json.loads(response.content), {"error": "you don't follow user with user_id: 1"})
-    #
-    #     response = self.client.get(reverse('api:v0:UnFollowUser', kwargs={"user_id": "3"}))
-    #     self.assertEqual(response.status_code, 403)
-    #     self.assertEqual(json.loads(response.content), {"error": "you don't follow user with user_id: 3"})
-    #
-    #     response = self.client.get(reverse('api:v0:UnFollowUser', kwargs={"user_id": "5"}))
-    #     self.assertEqual(response.status_code, 403)
-    #     self.assertEqual(json.loads(response.content), {"error": "user with user_id: 5 does not have profile!"})
-    #
-    #     response = self.client.get(reverse('api:v0:UnFollowUser', kwargs={"user_id": "2"}))
-    #     self.assertEqual(response.status_code, 200)
-    #     self.assertEqual(json.loads(response.content), {"status": "Successful!"})
-    #
-    #     self.client.login(email='edi@admin.com', password='passedi')
-    #     response = self.client.get(reverse('api:v0:UnFollowUser', kwargs={"user_id": "1"}))
-    #     self.assertEqual(response.status_code, 403)
-    #     self.assertEqual(json.loads(response.content), {"error": "you don't have profile, sorry!"})
+# def test_follow_someone(self):
+#     self.client.login(email='aasmpro@admin.com', password='passaasmpro')
+#     response = self.client.get(reverse('api:v0:FollowUser', kwargs={"user_id": "1"}))
+#     self.assertEqual(response.status_code, 403)
+#     self.assertEqual(json.loads(response.content), {"error": "you can not follow yourself!"})
+#
+#     response = self.client.get(reverse('api:v0:FollowUser', kwargs={"user_id": "5"}))
+#     self.assertEqual(response.status_code, 403)
+#     self.assertEqual(json.loads(response.content), {"error": "user with user_id: 5 does not have profile!"})
+#
+#     response = self.client.get(reverse('api:v0:FollowUser', kwargs={"user_id": "2"}))
+#     self.assertEqual(response.status_code, 403)
+#     self.assertEqual(json.loads(response.content), {"error": "you have already followed user with user_id: 2"})
+#
+#     response = self.client.get(reverse('api:v0:FollowUser', kwargs={"user_id": "3"}))
+#     self.assertEqual(response.status_code, 200)
+#     self.assertEqual(json.loads(response.content), {"status": "Successful!"})
+#
+#     self.client.login(email='edi@admin.com', password='passedi')
+#     response = self.client.get(reverse('api:v0:FollowUser', kwargs={"user_id": "1"}))
+#     self.assertEqual(response.status_code, 403)
+#     self.assertEqual(json.loads(response.content), {"error": "you don't have profile, sorry!"})
+#
+# def test_unfollow(self):
+#     self.client.login(email='aasmpro@admin.com', password='passaasmpro')
+#     response = self.client.get(reverse('api:v0:UnFollowUser', kwargs={"user_id": "1"}))
+#     self.assertEqual(response.status_code, 403)
+#     self.assertEqual(json.loads(response.content), {"error": "you don't follow user with user_id: 1"})
+#
+#     response = self.client.get(reverse('api:v0:UnFollowUser', kwargs={"user_id": "3"}))
+#     self.assertEqual(response.status_code, 403)
+#     self.assertEqual(json.loads(response.content), {"error": "you don't follow user with user_id: 3"})
+#
+#     response = self.client.get(reverse('api:v0:UnFollowUser', kwargs={"user_id": "5"}))
+#     self.assertEqual(response.status_code, 403)
+#     self.assertEqual(json.loads(response.content), {"error": "user with user_id: 5 does not have profile!"})
+#
+#     response = self.client.get(reverse('api:v0:UnFollowUser', kwargs={"user_id": "2"}))
+#     self.assertEqual(response.status_code, 200)
+#     self.assertEqual(json.loads(response.content), {"status": "Successful!"})
+#
+#     self.client.login(email='edi@admin.com', password='passedi')
+#     response = self.client.get(reverse('api:v0:UnFollowUser', kwargs={"user_id": "1"}))
+#     self.assertEqual(response.status_code, 403)
+#     self.assertEqual(json.loads(response.content), {"error": "you don't have profile, sorry!"})
 #
 #
 # class APIEditProfileTest(APIJWTTestCase):
@@ -489,7 +505,8 @@ class APISignUpTest(APIJWTTestCase):
 #         response = self.client.get(reverse("api:v0:profile"))
 #         self.assertEqual(response.status_code, 200)
 #         self.assertJSONEqual(response.content,
-#                              '{"id" :1, "bio": "salam man reza hastam :)", "image": null, "user": 1, "followers": [], "followings": []}')
+#                              '{"id" :1, "bio": "salam man reza hastam :)",
+#                                "image": null, "user": 1, "followers": [], "followings": []}')
 #         self.assertEqual(User.objects.get(id=1).name, 'reza')
 #
 #         # setting first name badly and bio good
@@ -501,7 +518,8 @@ class APISignUpTest(APIJWTTestCase):
 #         response = self.client.get(reverse("api:v0:profile"))
 #         self.assertEqual(response.status_code, 200)
 #         self.assertJSONEqual(response.content,
-#                              '{"id" :1, "bio": "salam man reza hastam 18 :)", "image": null, "user": 1, "followers": [], "followings": []}')
+#                              '{"id" :1, "bio": "salam man reza hastam 18 :)",
+#                                "image": null, "user": 1, "followers": [], "followings": []}')
 #         self.assertEqual(User.objects.get(id=1).name, 'reza')
 
 # class APIProfileTest(APIJWTTestCase):
@@ -509,4 +527,15 @@ class APISignUpTest(APIJWTTestCase):
 #         User.objects.create_user('aasmpro', 'aasmpro@admin.com', 'passaasmpro')
 #         self.client.login(email='aasmpro@admin.com', password='passaasmpro')
 #
-#     def
+#
+
+class Testmail(APIJWTTestCase):
+    def test(self):
+        maildata = {
+            "to": "request.data.get('email')",
+            "body": "hello mail",
+            "subject": "Invitation mail to Akaskhooneh from a friend"
+        }
+        headers = {"agent-key": "3Q0gRe22zp"}
+        response = requests.post(url='http://192.168.10.66:80/api/send/mail', data=maildata, headers=headers)
+        print(response)

@@ -6,7 +6,9 @@ from accounts.api.utils import get_user, get_password_errors
 from django.contrib.auth.password_validation import validate_password
 from accounts.forms import SignUpForm, ProfileEditForm
 from rest_framework_simplejwt.views import TokenObtainPairView as TOPW, TokenRefreshView as TRV, TokenVerifyView as TVW
+from accounts.api.utils import send_mail
 import json
+import requests
 
 
 class TokenObtainPairView(TOPW):
@@ -373,3 +375,45 @@ class FollowingsAPIView(APIView):
                 return JsonResponse({"success": {"message": ["unfollowed successfully"]}}, status=200)
         except Exception as e:
             return JsonResponse({"error": {"user": ["NotExist"]}}, status=400)
+
+
+class InvitationAPIView(APIView):
+    """
+    #farz kardam ke toie DB ie chizi zadim be user ha be esem contact
+    #farz kardam data ke miad injorie {{email:mamad@gmail.com},{},{},...}
+    """
+
+    def post(self, request):
+        ret = {}
+        requester = request.user
+        for email in request.data.get("contacts"):
+            try:
+                user = User.objects.get(email=email)
+                try:
+                    requester.profile.followings.get(profile=user.profile)
+                    ret.update({'email': email, 'username': user.username, 'followed': True})
+                except Exception as e:
+                    ret.update({'email': email, 'username': user.username, 'followed': False})
+
+            except Exception as e:
+                # must add to unregisterd
+                try:
+                    user.contact.users.get(user=requester)
+                except Exception as e:
+                    user.contact.users.add(requester)
+
+                try:
+                    user.contact.invited.get(user=requester)
+                    ret.update({'email': email, 'invited': True})
+                except Exception as e:
+                    ret.update({'email': email, 'invited': False})
+
+        return JsonResponse(ret)
+
+    def put(self, request):
+        requester = request.user
+        user = User.objects.get(email=request.data.get('email'))
+        user.contact.invited.add(user=requester)
+        send_mail(request.data.get('email'), "Akaskhoone Invitation", "salam man mamadam az team poshtibani akaskhone\n"
+                                                                      "shoma davat shodin be estefade az in app")
+        return JsonResponse({"message":"success"})
