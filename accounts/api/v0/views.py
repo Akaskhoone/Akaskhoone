@@ -88,6 +88,8 @@ class ProfileAPIView(APIView):
                 for result in User.objects.filter(username__contains=username):
                     results.append({
                         "username": result.username,
+                        "name": result.profile.name,
+                        "image": str(result.profile.image),
                         "isFollowing": result.profile in user.profile.followers.all(),
                         "isFollowed": user.profile in result.profile.followers.all()
                     })
@@ -103,7 +105,7 @@ class ProfileAPIView(APIView):
                         "followers": target_user.profile.followers.count(),
                         "followings": target_user.profile.followings.count(),
                         "image": target_user.profile.image.url if target_user.profile.image else
-                        "/media/profile_photos/default.jpg",
+                        "profile_photos/default.jpg",
 
                         "isFollowing": target_user.profile in user.profile.followers.all(),
                         "isFollowed": user.profile in target_user.profile.followers.all()
