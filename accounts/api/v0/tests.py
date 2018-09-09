@@ -128,9 +128,11 @@ class APIChangePasswordTest(APIJWTTestCase):
 
 class APIFollowingTest(APIJWTTestCase):
     def test_follow(self):
-        u = User.objects.create_user(email='reza@admin.com', username='reza', password='passreza')
+        User.objects.create_user(email='reza@admin.com', username='reza', password='passreza')
+        u = User.objects.get(username='reza')
         Profile.objects.create(user=u, name='reza', bio='reza bio')
-        u2 = User.objects.create_user(email='sohrab@admin.com', username='sohrab', password='passsohrab')
+        User.objects.create_user(email='sohrab@admin.com', username='sohrab', password='passsohrab')
+        u2 = User.objects.get(username='sohrab')
         Profile.objects.create(user=u2, name='sohrab', bio='sohrab bio')
         self.client.login(email='reza@admin.com', password='passreza')
 
@@ -138,18 +140,20 @@ class APIFollowingTest(APIJWTTestCase):
         response = self.client.post(reverse("api.v0.accounts:followings"), {'follow': 'sohrab'})
         self.assertEqual(response.status_code, 200)
         try:
-            sohrab = u.profile.followings.get(profile=u2.profile)
+            sohrab_profile = u.profile.followings.get(user=u2)
             print("Followed successfully")
         except Exception as e:
+            print("shit follow FAIL")
             print(e)
 
         # test follow a followed user
         response = self.client.post(reverse("api.v0.accounts:followings"), {'follow': 'sohrab'})
         self.assertEqual(response.status_code, 200)
         try:
-            sohrab = u.profile.followings.get(profile=u2.profile)
+            sohrab_profile = u.profile.followings.get(user=u2)
             print("Followed successfully")
         except Exception as e:
+            print("shit follow FAIL")
             print(e)
 
         # test follow itself
@@ -208,27 +212,27 @@ class APIFollowingTest(APIJWTTestCase):
 
         response = self.client.get(path='/api/v0/accounts/profile/followers/')
         self.assertEqual(response.status_code, 200)
-        self.assertJSONEqual(response.data, {{'name': 'Fatemeh', 'followed': True}})
+        self.assertJSONEqual(response.content, {'fatemeh': {'name': 'fatemeh', 'followed': True}})
 
-        response = self.client.get(path='api/v0/accounts/profile/followers/?username=reza')
+        response = self.client.get(path='/api/v0/accounts/profile/followers/?username=reza')
         self.assertEqual(response.status_code, 200)
-        self.assertJSONEqual(response.data, {{'name': 'Fatemeh', 'followed': True}})
+        self.assertJSONEqual(response.content, {'fatemeh': {'name': 'fatemeh', 'followed': True}})
 
-        response = self.client.get(path='api/v0/accounts/profile/followers/?email=reza@admin.com')
+        response = self.client.get(path='/api/v0/accounts/profile/followers/?email=reza@admin.com')
         self.assertEqual(response.status_code, 200)
-        self.assertJSONEqual(response.data, {{'name': 'Fatemeh', 'followed': True}})
+        self.assertJSONEqual(response.content, {'fatemeh': {'name': 'fatemeh', 'followed': True}})
 
-        response = self.client.get(path='api/v0/accounts/profile/followers/?username=eddi')
+        response = self.client.get(path='/api/v0/accounts/profile/followers/?username=eddi')
         self.assertEqual(response.status_code, 200)
-        self.assertJSONEqual(response.data, {{'name': 'aasmpro', 'followed': False}})
+        self.assertJSONEqual(response.content, {'aasmpro': {'name': 'aasmpro', 'followed': False}})
 
-        response = self.client.get(path='api/v0/accounts/profile/followers/?email=eddi@admin.com')
+        response = self.client.get(path='/api/v0/accounts/profile/followers/?email=eddi@admin.com')
         self.assertEqual(response.status_code, 200)
-        self.assertJSONEqual(response.data, {{'name': 'aasmpro', 'followed': False}})
+        self.assertJSONEqual(response.content, {'aasmpro': {'name': 'aasmpro', 'followed': False}})
 
-        response = self.client.get(path='api/v0/accounts/profile/followers/?email=mamad@shit.com')
+        response = self.client.get(path='/api/v0/accounts/profile/followers/?email=mamad@shit.com')
         self.assertEqual(response.status_code, 400)
-        response = self.client.get(path='api/v0/accounts/profile/followers/?username=mamadreza')
+        response = self.client.get(path='/api/v0/accounts/profile/followers/?username=mamadreza')
         self.assertEqual(response.status_code, 400)
 
     def test_followings_list(self):
@@ -251,29 +255,29 @@ class APIFollowingTest(APIJWTTestCase):
 
         self.client.login(email='reza@admin.com', password='passreza')
 
-        response = self.client.get(path='api/v0/accounts/profile/followers/')
+        response = self.client.get(path='/api/v0/accounts/profile/followers/')
         self.assertEqual(response.status_code, 200)
-        self.assertJSONEqual(response.data, {{'name': 'Fatemeh', 'followed': True}})
+        self.assertJSONEqual(response.content, {'fatemeh': {'name': 'fatemeh', 'followed': True}})
 
-        response = self.client.get(path='api/v0/accounts/profile/followers/?username=reza')
+        response = self.client.get(path='/api/v0/accounts/profile/followers/?username=reza')
         self.assertEqual(response.status_code, 200)
-        self.assertJSONEqual(response.data, {{'name': 'Fatemeh', 'followed': True}})
+        self.assertJSONEqual(response.content, {'fatemeh': {'name': 'fatemeh', 'followed': True}})
 
-        response = self.client.get(path='api/v0/accounts/profile/followers/?email=reza@admin.com')
+        response = self.client.get(path='/api/v0/accounts/profile/followers/?email=reza@admin.com')
         self.assertEqual(response.status_code, 200)
-        self.assertJSONEqual(response.data, {{'name': 'Fatemeh', 'followed': True}})
+        self.assertJSONEqual(response.content, {'fatemeh': {'name': 'fatemeh', 'followed': True}})
 
-        response = self.client.get(path='api/v0/accounts/profile/followers/?username=eddi')
+        response = self.client.get(path='/api/v0/accounts/profile/followers/?username=eddi')
         self.assertEqual(response.status_code, 200)
-        self.assertJSONEqual(response.data, {{'name': 'aasmpro', 'followed': False}})
+        self.assertJSONEqual(response.content, {'aasmpro': {'name': 'aasmpro', 'followed': False}})
 
-        response = self.client.get(path='api/v0/accounts/profile/followers/?email=eddi@admin.com')
+        response = self.client.get(path='/api/v0/accounts/profile/followers/?email=eddi@admin.com')
         self.assertEqual(response.status_code, 200)
-        self.assertJSONEqual(response.data, {{'name': 'aasmpro', 'followed': False}})
+        self.assertJSONEqual(response.content, {'aasmpro': {'name': 'aasmpro', 'followed': False}})
 
-        response = self.client.get(path='api/v0/accounts/profile/followers/?email=mamad@shit.com')
+        response = self.client.get(path='/api/v0/accounts/profile/followers/?email=mamad@shit.com')
         self.assertEqual(response.status_code, 400)
-        response = self.client.get(path='api/v0/accounts/profile/followers/?username=mamadreza')
+        response = self.client.get(path='/api/v0/accounts/profile/followers/?username=mamadreza')
         self.assertEqual(response.status_code, 400)
 
 
