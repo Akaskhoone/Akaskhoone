@@ -136,9 +136,7 @@ class ProfileAPIView(APIView):
                         "bio": target_user.profile.bio,
                         "followers": target_user.profile.followers.count(),
                         "followings": target_user.profile.followings.count(),
-                        "image": target_user.profile.image.url if target_user.profile.image else
-                        "/media/profile_photos/default.jpg",
-
+                        "image": target_user.profile.image.url if target_user.profile.image else "profile_photos/default.jpg",
                         "isFollowed": user.profile in target_user.profile.followings.all(),
                         "isFollowing": target_user.profile in user.profile.followers.all()
                     }
@@ -415,4 +413,4 @@ class InvitationAPIView(APIView):
         user.contact.invited.add(user=requester)
         send_mail(request.data.get('email'), "Akaskhoone Invitation", "salam man mamadam az team poshtibani akaskhone\n"
                                                                       "shoma davat shodin be estefade az in app")
-        return JsonResponse({"message":"success"})
+        return JsonResponse({"message": "success"})
