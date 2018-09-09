@@ -2,6 +2,7 @@ from accounts.api.utils import APIJWTTestCase
 from accounts.api.v0.serializers import *
 from django.urls import reverse
 from django.core.exceptions import *
+from accounts.api.utils import sending_mail
 import requests
 
 
@@ -625,24 +626,3 @@ class APIFollowingTest(APIJWTTestCase):
 #
 #
 
-class Testmail(APIJWTTestCase):
-    def test(self):
-        maildata = {
-            "to": "request.data.get('email')",
-            "body": "hello mail",
-            "subject": "Invitation mail to Akaskhooneh from a friend"
-        }
-        headers = {"agent-key": "3Q0gRe22zp"}
-        response = requests.post(url='http://192.168.10.66:80/api/send/mail', data=maildata, headers=headers)
-        print(response)
-
-# class Testmail(APIJWTTestCase):
-#     def test(self):
-#         maildata = {
-#             "to": "request.data.get('email')",
-#             "body": "hello mail",
-#             "subject": "Invitation mail to Akaskhooneh from a friend"
-#         }
-#         headers={"agent-key": "3Q0gRe22zp"}
-#         response = requests.post(url='http://192.168.10.66:80/api/send/mail', data=maildata, headers=headers)
-#         print(response)

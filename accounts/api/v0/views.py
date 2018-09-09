@@ -6,7 +6,8 @@ from accounts.api.utils import get_user, get_password_errors
 from django.contrib.auth.password_validation import validate_password
 from accounts.forms import SignUpForm, ProfileEditForm
 from rest_framework_simplejwt.views import TokenObtainPairView as TOPW, TokenRefreshView as TRV, TokenVerifyView as TVW
-from accounts.api.utils import send_mail
+from accounts.api.utils import *
+from accounts.models import  *
 import json
 
 
@@ -381,7 +382,6 @@ class InvitationAPIView(APIView):
     #farz kardam ke toie DB ie chizi zadim be user ha be esem contact
     #farz kardam data ke miad injorie {{email:mamad@gmail.com},{},{},...}
     """
-
     def post(self, request):
         ret = {}
         requester = request.user
@@ -389,30 +389,37 @@ class InvitationAPIView(APIView):
             try:
                 user = User.objects.get(email=email)
                 try:
-                    requester.profile.followings.get(profile=user.profile)
+                    requester.profile.followings.get(user=user)
                     ret.update({'email': email, 'username': user.username, 'followed': True})
                 except Exception as e:
                     ret.update({'email': email, 'username': user.username, 'followed': False})
 
             except Exception as e:
-                # must add to unregisterd
-                try:
-                    user.contact.users.get(user=requester)
-                except Exception as e:
-                    user.contact.users.add(requester)
-
-                try:
-                    user.contact.invited.get(user=requester)
+                contact = Contact.objects.get_or_create(email=email)[0]
+                invitation = Invitation.objects.get_or_create(contact=contact , user=requester)[0]
+                print(email)
+                if invitation.invited:
                     ret.update({'email': email, 'invited': True})
-                except Exception as e:
+                else:
                     ret.update({'email': email, 'invited': False})
-
-        return JsonResponse(ret)
+        return JsonResponse(ret, status=200)
 
     def put(self, request):
         requester = request.user
-        user = User.objects.get(email=request.data.get('email'))
-        user.contact.invited.add(user=requester)
-        send_mail(request.data.get('email'), "Akaskhoone Invitation", "salam man mamadam az team poshtibani akaskhone\n"
-                                                                      "shoma davat shodin be estefade az in app")
-        return JsonResponse({"message":"success"})
+        email = request.data.get('email')
+        if not email:
+            return JsonResponse({"error": {"email": ["required"]}}, status=400)
+        try:
+            contact = Contact.objects.get(email=email)
+            try:
+                invitation = requester.invitations.get(contact=contact)
+                print(email)
+                sending_mail(email, "Akaskhoone Invitation", "Hi there, you`ve been invited to join us at Akaskhooneh")
+                print("shit1")
+                invitation.invited = True
+                return JsonResponse({"message": "success"}, status=200)
+            except Exception as e:
+                print(e)
+                return JsonResponse({"error": {"RequestError": ["invitationError"]}}, status=400)
+        except Exception as e:
+            return JsonResponse({"error": {"contact": ["NotExist"]}},status=400)
