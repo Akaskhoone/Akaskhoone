@@ -296,9 +296,9 @@ class FollowersAPIView(APIView):
     """
 
     def get(self, request):
-        if get_user(request):
-            print("status: 400")
-            print({"error": {"Profile": ["NotExist"]}})
+        if not get_user(request):
+            #print("status: 400")
+            #print({"error": {"Profile": ["NotExist"]}})
             return JsonResponse({"error": {"Profile": ["NotExist"]}}, status=400)
         user = get_user(request)
         requester = request.user
@@ -351,10 +351,10 @@ class FollowingsAPIView(APIView):
                 if user == requester:
                     return JsonResponse({"error": {"Profile": ["NotExist"]}}, status=400)
                 try:
-                    requester.profile.followings.get(username=user)
+                    requester.profile.followings.get(user.profile)
                     return JsonResponse({"success": {"message": ["followed successfully"]}}, status=200)
                 except Exception as e:
-                    requester.profile.followings.add(user)
+                    requester.profile.followings.add(user.profile)
                     return JsonResponse({"success": {"message": ["followed successfully"]}}, status=200)
             except Exception as e:
                 return JsonResponse({"error": {"user": ["NotExist"]}}, status=400)
