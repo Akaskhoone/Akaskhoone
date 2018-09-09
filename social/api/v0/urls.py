@@ -10,4 +10,6 @@ urlpatterns = [
     path('boards/', BoardsAPIView.as_view(), name="home"),
     path('boards/<int:board_id>/', BoardDetailAPIView.as_view(), name="home"),
     path('posts/<int:post_id>/', PostWithID.as_view(), name="posts_with_id"),
+    path('posts/<int:post_id>/likes/', PostLikesAPIView.as_view(), name="posts_with_id"),
+    path('posts/<int:post_id>/comments/', PostCommentsAPIView.as_view(), name="posts_with_id"),
 ]
