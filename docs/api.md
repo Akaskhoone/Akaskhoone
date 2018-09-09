@@ -184,13 +184,16 @@ get:    JSON { [ { username:str, name:str, image:str:url }, ... ] }
         error:
             post:       [ NotExist ]
 -----------------------------------------------------------------
-put:    success:
+put:    JSON { like:bool }
+        ------------------------------
+        success:
             message: PostLiked
-            message: PostDisLiked
+            message: PostDisliked
         
         error:
             post:       [ NotExist ]
             profile:    [ Banned ]
+            method:     [ Required, WrongData ]
 ```
 /social/posts/{post_id}/comments/ `protected` 
 ```

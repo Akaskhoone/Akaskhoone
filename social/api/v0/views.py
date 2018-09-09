@@ -363,12 +363,18 @@ class PostLikesAPIView(APIView):
     def put(self, request, post_id):
         try:
             post = Post.objects.get(pk=post_id)
-            if not post.likes.filter(id=request.user.id).exists():
-                post.likes.add(request.user)
-                return JsonResponse({"message": "PostLiked"})
+            if request.data.get('method'):
+                method = request.data.get('method')
+                if method == "like":
+                    post.likes.add(request.user)
+                    return JsonResponse({"message": "PostLiked"})
+                elif method == "dislike":
+                    post.likes.remove(request.user)
+                    return JsonResponse({"message": "PostDisliked"})
+                else:
+                    return JsonResponse({"error": {"method": ["WrongData"]}}, status=400)
             else:
-                post.likes.remove(request.user)
-                return JsonResponse({"message": "PostDisLiked"})
+                return JsonResponse({"error": {"method": ["Required"]}}, status=400)
         except ObjectDoesNotExist:
             return JsonResponse({"error": {"post": ["NotExist"]}}, status=400)
 
