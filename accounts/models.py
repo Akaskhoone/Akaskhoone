@@ -99,3 +99,6 @@ class Invitation(models.Model):
 
     def __str__(self):
         return F"{self.user.email} {'invited' if self.invited else 'not invited'} {self.contact.email}"
+
+    class Meta:
+        unique_together = ('user', 'contact')

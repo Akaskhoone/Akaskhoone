@@ -165,8 +165,8 @@ put:    JSON { des:str, location:str, tags:[ name1, name2, ... ] }
             message: post updated successfully
         
         error:
-            post:       [ NotFound ]
-            location:   [ NotFound ]
+            post:       [ NotExist ]
+            location:   [ NotExist ]
 -----------------------------------------------------------------
 delete: JSON { des:str, location:str, tags:[ name1, name2, ... ] }
         ------------------------------
@@ -174,8 +174,39 @@ delete: JSON { des:str, location:str, tags:[ name1, name2, ... ] }
             message: post updated successfully
         
         error:
-            post:       [ NotFound ]
-            location:   [ NotFound ]        
+            post:       [ NotExist ]
+            location:   [ NotExist ]        
+```
+/social/posts/{post_id}/likes/ `protected` 
+```
+get:    JSON { [ { username:str, name:str, image:str:url }, ... ] }
+        ------------------------------
+        error:
+            post:       [ NotExist ]
+-----------------------------------------------------------------
+put:    success:
+            message: PostLiked
+            message: PostDisLiked
+        
+        error:
+            post:       [ NotExist ]
+            profile:    [ Banned ]
+```
+/social/posts/{post_id}/comments/ `protected` 
+```
+get:    JSON { [ { username:str, name:str, image:str:url, text:str }, ... ] }
+        ------------------------------
+        error:
+            post:       [ NotExist ]
+-----------------------------------------------------------------
+post:   JSON { text:str }
+        success:
+            message: CommentCreated
+        
+        error:
+            text:       [ Required ]
+            post:       [ NotExist ]
+            profile:    [ Banned ]
 ```
 /social/tags/?Q `protected`
 ```

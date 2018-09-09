@@ -342,4 +342,69 @@ class Posts(APIView):
                 errors["image"] = ["Required"]
             return JsonResponse({"error": errors}, status=400)
 
+
 # todo pagination is not implemented, but needed!
+
+class PostLikesAPIView(APIView):
+    def get(self, request, post_id):
+        try:
+            post = Post.objects.get(pk=post_id)
+            users = []
+            for user in post.likes.all():
+                users.append({
+                    "username": user.username,
+                    "name": user.profile.name,
+                    "image": str(user.profile.image)
+                })
+            return JsonResponse(data=users, safe=False)
+        except ObjectDoesNotExist:
+            return JsonResponse({"error": {"post": ["NotExist"]}}, status=400)
+
+    def put(self, request, post_id):
+        try:
+            post = Post.objects.get(pk=post_id)
+            if not post.likes.filter(id=request.user.id).exists():
+                post.likes.add(request.user)
+                return JsonResponse({"message": "PostLiked"})
+            else:
+                post.likes.remove(request.user)
+                return JsonResponse({"message": "PostDisLiked"})
+        except ObjectDoesNotExist:
+            return JsonResponse({"error": {"post": ["NotExist"]}}, status=400)
+
+
+class PostCommentsAPIView(APIView):
+    def get(self, request, post_id):
+        try:
+            post = Post.objects.get(pk=post_id)
+            comments = []
+            for comment in post.comments.all():
+                comments.append({
+                    "comment_id": comment.id,
+                    "username": comment.user.username,
+                    "name": comment.user.profile.name,
+                    "image": str(comment.user.profile.image),
+                    "text": comment.text
+                })
+            return JsonResponse(data=comments, safe=False)
+        except ObjectDoesNotExist:
+            return JsonResponse({"error": {"post": ["NotExist"]}}, status=400)
+
+    def post(self, request, post_id):
+        text = request.data.get('text')
+        if text:
+            try:
+                post = Post.objects.get(pk=post_id)
+                comment = post.comments.create(user=request.user, text=text)
+                comment = {
+                    "comment_id": comment.id,
+                    "username": comment.user.username,
+                    "name": comment.user.profile.name,
+                    "image": str(comment.user.profile.image),
+                    "text": comment.text
+                }
+                return JsonResponse(data=comment, safe=False)
+            except ObjectDoesNotExist:
+                return JsonResponse({"error": {"post": ["NotExist"]}}, status=400)
+        else:
+            return JsonResponse({"error": {"text": ["Required"]}}, status=400)
