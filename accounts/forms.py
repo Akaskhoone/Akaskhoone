@@ -9,7 +9,7 @@ from django.contrib.auth.password_validation import validate_password
 class ProfileEditForm(forms.Form):
     # name_validator = UnicodeNameValidator()
     name = forms.CharField(max_length=100)
-    bio = forms.CharField()
+    bio = forms.CharField(required=False)
     image = forms.ImageField(required=False)
 
     def save(self, user):
