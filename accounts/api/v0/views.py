@@ -396,7 +396,7 @@ class InvitationAPIView(APIView):
 
             except Exception as e:
                 contact = Contact.objects.get_or_create(email=email)[0]
-                invitation = Invitation.objects.get_or_create(contact=contact , user=requester)[0]
+                invitation = Invitation.objects.get_or_create(contact=contact, user=requester)[0]
                 print(email)
                 if invitation.invited:
                     ret.update({'email': email, 'invited': True})
@@ -414,7 +414,8 @@ class InvitationAPIView(APIView):
             try:
                 invitation = requester.invitations.get(contact=contact)
                 print(email)
-                sending_mail(email, "Akaskhoone Invitation", "Hi there, you`ve been invited to join us at Akaskhooneh")
+                sending_mail(email, "Akaskhoone Invitation",
+                             "Hi there,\n{} invited you to join us at Akaskhooneh".format(requester.username))
                 print("shit1")
                 invitation.invited = True
                 return JsonResponse({"message": "success"}, status=200)
@@ -422,4 +423,30 @@ class InvitationAPIView(APIView):
                 print(e)
                 return JsonResponse({"error": {"RequestError": ["invitationError"]}}, status=400)
         except Exception as e:
-            return JsonResponse({"error": {"contact": ["NotExist"]}},status=400)
+            return JsonResponse({"error": {"contact": ["NotExist"]}}, status=400)
+
+
+class ResetPasswordAPIView(APIView):
+    authentication_classes = ()
+    permission_classes = (AllowAny,)
+
+    def post(self, request):
+        try:
+            email = request.data.get('email')
+            user1 = User.objects.get(email=email)
+            try:
+                username = request.data.get('username')
+                user2 = User.objects.get(username=username)
+                if user1 == user2:
+                    password = User.objects.make_random_password()
+                    sending_mail(email, "Reset Password",
+                                 "Hi {}\nYour new password is: {}".format(user1.profile.name, password))
+                    user1.set_password(password)
+                    user1.save()
+                    return JsonResponse({"message": "success"}, status=200)
+                else:
+                    return JsonResponse({"message": "success"}, status=200)
+            except Exception as e:
+                return JsonResponse({"message": "success"}, status=200)
+        except Exception as e:
+            return JsonResponse({"message": "success"}, status=200)
