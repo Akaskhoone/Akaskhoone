@@ -12,5 +12,5 @@ urlpatterns = [
     path('profile/followers/', FollowersAPIView.as_view(), name='followers'),
     path('profile/followings/', FollowingsAPIView.as_view(), name='followings'),
     path('invitation/', InvitationAPIView.as_view(), name='invitation'),
-    path('resetpass/', ResetPasswordAPIView.as_view(), name='resetpassword')
+    path('resetpassword/', ResetPasswordAPIView.as_view(), name='resetpassword')
 ]

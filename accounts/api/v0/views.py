@@ -237,7 +237,7 @@ class Signup(APIView):
         try:
             check_exist = request.META.get('CONTENT_TYPE').__contains__('form-data')
         except Exception as e:
-            pass
+            print(e)
         if not check_exist:
             email = request.data.get('email')
             password = request.data.get('password')
@@ -392,7 +392,6 @@ class InvitationAPIView(APIView):
             except Exception as e:
                 contact = Contact.objects.get_or_create(email=email)[0]
                 invitation = Invitation.objects.get_or_create(contact=contact, user=requester)[0]
-                print(email)
                 if invitation.invited:
                     ret.update({'email': email, 'invited': True})
                 else:
@@ -408,14 +407,11 @@ class InvitationAPIView(APIView):
             contact = Contact.objects.get(email=email)
             try:
                 invitation = requester.invitations.get(contact=contact)
-                print(email)
                 sending_mail(email, "Akaskhoone Invitation",
                              "Hi there,\n{} invited you to join us at Akaskhooneh".format(requester.username))
-                print("shit1")
                 invitation.invited = True
                 return JsonResponse({"message": "success"}, status=200)
             except Exception as e:
-                print(e)
                 return JsonResponse({"error": {"RequestError": ["invitationError"]}}, status=400)
         except Exception as e:
             return JsonResponse({"error": {"contact": ["NotExist"]}}, status=400)
