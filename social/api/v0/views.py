@@ -1,16 +1,15 @@
 import json
-
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import Paginator, EmptyPage, InvalidPage
-from social.api.v0.serializers import *
 from rest_framework.views import APIView
 from django.http import JsonResponse
-from django.contrib.auth import get_user_model
 from rest_framework.parsers import FormParser, MultiPartParser
 from django.utils.datastructures import MultiValueDictKeyError
-from social.models import Post, Tag, Board
-from social.forms import *
+from social.forms import CreatePostFrom
 from accounts.api.utils import get_user
+from django.contrib.auth import get_user_model
+from social.models import Post, Tag, Board
+from akaskhoone.exceptions import error_data, success_data
 
 User = get_user_model()
 
@@ -32,7 +31,7 @@ class Tags(APIView):
             if request.query_params == {}:
                 matched_tags = [str(t) for t in Tag.objects.all()]
             else:
-                return JsonResponse({"error": "invalid"}, status=400)
+                return JsonResponse(error_data(request="Invalid"), status=400)
 
         return JsonResponse({
             "matched_tags": matched_tags
@@ -97,9 +96,8 @@ class BoardsAPIView(APIView):
             print("status: 200 >> board objects returned for user {}".format(user))
             return JsonResponse(data, status=200, safe=False)
         else:
-            print("status: 400")
-            print({"error": {"Profile": ["NotExist"]}})
-            return JsonResponse({"error": {"Profile": ["NotExist"]}}, status=400)
+            print("status: 400", error_data(profile="NotExist"))
+            return JsonResponse(error_data(profile="NotExist"), status=400)
 
     def post(self, request):
         name = request.data.get('name')
@@ -114,9 +112,8 @@ class BoardsAPIView(APIView):
                         pass
                 if board.posts.count() == 0:
                     board.delete()
-                    print("status: 400")
-                    print({"error": {"posts": ["NotValid"]}})
-                    return JsonResponse({"error": {"posts": ["NotValid"]}}, status=400)
+                    print("status: 400", error_data(posts="NotValid"))
+                    return JsonResponse(error_data(posts="NotValid"), status=400)
                 posts = []
                 for post in board.posts.all():
                     posts.append({
@@ -129,22 +126,19 @@ class BoardsAPIView(APIView):
                     "count": board.posts.count(),
                     "posts": posts
                 }
-                print("status: 200")
-                print(data)
+                print("status: 200", data)
                 return JsonResponse(data, status=200)
             except Exception as e:
-                print("status: 400")
-                print({"error": {"RequestError": ["InternalError"]}})
-                return JsonResponse({"error": {"RequestError": ["InternalError"]}}, status=400)
+                print("status: 400", error_data(request="InternalError"))
+                return JsonResponse(error_data(request="InternalError"), status=400)
         else:
-            errors = {}
+            errors = error_data()
             if not name:
-                errors.update({"name": ["Required"]})
+                errors = error_data(name="Required")
             if not posts:
-                errors.update({"posts": ["Required"]})
-            print("status: 400")
-            print({"error": errors})
-            return JsonResponse({"error": errors}, status=400)
+                errors = error_data(posts="Required")
+            print("status: 400", errors)
+            return JsonResponse(errors, status=400)
 
 
 class BoardDetailAPIView(APIView):
@@ -163,14 +157,12 @@ class BoardDetailAPIView(APIView):
                 "count": board.posts.count(),
                 "posts": posts
             }
-            print("status: 200")
-            print(data)
+            print("status: 200", data)
             return JsonResponse(data, status=200)
 
         except Exception as e:
-            print("status: 400")
-            print({"error": {"board": ["NotExist"]}})
-            return JsonResponse({"error": {"board": ["NotExist"]}}, status=400)
+            print("status: 400", error_data(board="NotExist"))
+            return JsonResponse(error_data(board="NotExist"), status=400)
 
     def put(self, request, board_id):
         try:
@@ -205,27 +197,23 @@ class BoardDetailAPIView(APIView):
                 "count": board.posts.count(),
                 "posts": posts
             }
-            print("status: 200")
-            print(data)
+            print("status: 200", data)
             return JsonResponse(data, status=200)
 
         except Exception as e:
-            print("status: 400")
-            print({"error": {"board": ["NotExist"]}})
-            return JsonResponse({"error": {"board": ["NotExist"]}}, status=400)
+            print("status: 400", error_data(board="NotExist"))
+            return JsonResponse(error_data(board="NotExist"), status=400)
 
     def delete(self, request, board_id):
         try:
             board = Board.objects.get(pk=board_id)
             board.delete()
-            print("status: 200")
-            print({"message": "board deleted"})
-            return JsonResponse({"message": "board deleted"}, status=200)
+            print("status: 200", success_data("BoardDeleted"))
+            return JsonResponse(success_data("BoardDeleted"), status=200)
 
         except Exception as e:
-            print("status: 400")
-            print({"error": {"board": ["NotExist"]}})
-            return JsonResponse({"error": {"board": ["NotExist"]}}, status=400)
+            print("status: 400", error_data(board="NotExist"))
+            return JsonResponse(error_data(board="NotExist"), status=400)
 
 
 class PostWithID(APIView):
@@ -251,7 +239,8 @@ class PostWithID(APIView):
                 "tags": [tag.name for tag in post.tags.all()]
             })
         except ObjectDoesNotExist as e:
-            return JsonResponse({"post": ["NotExist"]}, status=400)
+            print("status: 400", error_data(post="NotExist"))
+            return JsonResponse(error_data(post="NotExist"), status=400)
 
     def put(self, request, post_id):
         try:
@@ -271,15 +260,18 @@ class PostWithID(APIView):
                 "tags": [tag.name for tag in post.tags.all()]
             })
         except ObjectDoesNotExist:
-            return JsonResponse({"post": ["NotExist"]}, status=400)
+            print("status: 400", error_data(post="NotExist"))
+            return JsonResponse(error_data(post="NotExist"), status=400)
 
     def delete(self, request, post_id):
         try:
             post = Post.objects.get(pk=post_id)
             post.delete()
-            return JsonResponse({"message": "Deleted!"})
+            print("status: 200", success_data("PostDeletedSuccessfully"))
+            return JsonResponse(success_data("PostDeletedSuccessfully"))
         except ObjectDoesNotExist as e:
-            return JsonResponse({"post": ["NotExist"]}, status=400)
+            print("status: 400", error_data(post="NotExist"))
+            return JsonResponse(error_data(post="NotExist"), status=400)
 
 
 class Posts(APIView):
@@ -326,14 +318,16 @@ class Posts(APIView):
         elif email:
             posts_list = self.get_posts(email=email)
         else:
-            return JsonResponse({"error": "Invalid"}, status=400)
+            print("status: 400", error_data(request="Invalid"))
+            return JsonResponse(error_data(request="Invalid"), status=400)
         return JsonResponse({"posts": posts_list})
 
     def post(self, request):
         new_post = CreatePostFrom(request.POST, request.FILES)
         if new_post.is_valid():
             new_post.save(request.user)
-            return JsonResponse({"message": "post created successfully"})
+            print("status: 200", success_data("PostCreatedSuccessfully"))
+            return JsonResponse(success_data("PostCreatedSuccessfully"))
         else:
             errors = {}
             errors_as_json = json.loads(new_post.errors.as_json())
@@ -358,7 +352,8 @@ class PostLikesAPIView(APIView):
                 })
             return JsonResponse(data=users, safe=False)
         except ObjectDoesNotExist:
-            return JsonResponse({"error": {"post": ["NotExist"]}}, status=400)
+            print("status: 400", error_data(post="NotExist"))
+            return JsonResponse(error_data(post="NotExist"), status=400)
 
     def put(self, request, post_id):
         try:
@@ -367,16 +362,19 @@ class PostLikesAPIView(APIView):
                 method = request.data.get('method')
                 if method == "like":
                     post.likes.add(request.user)
-                    return JsonResponse({"message": "PostLiked"})
+                    return JsonResponse(success_data("PostLiked"))
                 elif method == "dislike":
                     post.likes.remove(request.user)
-                    return JsonResponse({"message": "PostDisliked"})
+                    return JsonResponse(success_data("PostDisliked"))
                 else:
-                    return JsonResponse({"error": {"method": ["WrongData"]}}, status=400)
+                    print("status: 400", error_data(method="WrongData"))
+                    return JsonResponse(error_data(method="WrongData"), status=400)
             else:
-                return JsonResponse({"error": {"method": ["Required"]}}, status=400)
+                print("status: 400", error_data(method="Required"))
+                return JsonResponse(error_data(method="Required"), status=400)
         except ObjectDoesNotExist:
-            return JsonResponse({"error": {"post": ["NotExist"]}}, status=400)
+            print("status: 400", error_data(post="NotExist"))
+            return JsonResponse(error_data(post="NotExist"), status=400)
 
 
 class PostCommentsAPIView(APIView):
@@ -394,7 +392,8 @@ class PostCommentsAPIView(APIView):
                 })
             return JsonResponse(data=comments, safe=False)
         except ObjectDoesNotExist:
-            return JsonResponse({"error": {"post": ["NotExist"]}}, status=400)
+            print("status: 400", error_data(post="NotExist"))
+            return JsonResponse(error_data(post="NotExist"), status=400)
 
     def post(self, request, post_id):
         text = request.data.get('text')
@@ -411,6 +410,8 @@ class PostCommentsAPIView(APIView):
                 }
                 return JsonResponse(data=comment, safe=False)
             except ObjectDoesNotExist:
-                return JsonResponse({"error": {"post": ["NotExist"]}}, status=400)
+                print("status: 400", error_data(post="NotExist"))
+                return JsonResponse(error_data(post="NotExist"), status=400)
         else:
-            return JsonResponse({"error": {"text": ["Required"]}}, status=400)
+            print("status: 400", error_data(text="Required"))
+            return JsonResponse(error_data(text="Required"), status=400)
