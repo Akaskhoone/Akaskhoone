@@ -7,7 +7,7 @@ from django.contrib.auth.password_validation import validate_password
 from accounts.forms import SignUpForm, ProfileEditForm
 from rest_framework_simplejwt.views import TokenObtainPairView as TOPW, TokenRefreshView as TRV, TokenVerifyView as TVW
 from accounts.api.utils import *
-from accounts.models import  *
+from accounts.models import *
 import json
 
 
@@ -377,10 +377,6 @@ class FollowingsAPIView(APIView):
 
 
 class InvitationAPIView(APIView):
-    """
-    #farz kardam ke toie DB ie chizi zadim be user ha be esem contact
-    #farz kardam data ke miad injorie {{email:mamad@gmail.com},{},{},...}
-    """
     def post(self, request):
         ret = {}
         requester = request.user

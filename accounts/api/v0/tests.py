@@ -71,14 +71,11 @@ class APIChangePasswordTest(APIJWTTestCase):
         User.objects.create_user(username='reza', email='reza@admin.com', password='passreza')
         self.client.login(email='reza@admin.com', password='passreza')
         self.client.put(reverse("api.v0.accounts:profile"), {'old_password': 'passreza', 'new_password': 'rezareza'})
-        response = self.client.post(reverse("api.v0.accounts:login"),
-                                    {'email': 'reza@admin.com', 'password': 'passreza'})
+        response = self.client.post(reverse("api.v0.accounts:login"), {'email': 'reza@admin.com', 'password': 'passreza'})
         self.assertEqual(response.status_code, 400)
-        response = self.client.post(reverse("api.v0.accounts:login"),
-                                    {'email': 'reza@admin.com', 'password': 'mamadmamad'})
+        response = self.client.post(reverse("api.v0.accounts:login"), {'email': 'reza@admin.com', 'password': 'mammamad'})
         self.assertEqual(response.status_code, 400)
-        response = self.client.post(reverse("api.v0.accounts:login"),
-                                    {'email': 'reza@admin.com', 'password': 'rezareza'})
+        response = self.client.post(reverse("api.v0.accounts:login"), {'email': 'reza@admin.com', 'password': 'rezareza'})
         self.assertEqual(response.status_code, 200)
 
     def test_valid_password(self):
@@ -86,13 +83,8 @@ class APIChangePasswordTest(APIJWTTestCase):
         self.client.login(email='reza@admin.com', password='passreza')
 
         # common_pass
-        try:
-            self.client.post(reverse("api.v0.accounts:profile"),
-                             {'old_password': 'passreza', 'new_password': '12345678'})
-            print("SSSSSSSSSSHHHHHHHHHHIIIIIIIIIITTTTTTTTTT  wher are the validators ??!! at line 88")
-        except ValidationError as e:
-            # print(E.messages)
-            self.assertListEqual(e.messages, ['This password is too common.', 'This password is entirely numeric.'])
+        self.client.put(reverse("api.v0.accounts:profile"), {'old_password': 'passreza', 'new_password': '12345678'})
+
         response = self.client.post(reverse("api.v0.accounts:login"),
                                     {'email': 'reza@admin.com', 'password': '12345678'})
         self.assertEqual(response.status_code, 400)
@@ -101,11 +93,8 @@ class APIChangePasswordTest(APIJWTTestCase):
         self.assertEqual(response.status_code, 200)
 
         # min_lenght
-        try:
-            self.client.post(reverse("api.v0.accounts:profile"), {'old_password': 'passreza', 'new_password': 'j43n54'})
-            print("SSSSSSSSSSHHHHHHHHHHIIIIIIIIIITTTTTTTTTT  wher are the validators ??!! at line 100")
-        except ValidationError:
-            pass
+        self.client.put(reverse("api.v0.accounts:profile"), {'old_password': 'passreza', 'new_password': 'j43n54'})
+
         response = self.client.post(reverse("api.v0.accounts:login"), {'email': 'reza@admin.com', 'password': 'j43n54'})
         self.assertEqual(response.status_code, 400)
         response = self.client.post(reverse("api.v0.accounts:login"),
@@ -113,12 +102,8 @@ class APIChangePasswordTest(APIJWTTestCase):
         self.assertEqual(response.status_code, 200)
 
         # Numerical_pass
-        try:
-            self.client.post(reverse("api.v0.accounts:profile"),
-                             {'old_password': 'passreza', 'new_password': '1231423223453'})
-            print("SSSSSSSSSSHHHHHHHHHHIIIIIIIIIITTTTTTTTTT  wher are the validators ??!! at line 112")
-        except ValidationError:
-            pass
+        self.client.put(reverse("api.v0.accounts:profile"), {'old_password': 'passreza', 'new_password': '1231423223453'})
+
         response = self.client.post(reverse("api.v0.accounts:login"),
                                     {'email': 'reza@admin.com', 'password': '1231423223453'})
         self.assertEqual(response.status_code, 400)
