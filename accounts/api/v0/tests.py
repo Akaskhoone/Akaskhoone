@@ -2,6 +2,7 @@ from accounts.api.utils import APIJWTTestCase
 from accounts.api.v0.serializers import *
 from django.urls import reverse
 from django.core.exceptions import *
+from accounts.api.utils import sending_mail
 import requests
 
 
@@ -70,14 +71,11 @@ class APIChangePasswordTest(APIJWTTestCase):
         User.objects.create_user(username='reza', email='reza@admin.com', password='passreza')
         self.client.login(email='reza@admin.com', password='passreza')
         self.client.put(reverse("api.v0.accounts:profile"), {'old_password': 'passreza', 'new_password': 'rezareza'})
-        response = self.client.post(reverse("api.v0.accounts:login"),
-                                    {'email': 'reza@admin.com', 'password': 'passreza'})
+        response = self.client.post(reverse("api.v0.accounts:login"), {'email': 'reza@admin.com', 'password': 'passreza'})
         self.assertEqual(response.status_code, 400)
-        response = self.client.post(reverse("api.v0.accounts:login"),
-                                    {'email': 'reza@admin.com', 'password': 'mamadmamad'})
+        response = self.client.post(reverse("api.v0.accounts:login"), {'email': 'reza@admin.com', 'password': 'mammamad'})
         self.assertEqual(response.status_code, 400)
-        response = self.client.post(reverse("api.v0.accounts:login"),
-                                    {'email': 'reza@admin.com', 'password': 'rezareza'})
+        response = self.client.post(reverse("api.v0.accounts:login"), {'email': 'reza@admin.com', 'password': 'rezareza'})
         self.assertEqual(response.status_code, 200)
 
     def test_valid_password(self):
@@ -85,13 +83,8 @@ class APIChangePasswordTest(APIJWTTestCase):
         self.client.login(email='reza@admin.com', password='passreza')
 
         # common_pass
-        try:
-            self.client.post(reverse("api.v0.accounts:profile"),
-                             {'old_password': 'passreza', 'new_password': '12345678'})
-            print("SSSSSSSSSSHHHHHHHHHHIIIIIIIIIITTTTTTTTTT  wher are the validators ??!! at line 88")
-        except ValidationError as e:
-            # print(E.messages)
-            self.assertListEqual(e.messages, ['This password is too common.', 'This password is entirely numeric.'])
+        self.client.put(reverse("api.v0.accounts:profile"), {'old_password': 'passreza', 'new_password': '12345678'})
+
         response = self.client.post(reverse("api.v0.accounts:login"),
                                     {'email': 'reza@admin.com', 'password': '12345678'})
         self.assertEqual(response.status_code, 400)
@@ -100,11 +93,8 @@ class APIChangePasswordTest(APIJWTTestCase):
         self.assertEqual(response.status_code, 200)
 
         # min_lenght
-        try:
-            self.client.post(reverse("api.v0.accounts:profile"), {'old_password': 'passreza', 'new_password': 'j43n54'})
-            print("SSSSSSSSSSHHHHHHHHHHIIIIIIIIIITTTTTTTTTT  wher are the validators ??!! at line 100")
-        except ValidationError:
-            pass
+        self.client.put(reverse("api.v0.accounts:profile"), {'old_password': 'passreza', 'new_password': 'j43n54'})
+
         response = self.client.post(reverse("api.v0.accounts:login"), {'email': 'reza@admin.com', 'password': 'j43n54'})
         self.assertEqual(response.status_code, 400)
         response = self.client.post(reverse("api.v0.accounts:login"),
@@ -112,12 +102,8 @@ class APIChangePasswordTest(APIJWTTestCase):
         self.assertEqual(response.status_code, 200)
 
         # Numerical_pass
-        try:
-            self.client.post(reverse("api.v0.accounts:profile"),
-                             {'old_password': 'passreza', 'new_password': '1231423223453'})
-            print("SSSSSSSSSSHHHHHHHHHHIIIIIIIIIITTTTTTTTTT  wher are the validators ??!! at line 112")
-        except ValidationError:
-            pass
+        self.client.put(reverse("api.v0.accounts:profile"), {'old_password': 'passreza', 'new_password': '1231423223453'})
+
         response = self.client.post(reverse("api.v0.accounts:login"),
                                     {'email': 'reza@admin.com', 'password': '1231423223453'})
         self.assertEqual(response.status_code, 400)
@@ -625,24 +611,3 @@ class APIFollowingTest(APIJWTTestCase):
 #
 #
 
-class Testmail(APIJWTTestCase):
-    def test(self):
-        maildata = {
-            "to": "request.data.get('email')",
-            "body": "hello mail",
-            "subject": "Invitation mail to Akaskhooneh from a friend"
-        }
-        headers = {"agent-key": "3Q0gRe22zp"}
-        response = requests.post(url='http://192.168.10.66:80/api/send/mail', data=maildata, headers=headers)
-        print(response)
-
-# class Testmail(APIJWTTestCase):
-#     def test(self):
-#         maildata = {
-#             "to": "request.data.get('email')",
-#             "body": "hello mail",
-#             "subject": "Invitation mail to Akaskhooneh from a friend"
-#         }
-#         headers={"agent-key": "3Q0gRe22zp"}
-#         response = requests.post(url='http://192.168.10.66:80/api/send/mail', data=maildata, headers=headers)
-#         print(response)
