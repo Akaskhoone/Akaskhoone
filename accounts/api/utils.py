@@ -48,6 +48,7 @@ def send_mail(to,subject,body):
     requests.post(url='http://192.168.10.66:80/api/send/mail', data=json.dumps(maildata), headers=headers)
     return
 
+
 class APIJWTClient(APIClient):
     def login(self, url="/api/v0/accounts/login/", get_response=True, token="access", auth_header_type=0,
               **credentials):

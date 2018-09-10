@@ -7,6 +7,7 @@ from django.contrib.auth.password_validation import validate_password
 from accounts.forms import SignUpForm, ProfileEditForm
 from rest_framework_simplejwt.views import TokenObtainPairView as TOPW, TokenRefreshView as TRV, TokenVerifyView as TVW
 from accounts.api.utils import send_mail
+from akaskhoone.exceptions import error_data, success_data
 import json
 
 
@@ -15,18 +16,17 @@ class TokenObtainPairView(TOPW):
         try:
             return super(TokenObtainPairView, self).post(request)
         except Exception as e:
-            errors = {}
+            errors = error_data()
             for i in e.args[0]:
                 if i == 'non_field_errors':
-                    errors.update({"RequestError": ["WrongCredentials"]})
+                    errors = error_data(__data__=errors, RequestError="WrongCredentials")
                 elif i == 'email':
-                    errors.update({"email": ["Required"]})
+                    errors = error_data(__data__=errors, email="Required")
                 elif i == 'password':
-                    errors.update({"password": ["Required"]})
+                    errors = error_data(__data__=errors, password="Required")
 
-            print("status: 400")
-            print({"error": errors})
-            return JsonResponse({"error": errors}, status=400)
+            print("status: 400", errors)
+            return JsonResponse(errors, status=400)
 
 
 class TokenRefreshView(TRV):
@@ -34,14 +34,13 @@ class TokenRefreshView(TRV):
         try:
             return super(TokenRefreshView, self).post(request)
         except Exception as e:
-            errors = {}
+            errors = error_data()
             for i in e.args[0]:
                 if i == 'refresh':
-                    errors.update({"Refresh": ["Required"]})
+                    errors = error_data(refresh="Required")
 
-            print("status: 400")
-            print({"error": errors})
-            return JsonResponse({"error": errors}, status=400)
+            print("status: 400", errors)
+            return JsonResponse(errors, status=400)
 
 
 class TokenVerifyView(TVW):
@@ -49,16 +48,15 @@ class TokenVerifyView(TVW):
         try:
             return super(TokenVerifyView, self).post(request)
         except Exception as e:
-            errors = {}
+            errors = error_data()
             for i in e.args:
                 if str(i).__contains__('invalid'):
-                    errors.update({"access": ["Expired"]})
+                    errors = error_data(access="Expired")
                 elif str(i).__contains__('required'):
-                    errors.update({"token": ["Required"]})
+                    errors = error_data(token="Required")
 
-            print("status: 400")
-            print({"error": errors})
-            return JsonResponse({"error": errors}, status=400)
+            print("status: 400", errors)
+            return JsonResponse(errors, status=400)
 
 
 class ProfileAPIView(APIView):
@@ -78,7 +76,7 @@ class ProfileAPIView(APIView):
                 }
                 return JsonResponse(data, status=200)
             except:
-                return JsonResponse({"error": {"Profile": ["NotExist"]}}, status=400)
+                return JsonResponse(error_data(profile="NotExist"), status=400)
 
         username = request.query_params.get("username")
         email = request.query_params.get("email")
@@ -113,8 +111,7 @@ class ProfileAPIView(APIView):
                     }
                     return JsonResponse(data, status=200)
                 except Exception as e:
-                    print(e)
-                    return JsonResponse({"error": {"Profile": ["NotExist"]}}, status=400)
+                    return JsonResponse(error_data(profile="NotExist"), status=400)
         elif email:
             if search and eval(search):
                 results = []
@@ -143,9 +140,9 @@ class ProfileAPIView(APIView):
                     }
                     return JsonResponse(data, status=200)
                 except:
-                    return JsonResponse({"error": {"Profile": ["NotExist"]}}, status=400)
+                    return JsonResponse(error_data(profile="NotExist"), status=400)
         else:
-            return JsonResponse({"error": "invalid"}, status=400)
+            return JsonResponse(error_data(request="Invalid"), status=400)
 
     def put(self, request):
         user = request.user
@@ -157,17 +154,14 @@ class ProfileAPIView(APIView):
                     validate_password(new_password, user=user, password_validators=None)
                     user.set_password(new_password)
                     user.save()
-                    print("status: 200")
-                    print({"message": "user password changed"})
-                    return JsonResponse({"message": "user password changed"}, status=200)
+                    print("status: 200", success_data("PasswordChanged"))
+                    return JsonResponse(success_data("PasswordChanged"), status=200)
                 except Exception as e:
-                    print("status: 400")
-                    print({"error": {"new_password": get_password_errors(e)}})
-                    return JsonResponse({"error": {"new_password": get_password_errors(e)}}, status=400)
+                    print("status: 400", error_data(new_password=get_password_errors(e)))
+                    return JsonResponse(error_data(new_password=get_password_errors(e)), status=400)
             else:
-                print("status: 400")
-                print({"error": {"old_password": ["NotMatch"]}})
-                return JsonResponse({"error": {"old_password": ["NotMatch"]}}, status=400)
+                print("status: 400", error_data(old_password="NotMatch"))
+                return JsonResponse(error_data(old_password="NotMatch"), status=400)
 
         elif request.POST.get('name'):
             profile_edit_form = ProfileEditForm(data=request.POST, files=request.FILES)
@@ -183,24 +177,21 @@ class ProfileAPIView(APIView):
                     "followings": user.profile.followings.count(),
                     "image": str(user.profile.image) if user.profile.image else "profile_photos/default.jpg"
                 }
-                print("status: 200")
-                print(data)
+                print("status: 200", data)
                 return JsonResponse(data, status=200)
             else:
-                print("status: 400")
-                print({"error": {"image": ["Size"]}})
-                return JsonResponse({"error": {"image": ["Size"]}}, status=400)
+                print("status: 400", error_data(image="Size"))
+                return JsonResponse(error_data(image="Size"), status=400)
 
         else:
-            errors = {}
+            errors = error_data()
             if not old_password:
-                errors.update({"old_password": ["Required"]})
+                errors = error_data(old_password="Required")
             if not new_password:
-                errors.update({"new_password": ["Required"]})
+                errors = error_data(new_password="Required")
 
-            print("status: 400")
-            print({"error": errors})
-            return JsonResponse({"error": errors}, status=400)
+            print("status: 400", errors)
+            return JsonResponse(errors, status=400)
 
 
 class Signup(APIView):
@@ -241,36 +232,32 @@ class Signup(APIView):
             email = request.data.get('email')
             password = request.data.get('password')
             if email:
-                errors = {}
+                errors = error_data()
                 try:
                     User.objects.get(email=email)
-                    errors.update({"email": ["Exist"]})
+                    errors = error_data(email="Exist")
                 except Exception as e:
                     pass
                 if password:
                     try:
                         validate_password(password)
                     except Exception as e:
-                        errors.update({"password": get_password_errors(e)})
+                        errors = error_data(password=get_password_errors(e))
                 if errors:
-                    print("status: 400")
-                    print({"error": errors})
-                    return JsonResponse({"error": errors}, status=400)
+                    print("status: 400", errors)
+                    return JsonResponse(errors, status=400)
                 else:
-                    print("status: 200")
-                    print({"message": "user can be created"})
-                    return JsonResponse({"message": "user can be created"}, status=200)
+                    print("status: 200", success_data("CanBeCreated"))
+                    return JsonResponse(success_data("CanBeCreated"), status=200)
             else:
-                print("status: 400")
-                print({"error": {"email": ["Required"]}})
-                return JsonResponse({"error": {"email": ["Required"]}}, status=400)
+                print("status: 400", error_data(email="Required"))
+                return JsonResponse(error_data(email="Required"), status=400)
 
         signup_form = SignUpForm(data=request.POST, files=request.FILES)
         if signup_form.is_valid():
             signup_form.save()
-            print("status: 200")
-            print({"message": "user created successfully"})
-            return JsonResponse({"message": "user created successfully"}, status=200)
+            print("status: 200", success_data("UserCreated"))
+            return JsonResponse(success_data("UserCreated"), status=200)
         else:
             errors = {}
             # fixme removing json, signup_form.errors is Dict type
@@ -280,8 +267,7 @@ class Signup(APIView):
                 if all_erros_of_the_type:
                     errors[error_type] = all_erros_of_the_type
 
-            print("status: 400")
-            print({"error": errors})
+            print("status: 400", {"error": errors})
             return JsonResponse({"error": errors}, status=400)
 
 
@@ -298,9 +284,8 @@ class FollowersAPIView(APIView):
 
     def get(self, request):
         if not get_user(request):
-            # print("status: 400")
-            # print({"error": {"Profile": ["NotExist"]}})
-            return JsonResponse({"error": {"Profile": ["NotExist"]}}, status=400)
+            print("status: 400", error_data(profile="NotExist"))
+            return JsonResponse(error_data(profile="NotExist"), status=400)
         user = get_user(request)
         requester = request.user
         ret = {}
@@ -326,8 +311,9 @@ class FollowingsAPIView(APIView):
 
         USERs are chosen from the Requester Following List in DateBase
         """
-        if get_user(request):
-            return JsonResponse({"error": {"Profile": ["NotExist"]}}, status=400)
+        if not get_user(request):
+            print("status: 400", error_data(profile="NotExist"))
+            return JsonResponse(error_data(profile="NotExist"), status=400)
         user = get_user(request)
         requester = request.user
         ret = {}
@@ -350,29 +336,37 @@ class FollowingsAPIView(APIView):
                 user = User.objects.get(username=username)
                 requester = request.user
                 if user == requester:
-                    return JsonResponse({"error": {"Profile": ["NotExist"]}}, status=400)
+                    print("status: 400", error_data(profile="NotExist"))
+                    return JsonResponse(error_data(profile="NotExist"), status=400)
                 try:
                     requester.profile.followings.get(user.profile)
-                    return JsonResponse({"success": {"message": ["followed successfully"]}}, status=200)
+                    print("status: 200", success_data("FollowedSuccessfully"))
+                    return JsonResponse(success_data("FollowedSuccessfully"), status=200)
                 except Exception as e:
                     requester.profile.followings.add(user.profile)
-                    return JsonResponse({"success": {"message": ["followed successfully"]}}, status=200)
+                    print("status: 200", success_data("FollowedSuccessfully"))
+                    return JsonResponse(success_data("FollowedSuccessfully"), status=200)
             except Exception as e:
-                return JsonResponse({"error": {"user": ["NotExist"]}}, status=400)
+                print("status: 400", error_data(profile="NotExist"))
+                return JsonResponse(error_data(profile="NotExist"), status=400)
 
         username = request.data.get('unfollow')
         try:
             user = User.objects.get(username=username)
             requester = request.user
             if user == requester:
-                return JsonResponse({"error": {"Profile": ["NotExist"]}}, status=400)
+                print("status: 400", error_data(profile="NotExist"))
+                return JsonResponse(error_data(profile="NotExist"), status=400)
             try:
                 requester.profile.followings.remove(user.profile.id)
-                return JsonResponse({"success": {"message": ["unfollowed successfully"]}}, status=200)
+                print("status: 200", success_data("UnFollowedSuccessfully"))
+                return JsonResponse(success_data("UnFollowedSuccessfully"), status=200)
             except Exception as e:
-                return JsonResponse({"success": {"message": ["unfollowed successfully"]}}, status=200)
+                print("status: 200", success_data("UnFollowedSuccessfully"))
+                return JsonResponse(success_data("UnFollowedSuccessfully"), status=200)
         except Exception as e:
-            return JsonResponse({"error": {"user": ["NotExist"]}}, status=400)
+            print("status: 400", error_data(profile="NotExist"))
+            return JsonResponse(error_data(profile="NotExist"), status=400)
 
 
 class InvitationAPIView(APIView):
@@ -394,7 +388,6 @@ class InvitationAPIView(APIView):
                     ret.update({'email': email, 'username': user.username, 'followed': False})
 
             except Exception as e:
-                # must add to unregisterd
                 try:
                     user.contact.users.get(user=requester)
                 except Exception as e:
@@ -414,4 +407,5 @@ class InvitationAPIView(APIView):
         user.contact.invited.add(user=requester)
         send_mail(request.data.get('email'), "Akaskhoone Invitation", "salam man mamadam az team poshtibani akaskhone\n"
                                                                       "shoma davat shodin be estefade az in app")
-        return JsonResponse({"message": "success"})
+        print("status: 200", success_data("UserInvited"))
+        return JsonResponse(success_data("UserInvited"))

@@ -1,6 +1,22 @@
 [
   {
     "model": "accounts.user",
+    "pk": 1,
+    "fields": {
+      "password": "pbkdf2_sha256$120000$yUTebWGbp23E$eIL0aDUQEnBdq+p0U2WdOfvXcR8qFClsBaFcLXjmuYk=",
+      "last_login": "2018-08-18T14:31:56.222Z",
+      "is_superuser": false,
+      "email": "mehhras@gmail.com",
+      "username": "Yasin",
+      "is_staff": false,
+      "is_active": true,
+      "date_joined": "2018-09-09T11:58:48.090Z",
+      "groups": [],
+      "user_permissions": []
+    }
+  },
+  {
+    "model": "accounts.user",
     "pk": 2,
     "fields": {
       "password": "pbkdf2_sha256$120000$8XTkM4ZaHVFS$F3UzYT1bGaojH/YM52tOc2TiSDfabTY3YPzbbJ6ZwxM=",
