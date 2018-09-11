@@ -26,11 +26,11 @@ def success_data(message: str):
 def akaskhoone_rest_framework_exceptions_handler(exc, context):
     response = exception_handler(exc, context)
     if isinstance(exc, InvalidToken):
-        response.data = error_data(toke="Invalid")
+        response.data = error_data(token="Invalid")
     elif isinstance(exc, AuthenticationFailed):
-        response.data = error_data(toke="Invalid")
+        response.data = error_data(token="Invalid")
     elif isinstance(exc, NotAuthenticated):
-        response.data = error_data(toke="Invalid")
+        response.data = error_data(token="Invalid")
     elif isinstance(exc, MethodNotAllowed):
         response.data = error_data(method="Invalid")
     return response
