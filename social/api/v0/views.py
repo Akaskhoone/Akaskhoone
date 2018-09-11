@@ -1,8 +1,9 @@
 import json
-
+from rest_framework.permissions import AllowAny
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import Paginator, EmptyPage, InvalidPage
 from social.api.v0.serializers import *
+from django.core import serializers
 from rest_framework.views import APIView
 from django.http import JsonResponse
 from django.contrib.auth import get_user_model
@@ -11,6 +12,11 @@ from django.utils.datastructures import MultiValueDictKeyError
 from social.models import Post, Tag, Board
 from social.forms import *
 from accounts.api.utils import get_user
+import redis
+from accounts.models import Contact
+
+#todo connect to redis in just one place
+Redis = redis.StrictRedis(host='localhost', port=6379, db=0)
 
 User = get_user_model()
 
@@ -367,9 +373,15 @@ class PostLikesAPIView(APIView):
                 method = request.data.get('method')
                 if method == "like":
                     post.likes.add(request.user)
+                    Redis.lpush("notifications",
+                                json.dumps({"type": "like", "user": serializers.serialize('json', [request.user]),
+                                            "post": serializers.serialize('json', [post])}))
                     return JsonResponse({"message": "PostLiked"})
                 elif method == "dislike":
                     post.likes.remove(request.user)
+                    Redis.lpush("notifications",
+                                json.dumps({"type": "dislike", "user": serializers.serialize('json', [request.user]),
+                                            "post": serializers.serialize('json', [post])}))
                     return JsonResponse({"message": "PostDisliked"})
                 else:
                     return JsonResponse({"error": {"method": ["WrongData"]}}, status=400)
@@ -409,8 +421,134 @@ class PostCommentsAPIView(APIView):
                     "image": str(comment.user.profile.image),
                     "text": comment.text
                 }
+                Redis.lpush("notifications",
+                            json.dumps({"type": "comment", "user": serializers.serialize('json', [request.user]),
+                                        "post": serializers.serialize('json', [post])}))
                 return JsonResponse(data=comment, safe=False)
             except ObjectDoesNotExist:
                 return JsonResponse({"error": {"post": ["NotExist"]}}, status=400)
         else:
             return JsonResponse({"error": {"text": ["Required"]}}, status=400)
+
+
+class Notifications(APIView):
+    def get(self, request):
+        limit = request.query_params.get('limit') or 1
+        page = request.query_params.get('page') or 1
+        page = int(page)
+        notifs_list = []
+        notifications = request.user.notifications.all().order_by('-date')
+        notifs_paginated = Paginator(notifications, limit)
+        for notif in notifs_paginated.object_list:
+            notifs_list.append({
+                "type": notif.data.type,
+                "user_name": notif.data.user.username,
+                "user_image": str(notif.data.user.profile.image),
+                "post_id": notif.data.post.id,
+                "post_image": str(notif.data.post.image),
+                "date": str(notif.data.date),
+            })
+        notifs_paginated.object_list = notifs_list
+        next_page = (page + 1) if (page + 1) <= notifs_paginated.num_pages else None
+        try:
+            notifs_list = list(notifs_paginated.page(page))
+        except EmptyPage or InvalidPage:
+            notifs_list = None
+        data = {
+            "posts": notifs_list,
+            "next": F"/social/home/?page={next_page}" if next_page else None
+        }
+        return JsonResponse(data, status=200, safe=False)
+
+
+class Private(APIView):
+    authentication_classes = ()
+    permission_classes = (AllowAny,)
+
+    def post(self, request):
+        for obj in serializers.deserialize("json", request.data["user"]):
+            user = obj.object
+        if request.data["type"] == "post":
+            for obj in serializers.deserialize("json", request.data["post"]):
+                post = obj.object
+            data = NOtificationData.objects.create(
+                type="post",
+                user=user,
+                post=post
+            )
+            for follower in user.profile.followers.all():
+                Notification.objects.create(
+                    user=follower.user,
+                    data=data
+                )
+        elif request.data["type"] == "like":
+            for obj in serializers.deserialize("json", request.data["post"]):
+                post = obj.object
+            data = NOtificationData.objects.create(
+                type="like",
+                user=user,
+                post=post,
+            )
+            Notification.objects.create(
+                user=post.user,
+                data=data
+            )
+        elif request.data["type"] == "dislike":
+            for obj in serializers.deserialize("json", request.data["post"]):
+                post = obj.object
+            data = NOtificationData.objects.create(
+                type="dislike",
+                user=user,
+                post=post
+            )
+            Notification.objects.create(
+                user=post.user,
+                data=data
+            )
+        elif request.data["type"] == "comment":
+            for obj in serializers.deserialize("json", request.data["post"]):
+                post = obj.object
+            data = NOtificationData.objects.create(
+                type="comment",
+                user=user,
+                post=post
+            )
+            Notification.objects.create(
+                user=post.user,
+                data=data
+            )
+        elif request.data["type"] == "follow":
+            for obj in serializers.deserialize("json", request.data["profile"]):
+                profile = obj.object
+            data = NOtificationData.objects.create(
+                type="follow",
+                user=user,
+                profile=profile
+            )
+            Notification.objects.create(
+                user=profile.user,
+                data=data
+            )
+        elif request.data["type"] == "unfollow":
+            for obj in serializers.deserialize("json", request.data["profile"]):
+                profile = obj.object
+            data = NOtificationData.objects.create(
+                type="unfollow",
+                user=user,
+                profile=profile
+            )
+            Notification.objects.create(
+                user=profile.user,
+                data=data
+            )
+        elif request.data["type"] == "join":
+            data = NOtificationData.objects.create(
+                type="join",
+                user=user,
+            )
+            for friend in Contact.objects.get(email=user.email).users.all():
+                Notification.objects.create(
+                    user=friend,
+                    data=data
+                )
+        return JsonResponse({"status": "received"})

@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.admin.decorators import register
-from .models import Tag, Post, Board
+from .models import *
 
 
 @register(Tag)
@@ -15,4 +15,14 @@ class PostAdmin(admin.ModelAdmin):
 
 @register(Board)
 class BoardAdmin(admin.ModelAdmin):
+    pass
+
+
+@register(Notification)
+class NotificationAdmin(admin.ModelAdmin):
+    pass
+
+
+@register(NOtificationData)
+class NotificationDataAdmin(admin.ModelAdmin):
     pass
