@@ -44,8 +44,9 @@ class HomeAPIView(APIView):
         page = request.query_params.get('page') or 1
         page = int(page)
         posts_list = []
-        followings = request.user.profile.followings.all().values('user')
-        posts = Post.objects.filter(user__in=followings).order_by('date').reverse()
+        followings = list(request.user.profile.followings.all().values_list('user', flat=True))
+        followings.append(request.user.pk)
+        posts = Post.objects.filter(user_id__in=followings).order_by('-date')
         posts_paginated = Paginator(posts, limit)
         for post in posts_paginated.object_list:
             posts_list.append({
