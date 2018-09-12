@@ -61,7 +61,6 @@ class TokenVerifyView(TVW):
 
 
 class ProfileAPIView(APIView):
-
     def get(self, request):
         user = request.user
         if request.query_params == {}:
@@ -344,6 +343,10 @@ class FollowingsAPIView(APIView):
                     print("status: 200", success_data("FollowedSuccessfully"))
                     return JsonResponse(success_data("FollowedSuccessfully"), status=200)
                 except Exception as e:
+                    if user.profile.private:
+                        user.profile.requests.add(requester.profile)
+                        print("status: 200", success_data("RequestedSuccessfully"))
+                        return JsonResponse(success_data("RequestedSuccessfully"), status=200)
                     requester.profile.followings.add(user.profile)
                     print("status: 200", success_data("FollowedSuccessfully"))
                     return JsonResponse(success_data("FollowedSuccessfully"), status=200)
@@ -352,22 +355,47 @@ class FollowingsAPIView(APIView):
                 return JsonResponse(error_data(profile="NotExist"), status=400)
 
         username = request.data.get('unfollow')
-        try:
-            user = User.objects.get(username=username)
-            requester = request.user
-            if user == requester:
+        if username:
+            try:
+                user = User.objects.get(username=username)
+                requester = request.user
+                if user == requester:
+                    print("status: 400", error_data(profile="NotExist"))
+                    return JsonResponse(error_data(profile="NotExist"), status=400)
+                try:
+                    requester.profile.followings.remove(user.profile.id)
+                    print("status: 200", success_data("UnFollowedSuccessfully"))
+                    return JsonResponse(success_data("UnFollowedSuccessfully"), status=200)
+                except Exception as e:
+                    print("status: 200", success_data("UnFollowedSuccessfully"))
+                    return JsonResponse(success_data("UnFollowedSuccessfully"), status=200)
+            except Exception as e:
                 print("status: 400", error_data(profile="NotExist"))
                 return JsonResponse(error_data(profile="NotExist"), status=400)
+
+        username = request.data.get('accept')
+        if username:
             try:
-                requester.profile.followings.remove(user.profile.id)
-                print("status: 200", success_data("UnFollowedSuccessfully"))
-                return JsonResponse(success_data("UnFollowedSuccessfully"), status=200)
+                user = User.objects.get(username=username)
+                requester = request.user
+                if user == requester:
+                    print("status: 400", error_data(profile="NotExist"))
+                    return JsonResponse(error_data(profile="NotExist"), status=400)
+                if user.profile in requester.profile.requests.all():
+                    user.profile.followings.add(requester.profile)
+                    requester.profile.requests.remove(user.profile)
+                    print("status: 200", success_data("AcceptedSuccessfully"))
+                    return JsonResponse(success_data("AcceptedSuccessfully"), status=200)
+                else:
+                    print("status: 400", error_data(profile="RequestNotExist"))
+                    return JsonResponse(error_data(profile="RequestNotExist"), status=400)
+
             except Exception as e:
-                print("status: 200", success_data("UnFollowedSuccessfully"))
-                return JsonResponse(success_data("UnFollowedSuccessfully"), status=200)
-        except Exception as e:
-            print("status: 400", error_data(profile="NotExist"))
-            return JsonResponse(error_data(profile="NotExist"), status=400)
+                print("status: 400", error_data(profile="NotExist"))
+                return JsonResponse(error_data(profile="NotExist"), status=400)
+
+        print("status: 400", error_data(request="WrongData"))
+        return JsonResponse(error_data(request="WrongData"), status=400)
 
 
 class InvitationAPIView(APIView):
