@@ -448,19 +448,14 @@ class ResetPasswordAPIView(APIView):
     def post(self, request):
         try:
             email = request.data.get('email')
-            user1 = User.objects.get(email=email)
+            user = User.objects.get(email=email)
             try:
-                username = request.data.get('username')
-                user2 = User.objects.get(username=username)
-                if user1 == user2:
-                    password = User.objects.make_random_password()
-                    sending_mail(email, "Reset Password",
-                                 "Hi {}\nYour new password is: {}".format(user1.profile.name, password))
-                    user1.set_password(password)
-                    user1.save()
-                    return JsonResponse({"message": "success"}, status=200)
-                else:
-                    return JsonResponse({"message": "success"}, status=200)
+                password = User.objects.make_random_password()
+                sending_mail(email, "Reset Password",
+                             "Hi {}\nYour new password is: {}".format(user.profile.name, password))
+                user.set_password(password)
+                user.save()
+                return JsonResponse({"message": "success"}, status=200)
             except Exception as e:
                 return JsonResponse({"message": "success"}, status=200)
         except Exception as e:
