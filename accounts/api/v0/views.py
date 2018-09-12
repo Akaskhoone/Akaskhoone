@@ -9,6 +9,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView as TOPW, TokenRef
 from akaskhoone.exceptions import error_data, success_data
 from accounts.api.utils import *
 from accounts.models import *
+from django.db.models import Q
 import json
 
 
@@ -62,60 +63,50 @@ class TokenVerifyView(TVW):
 
 class ProfileAPIView(APIView):
     def get(self, request):
-        user = request.user
         if request.query_params == {}:
             try:
-                profile = ProfileSerializer(user.profile)
+                profile = ProfileSerializer(request.user.profile)
                 return JsonResponse(profile.data, status=200)
             except Exception as e:
                 return JsonResponse(error_data(profile="NotExist"), status=400)
 
         username = request.query_params.get("username")
-        email = request.query_params.get("email")
-        search = request.query_params.get("search")
         if username:
-            if search and eval(search):
-                results = []
-                for result in User.objects.filter(username__contains=username):
-                    results.append({
-                        "username": result.username,
-                        "name": result.profile.name,
-                        "image": str(result.profile.image),
-                        "isFollowing": result.profile in user.profile.followers.all(),
-                        "isFollowed": user.profile in result.profile.followers.all()
-                    })
-                return JsonResponse({"profiles": results})
-            else:
-                try:
-                    target_user = User.objects.get(username=username)
-                    profile = ProfileSerializer(target_user.profile, context={"requester": request.user.profile})
-                    return JsonResponse(profile.data, status=200)
-                except Exception as e:
-                    return JsonResponse(error_data(profile="NotExist"), status=400)
-        elif email:
-            if search and eval(search):
-                results = []
-                for result in User.objects.filter(email__contains=email):
-                    results.append({
-                        "username": result.username,
-                        "isFollowing": result.profile in user.profile.followers.all(),
-                        "isFollowed": user.profile in result.profile.followers.all()
-                    })
-                return JsonResponse({"profiles": results})
+            try:
+                target_user = User.objects.get(username=username)
+                profile = ProfileSerializer(target_user.profile, requester=request.user.profile)
+                return JsonResponse(profile.data, status=200)
+            except Exception as e:
+                return JsonResponse(error_data(profile="NotExist"), status=400)
 
-            else:
-                try:
-                    target_user = User.objects.get(email=email)
-                    profile = ProfileSerializer(target_user.profile, context={"requester": request.user.profile},
-                                                fields=('username', 'image'))
-                    return JsonResponse(profile.data, status=200)
-                except Exception as e:
-                    return JsonResponse(error_data(profile="NotExist"), status=400)
-        else:
-            return JsonResponse(error_data(request="Invalid"), status=400)
+        email = request.query_params.get("email")
+        if email:
+            try:
+                target_user = User.objects.get(email=email)
+                profile = ProfileSerializer(target_user.profile, requester=request.user.profile)
+                return JsonResponse(profile.data, status=200)
+            except Exception as e:
+                print(e)
+                return JsonResponse(error_data(profile="NotExist"), status=400)
+
+        search = request.query_params.get("search")
+        if search:
+            try:
+                filtered_profiles = Profile.objects.filter(
+                    Q(user__username__contains=search) | Q(name__contains=search)).exclude(user=request.user)
+                profiles = []
+                for profile in filtered_profiles:
+                    profiles.append(ProfileSerializer(profile, requester=request.user.profile,
+                                                      fields=(
+                                                          "username", "name", "image", "private", "isFollowed")).data)
+                return JsonResponse({"data": profiles}, status=200)
+            except Exception as e:
+                return JsonResponse({"data": []}, status=200)
+
+        return JsonResponse(error_data(request="Invalid"), status=400)
 
     def put(self, request):
-        user = request.user
+        user = request.userrequester
         old_password = request.data.get('old_password')
         new_password = request.data.get('new_password')
         if old_password and new_password:
@@ -137,18 +128,9 @@ class ProfileAPIView(APIView):
             profile_edit_form = ProfileEditForm(data=request.POST, files=request.FILES)
             if profile_edit_form.is_valid():
                 profile_edit_form.save(user=request.user)
-                user = request.user
-                data = {
-                    "username": user.username,
-                    "email": user.email,
-                    "name": user.profile.name,
-                    "bio": user.profile.bio,
-                    "followers": user.profile.followers.count(),
-                    "followings": user.profile.followings.count(),
-                    "image": str(user.profile.image) if user.profile.image else "profile_photos/default.jpg"
-                }
-                print("status: 200", data)
-                return JsonResponse(data, status=200)
+                profile = ProfileSerializer(request.user.profile)
+                print("status: 200", profile.data)
+                return JsonResponse(profile.data, status=200)
             else:
                 print("status: 400", error_data(image="Size"))
                 return JsonResponse(error_data(image="Size"), status=400)
@@ -159,7 +141,6 @@ class ProfileAPIView(APIView):
                 errors = error_data(old_password="Required")
             if not new_password:
                 errors = error_data(new_password="Required")
-
             print("status: 400", errors)
             return JsonResponse(errors, status=400)
 

@@ -5,6 +5,7 @@ from accounts.models import Profile
 class ProfileSerializer(serializers.ModelSerializer):
     def __init__(self, *args, **kwargs):
         fields = kwargs.pop('fields', None)
+        self.requester = kwargs.pop('requester', None)
         super(ProfileSerializer, self).__init__(*args, **kwargs)
         if fields:
             allowed = set(fields)
@@ -35,7 +36,6 @@ class ProfileSerializer(serializers.ModelSerializer):
         return obj.followers.count()
 
     def get_isFollowed(self, obj):
-        requester = self.context.get("requester")
-        if requester:
-            return obj in requester.followings.all()
+        if self.requester:
+            return obj in self.requester.followings.all()
         return False

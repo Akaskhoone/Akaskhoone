@@ -10,6 +10,8 @@ from accounts.api.utils import get_user
 from django.contrib.auth import get_user_model
 from social.models import Post, Tag, Board
 from akaskhoone.exceptions import error_data, success_data
+from social.api.v0.serializers import PostSerializer, CommentSerializer, TagSerializer
+from akaskhoone.utils import get_paginated_data
 
 User = get_user_model()
 
@@ -22,53 +24,37 @@ class Tags(APIView):
     It returns error with message 'invalid' if the query part contains other fields.
     """
 
-    def get(self, request, formant=None):
-        try:
-            query = request.query_params['name']
-            matched_tags = [str(t) for t in Tag.objects.filter(name__startswith=query)]
-
-        except MultiValueDictKeyError:
-            if request.query_params == {}:
-                matched_tags = [str(t) for t in Tag.objects.all()]
-            else:
-                return JsonResponse(error_data(request="Invalid"), status=400)
-
-        return JsonResponse({
-            "matched_tags": matched_tags
-        })
+    def get(self, request):
+        search = request.query_params.get('search')
+        if search:
+            data = get_paginated_data(
+                data=TagSerializer(Tag.objects.filter(name__contains=search), many=True).data,
+                page=request.query_params.get('page'),
+                limit=request.query_params.get('limit'),
+                url=F"/social/tags/?search={search}"
+            )
+        else:
+            data = get_paginated_data(
+                data=TagSerializer(Tag.objects.all(), many=True).data,
+                page=request.query_params.get('page'),
+                limit=request.query_params.get('limit'),
+                url=F"/social/tags/?"
+            )
+        return JsonResponse(data)
 
 
 class HomeAPIView(APIView):
     def get(self, request):
-        limit = request.query_params.get('limit') or 2
-        page = request.query_params.get('page') or 1
-        page = int(page)
-        posts_list = []
         followings = list(request.user.profile.followings.all().values_list('user', flat=True))
         followings.append(request.user.pk)
         posts = Post.objects.filter(user_id__in=followings).order_by('-date')
-        posts_paginated = Paginator(posts, limit)
-        for post in posts_paginated.object_list:
-            posts_list.append({
-                "post_id": post.id,
-                "creator": post.user.username,
-                "image": str(post.image),
-                "des": post.des,
-                "location": post.location,
-                "date": str(post.date),
-                "tags": [tag.name for tag in post.tags.all()]
-            })
-        posts_paginated.object_list = posts_list
-        next_page = (page + 1) if (page + 1) <= posts_paginated.num_pages else None
-        try:
-            posts_list = list(posts_paginated.page(page))
-        except EmptyPage or InvalidPage:
-            posts_list = None
-        data = {
-            "posts": posts_list,
-            "next": F"/social/home/?page={next_page}" if next_page else None
-        }
-        return JsonResponse(data, status=200, safe=False)
+        data = get_paginated_data(
+            data=PostSerializer(posts, many=True).data,
+            page=request.query_params.get('page'),
+            limit=request.query_params.get('limit'),
+            url="/social/home/?"
+        )
+        return JsonResponse(data)
 
 
 class BoardsAPIView(APIView):
@@ -95,7 +81,7 @@ class BoardsAPIView(APIView):
                 "boards": boards_list
             }
             print("status: 200 >> board objects returned for user {}".format(user))
-            return JsonResponse(data, status=200, safe=False)
+            return JsonResponse(data)
         else:
             print("status: 400", error_data(profile="NotExist"))
             return JsonResponse(error_data(profile="NotExist"), status=400)
