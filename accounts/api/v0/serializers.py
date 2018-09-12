@@ -18,10 +18,13 @@ class ProfileSerializer(serializers.ModelSerializer):
     followings = serializers.SerializerMethodField()
     followers = serializers.SerializerMethodField()
     isFollowed = serializers.SerializerMethodField()
+    postsCount = serializers.SerializerMethodField()
+    boardsCount = serializers.SerializerMethodField()
 
     class Meta:
         model = Profile
-        fields = ("username", "name", "bio", "image", "followings", "followers", "private", "isFollowed")
+        fields = ("username", "name", "bio", "image", "followings", "followers", "private", "isFollowed", "postsCount",
+                  "boardsCount")
 
     def get_username(self, obj):
         return obj.user.username
@@ -39,3 +42,9 @@ class ProfileSerializer(serializers.ModelSerializer):
         if self.requester:
             return obj in self.requester.followings.all()
         return False
+
+    def get_postsCount(self, obj):
+        return obj.user.posts.count()
+
+    def get_boardsCount(self, obj):
+        return obj.user.boards.count()

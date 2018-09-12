@@ -71,7 +71,7 @@ class BoardSerializer(serializers.ModelSerializer):
         return obj.posts.count()
 
     def get_posts(self, obj):
-        return PostSerializer(obj.posts.all(), many=True, fields=('postId', 'image'))
+        return PostSerializer(obj.posts.all(), many=True, fields=('postId', 'image')).data
 
 
 class CommentSerializer(serializers.ModelSerializer):
@@ -84,9 +84,26 @@ class CommentSerializer(serializers.ModelSerializer):
             for field_name in existing - allowed:
                 self.fields.pop(field_name)
 
+    commentId = serializers.SerializerMethodField()
+    postId = serializers.SerializerMethodField()
+    creator = serializers.SerializerMethodField()
+    date = serializers.SerializerMethodField()
+
     class Meta:
         model = Comment
-        fields = '__all__'
+        fields = ('commentId', 'postId', 'creator', 'text', 'date')
+
+    def get_commentId(self, obj):
+        return obj.pk
+
+    def get_postId(self, obj):
+        return obj.post.id
+
+    def get_creator(self, obj):
+        return {"username": obj.user.username, "name": obj.user.profile.name, "image": str(obj.user.profile.image)}
+
+    def get_date(self, obj):
+        return F"{obj.date}"
 
 
 class TagSerializer(serializers.ModelSerializer):

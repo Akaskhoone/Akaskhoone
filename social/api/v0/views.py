@@ -10,8 +10,9 @@ from accounts.api.utils import get_user
 from django.contrib.auth import get_user_model
 from social.models import Post, Tag, Board
 from akaskhoone.exceptions import error_data, success_data
-from social.api.v0.serializers import PostSerializer, CommentSerializer, TagSerializer
+from social.api.v0.serializers import PostSerializer, CommentSerializer, TagSerializer, BoardSerializer
 from akaskhoone.utils import get_paginated_data
+from accounts.api.v0.serializers import ProfileSerializer
 
 User = get_user_model()
 
@@ -61,26 +62,12 @@ class BoardsAPIView(APIView):
     def get(self, request):
         user = get_user(request)
         if user:
-            boards = user.boards.all()
-            boards_list = []
-            for board in boards:
-                posts = []
-                for post in board.posts.all():
-                    posts.append({
-                        "post_id": post.id,
-                        "image": str(post.image)
-                    })
-                boards_list.append({
-                    "board_id": board.id,
-                    "name": board.name,
-                    "count": board.posts.count(),
-                    "posts": posts
-                })
-            data = {
-                "count": len(boards),
-                "boards": boards_list
-            }
-            print("status: 200 >> board objects returned for user {}".format(user))
+            data = get_paginated_data(
+                data=BoardSerializer(user.boards.all(), many=True).data,
+                page=request.query_params.get('page'),
+                limit=request.query_params.get('limit'),
+                url=F"/social/boards/?username={user.username}"
+            )
             return JsonResponse(data)
         else:
             print("status: 400", error_data(profile="NotExist"))
@@ -131,19 +118,7 @@ class BoardsAPIView(APIView):
 class BoardDetailAPIView(APIView):
     def get(self, request, board_id):
         try:
-            board = Board.objects.get(pk=board_id)
-            posts = []
-            for post in board.posts.all():
-                posts.append({
-                    "post_id": post.id,
-                    "image": str(post.image)
-                })
-            data = {
-                "board_id": board.id,
-                "name": board.name,
-                "count": board.posts.count(),
-                "posts": posts
-            }
+            data = BoardSerializer(Board.objects.get(pk=board_id)).data
             print("status: 200", data)
             return JsonResponse(data, status=200)
 
@@ -215,16 +190,8 @@ class PostWithID(APIView):
 
     def get(self, request, post_id):
         try:
-            post = Post.objects.get(pk=post_id)
-            return JsonResponse({
-                "post_id": post.id,
-                "creator": post.user.username,
-                "image": str(post.image),
-                "des": post.des,
-                "location": post.location,
-                "date": str(post.date),
-                "tags": [tag.name for tag in post.tags.all()]
-            })
+            data = PostSerializer(Post.objects.get(pk=post_id))
+            return JsonResponse(data)
         except ObjectDoesNotExist as e:
             print("status: 400", error_data(post="NotExist"))
             return JsonResponse(error_data(post="NotExist"), status=400)
@@ -232,20 +199,23 @@ class PostWithID(APIView):
     def put(self, request, post_id):
         try:
             post = Post.objects.get(pk=post_id)
-            post.des = request.data.get("des")
-            post.location = request.data.get("location")
-            post.tags = request.data.get("tags")
+            if request.data.get("des"):
+                post.des = request.data.get("des")
+            if request.data.get("location"):
+                post.location = request.data.get("location")
+            if request.data.get("tags"):
+                tags = request.data.get("tags").split()
+                for tag in tags:
+                    try:
+                        Tag.objects.create(name=tag)
+                    except Exception as e:
+                        pass
+                post.tags.clear()
+                post.tags.add(*tags)
             post.save()
-            post = Post.objects.get(pk=post_id)
-            return JsonResponse({
-                "post_id": post.id,
-                "creator": post.user.username,
-                "image": str(post.image),
-                "des": post.des,
-                "location": post.location,
-                "date": str(post.date),
-                "tags": [tag.name for tag in post.tags.all()]
-            })
+            data = PostSerializer(Post.objects.get(pk=post_id))
+            return JsonResponse(data)
+
         except ObjectDoesNotExist:
             print("status: 400", error_data(post="NotExist"))
             return JsonResponse(error_data(post="NotExist"), status=400)
@@ -268,46 +238,29 @@ class Posts(APIView):
     get method it returns posts associated with the query part.
     """
 
-    def get_posts(self, *args, **kwargs):
-        if args:
-            posts = Post.objects.filter(user=args[0])
-        elif kwargs.get("tag"):
-            posts = Post.objects.filter(tags=kwargs.get("tag"))
-        elif kwargs.get("username"):
-            posts = User.objects.get(username=kwargs.get("username")).post_set.all()
-        elif kwargs.get("email"):
-            posts = User.objects.get(email=kwargs.get("email")).post_set.all()
-        else:
-            posts = []
-        posts_list = []
-        for post in posts:
-            posts_list.append({
-                "post_id": post.id,
-                "creator": post.user.username,
-                "image": str(post.image),
-                "des": post.des,
-                "location": post.location,
-                "date": str(post.date),
-                "tags": [tag.name for tag in post.tags.all()]
-            })
-        return posts_list
-
-    def get(self, request, format=None):
+    def get(self, request):
         tag = request.query_params.get("tag")
-        username = request.query_params.get("username")
-        email = request.query_params.get("email")
-        if request.query_params == {}:
-            posts_list = self.get_posts(request.user)
-        elif tag:
-            posts_list = self.get_posts(tag=tag)
-        elif username:
-            posts_list = self.get_posts(username=username)
-        elif email:
-            posts_list = self.get_posts(email=email)
+        if tag:
+            data = get_paginated_data(
+                data=PostSerializer(Post.objects.filter(tags__name=tag), many=True).data,
+                page=request.query_params.get('page'),
+                limit=request.query_params.get('limit'),
+                url=F"/social/posts/?tag={tag}"
+            )
+            return JsonResponse(data)
+
+        user = get_user(request)
+        if user:
+            data = get_paginated_data(
+                data=PostSerializer(Post.objects.filter(user_id=user.pk), many=True).data,
+                page=request.query_params.get('page'),
+                limit=request.query_params.get('limit'),
+                url=F"/social/posts/?username={user.username}"
+            )
+            return JsonResponse(data)
         else:
-            print("status: 400", error_data(request="Invalid"))
-            return JsonResponse(error_data(request="Invalid"), status=400)
-        return JsonResponse({"posts": posts_list})
+            print("status: 400", error_data(profile="NotExist"))
+            return JsonResponse(error_data(profile="NotExist"), status=400)
 
     def post(self, request):
         new_post = CreatePostFrom(request.POST, request.FILES)
@@ -324,23 +277,22 @@ class Posts(APIView):
             return JsonResponse({"error": errors}, status=400)
 
 
-# todo pagination is not implemented, but needed!
-
 class PostLikesAPIView(APIView):
-    def get(self, request, post_id):
-        try:
-            post = Post.objects.get(pk=post_id)
-            users = []
-            for user in post.likes.all():
-                users.append({
-                    "username": user.username,
-                    "name": user.profile.name,
-                    "image": str(user.profile.image)
-                })
-            return JsonResponse(data=users, safe=False)
-        except ObjectDoesNotExist:
-            print("status: 400", error_data(post="NotExist"))
-            return JsonResponse(error_data(post="NotExist"), status=400)
+    # extra future
+    # def get(self, request, post_id):
+    #     try:
+    #         post = Post.objects.get(pk=post_id)
+    #         data = get_paginated_data(
+    #             data=ProfileSerializer(post.likes.all(), many=True, fields=(
+    #                 "username", "name", "image", "private", "isFollowed")).data,
+    #             page=request.query_params.get('page'),
+    #             limit=request.query_params.get('limit'),
+    #             url=F"/social/posts/{post_id}/likes/?"
+    #         )
+    #         return JsonResponse(data)
+    #     except ObjectDoesNotExist:
+    #         print("status: 400", error_data(post="NotExist"))
+    #         return JsonResponse(error_data(post="NotExist"), status=400)
 
     def put(self, request, post_id):
         try:
@@ -368,16 +320,13 @@ class PostCommentsAPIView(APIView):
     def get(self, request, post_id):
         try:
             post = Post.objects.get(pk=post_id)
-            comments = []
-            for comment in post.comments.all():
-                comments.append({
-                    "comment_id": comment.id,
-                    "username": comment.user.username,
-                    "name": comment.user.profile.name,
-                    "image": str(comment.user.profile.image),
-                    "text": comment.text
-                })
-            return JsonResponse(data=comments, safe=False)
+            data = get_paginated_data(
+                data=CommentSerializer(post.comments.all(), many=True).data,
+                page=request.query_params.get('page'),
+                limit=request.query_params.get('limit'),
+                url=F"/social/posts/{post_id}/comments/?"
+            )
+            return JsonResponse(data)
         except ObjectDoesNotExist:
             print("status: 400", error_data(post="NotExist"))
             return JsonResponse(error_data(post="NotExist"), status=400)
@@ -388,14 +337,8 @@ class PostCommentsAPIView(APIView):
             try:
                 post = Post.objects.get(pk=post_id)
                 comment = post.comments.create(user=request.user, text=text)
-                comment = {
-                    "comment_id": comment.id,
-                    "username": comment.user.username,
-                    "name": comment.user.profile.name,
-                    "image": str(comment.user.profile.image),
-                    "text": comment.text
-                }
-                return JsonResponse(data=comment, safe=False)
+                data = CommentSerializer(comment).data
+                return JsonResponse(data)
             except ObjectDoesNotExist:
                 print("status: 400", error_data(post="NotExist"))
                 return JsonResponse(error_data(post="NotExist"), status=400)
