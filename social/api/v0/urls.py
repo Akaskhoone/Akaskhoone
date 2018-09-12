@@ -13,5 +13,4 @@ urlpatterns = [
     path('posts/<int:post_id>/likes/', PostLikesAPIView.as_view(), name="posts_with_id"),
     path('posts/<int:post_id>/comments/', PostCommentsAPIView.as_view(), name="posts_with_id"),
     path('notifications/', Notifications.as_view(), name="notification"),
-    path('private/', Private.as_view(), name="private")
 ]

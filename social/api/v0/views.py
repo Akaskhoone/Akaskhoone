@@ -1,9 +1,7 @@
-import json
 from rest_framework.permissions import AllowAny
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import Paginator, EmptyPage, InvalidPage
 from social.api.v0.serializers import *
-from django.core import serializers
 from rest_framework.views import APIView
 from django.http import JsonResponse
 from django.contrib.auth import get_user_model
@@ -12,11 +10,8 @@ from django.utils.datastructures import MultiValueDictKeyError
 from social.models import Post, Tag, Board
 from social.forms import *
 from accounts.api.utils import get_user
-import redis
 from accounts.models import Contact
-
-#todo connect to redis in just one place
-Redis = redis.StrictRedis(host='localhost', port=6379, db=0)
+from akaskhoone.notifications import push_to_queue
 
 User = get_user_model()
 
@@ -373,15 +368,11 @@ class PostLikesAPIView(APIView):
                 method = request.data.get('method')
                 if method == "like":
                     post.likes.add(request.user)
-                    Redis.lpush("notifications",
-                                json.dumps({"type": "like", "user": serializers.serialize('json', [request.user]),
-                                            "post": serializers.serialize('json', [post])}))
+                    push_to_queue(type="like", user=request.user, post=post)
                     return JsonResponse({"message": "PostLiked"})
                 elif method == "dislike":
                     post.likes.remove(request.user)
-                    Redis.lpush("notifications",
-                                json.dumps({"type": "dislike", "user": serializers.serialize('json', [request.user]),
-                                            "post": serializers.serialize('json', [post])}))
+                    push_to_queue(type="dislike", user=request.user, post=post)
                     return JsonResponse({"message": "PostDisliked"})
                 else:
                     return JsonResponse({"error": {"method": ["WrongData"]}}, status=400)
@@ -421,9 +412,7 @@ class PostCommentsAPIView(APIView):
                     "image": str(comment.user.profile.image),
                     "text": comment.text
                 }
-                Redis.lpush("notifications",
-                            json.dumps({"type": "comment", "user": serializers.serialize('json', [request.user]),
-                                        "post": serializers.serialize('json', [post])}))
+                push_to_queue(type="comment", user=request.user, post=post)
                 return JsonResponse(data=comment, safe=False)
             except ObjectDoesNotExist:
                 return JsonResponse({"error": {"post": ["NotExist"]}}, status=400)

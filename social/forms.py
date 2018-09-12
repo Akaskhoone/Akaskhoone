@@ -3,9 +3,7 @@ import json
 from django import forms
 from django.core import serializers
 from .models import *
-import redis
-
-Redis = redis.StrictRedis(host='localhost', port=6379, db=0)
+from akaskhoone.notifications import push_to_queue
 
 
 class CreatePostFrom(forms.Form):
@@ -21,5 +19,4 @@ class CreatePostFrom(forms.Form):
         new_post = Post.objects.create(user=user, image=self.cleaned_data["image"], des=self.cleaned_data["des"],
                                        location=self.cleaned_data["location"])
         new_post.tags.add(*tags)
-        Redis.lpush("notifications", json.dumps({"type": "post", "user": serializers.serialize('json', [user]),
-                                                 "post": serializers.serialize('json', [new_post])}))
+        push_to_queue(type="post", user=user, post=new_post)

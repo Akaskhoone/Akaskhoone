@@ -9,9 +9,7 @@ from accounts.forms import SignUpForm, ProfileEditForm
 from rest_framework_simplejwt.views import TokenObtainPairView as TOPW, TokenRefreshView as TRV, TokenVerifyView as TVW
 from accounts.api.utils import send_mail
 import json
-import redis
-
-Redis = redis.StrictRedis(host='localhost', port=6379, db=0)
+from akaskhoone.notifications import push_to_queue
 
 
 class TokenObtainPairView(TOPW):
@@ -360,9 +358,7 @@ class FollowingsAPIView(APIView):
                     return JsonResponse({"success": {"message": ["followed successfully"]}}, status=200)
                 except Exception as e:
                     requester.profile.followings.add(user.profile)
-                    Redis.lpush("notifications",
-                                json.dumps({"type": "follow", "user": serializers.serialize('json', [request.user]),
-                                            "profile": serializers.serialize('json', [user.profile])}))
+                    push_to_queue(type="follow", user=request.user, profile=user.profile)
                     return JsonResponse({"success": {"message": ["followed successfully"]}}, status=200)
             except Exception as e:
                 return JsonResponse({"error": {"user": ["NotExist"]}}, status=400)
@@ -375,9 +371,7 @@ class FollowingsAPIView(APIView):
                 return JsonResponse({"error": {"Profile": ["NotExist"]}}, status=400)
             try:
                 requester.profile.followings.remove(user.profile.id)
-                Redis.lpush("notifications",
-                            json.dumps({"type": "unfollow", "user": serializers.serialize('json', [request.user]),
-                                        "profile": serializers.serialize('json', [user.profile])}))
+                push_to_queue(type="unfollow", user=request.user, profile=user.profile)
 
                 return JsonResponse({"success": {"message": ["unfollowed successfully"]}}, status=200)
             except Exception as e:
