@@ -65,17 +65,9 @@ class ProfileAPIView(APIView):
         user = request.user
         if request.query_params == {}:
             try:
-                data = {
-                    "username": user.username,
-                    "email": user.email,
-                    "name": user.profile.name,
-                    "bio": user.profile.bio,
-                    "followers": user.profile.followers.count(),
-                    "followings": user.profile.followings.count(),
-                    "image": str(user.profile.image) if user.profile.image else "profile_photos/default.jpg"
-                }
-                return JsonResponse(data, status=200)
-            except:
+                profile = ProfileSerializer(user.profile)
+                return JsonResponse(profile.data, status=200)
+            except Exception as e:
                 return JsonResponse(error_data(profile="NotExist"), status=400)
 
         username = request.query_params.get("username")
@@ -96,20 +88,8 @@ class ProfileAPIView(APIView):
             else:
                 try:
                     target_user = User.objects.get(username=username)
-                    data = {
-                        "username": target_user.username,
-                        "email": target_user.email,
-                        "name": target_user.profile.name,
-                        "bio": target_user.profile.bio,
-                        "followers": target_user.profile.followers.count(),
-                        "followings": target_user.profile.followings.count(),
-                        "image": str(target_user.profile.image) if target_user.profile.image else
-                        "profile_photos/default.jpg",
-
-                        "isFollowing": target_user.profile in user.profile.followers.all(),
-                        "isFollowed": user.profile in target_user.profile.followers.all()
-                    }
-                    return JsonResponse(data, status=200)
+                    profile = ProfileSerializer(target_user.profile, context={"requester": request.user.profile})
+                    return JsonResponse(profile.data, status=200)
                 except Exception as e:
                     return JsonResponse(error_data(profile="NotExist"), status=400)
         elif email:
@@ -126,20 +106,10 @@ class ProfileAPIView(APIView):
             else:
                 try:
                     target_user = User.objects.get(email=email)
-                    data = {
-                        "username": target_user.username,
-                        "email": target_user.email,
-                        "name": target_user.profile.name,
-                        "bio": target_user.profile.bio,
-                        "followers": target_user.profile.followers.count(),
-                        "followings": target_user.profile.followings.count(),
-                        "image": str(
-                            target_user.profile.image) if target_user.profile.image else "profile_photos/default.jpg",
-                        "isFollowed": user.profile in target_user.profile.followings.all(),
-                        "isFollowing": target_user.profile in user.profile.followers.all()
-                    }
-                    return JsonResponse(data, status=200)
-                except:
+                    profile = ProfileSerializer(target_user.profile, context={"requester": request.user.profile},
+                                                fields=('username', 'image'))
+                    return JsonResponse(profile.data, status=200)
+                except Exception as e:
                     return JsonResponse(error_data(profile="NotExist"), status=400)
         else:
             return JsonResponse(error_data(request="Invalid"), status=400)
