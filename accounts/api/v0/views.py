@@ -108,7 +108,6 @@ class ProfileAPIView(APIView):
     def put(self, request):
         old_password = request.data.get('old_password')
         new_password = request.data.get('new_password')
-        is_private = request.data.get('is_private')
         if old_password and new_password:
             if request.user.check_password(old_password):
                 try:
@@ -123,13 +122,18 @@ class ProfileAPIView(APIView):
             else:
                 print("status: 400", error_data(old_password="NotMatch"))
                 return JsonResponse(error_data(old_password="NotMatch"), status=400)
-        elif is_private:
+        elif dict(request.data).__contains__('is_private'):
+            is_private = request.data.get('is_private')
             if is_private == True:
                 request.user.profile.is_private = True
                 request.user.profile.save()
+                return JsonResponse(success_data("PrivateProfile"), status=200)
             elif is_private == False:
                 request.user.profile.is_private = False
                 request.user.profile.save()
+                return JsonResponse(success_data("PublicProfile"), status=200)
+            print("status: 400", error_data(is_private="WrongData"))
+            return JsonResponse(error_data(is_private="WrongData"), status=400)
         elif request.POST.get('name'):
             profile_edit_form = ProfileEditForm(data=request.POST, files=request.FILES)
             if profile_edit_form.is_valid():
