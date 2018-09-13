@@ -177,4 +177,4 @@ class UserAdmin(admin.ModelAdmin):
 
 @register(Profile)
 class ProfileAdmin(admin.ModelAdmin):
-    pass
+    filter_horizontal = ('followings', 'requests')

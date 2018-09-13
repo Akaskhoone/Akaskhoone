@@ -39,5 +39,20 @@
         2
       ]
     }
+  },
+  {
+    "model": "accounts.profile",
+    "pk": 4,
+    "fields": {
+      "user": 1,
+      "name": "Yasin",
+      "bio": "The Greatest!",
+      "image": "profile_photos/4/yasin.jpg",
+      "followings": [
+        3,
+        2,
+        1
+      ]
+    }
   }
 ]

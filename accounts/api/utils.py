@@ -9,6 +9,15 @@ import requests
 User = get_user_model()
 
 
+def has_permission(user, requested_user):
+    if requested_user.profile.private:
+        if requested_user.profile in user.profile.followings.all():
+            return True
+        else:
+            return False
+    return True
+
+
 def get_user(request):
     username = request.query_params.get('username')
     if username:

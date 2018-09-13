@@ -86,6 +86,7 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 REST_FRAMEWORK = {
+    'EXCEPTION_HANDLER': 'akaskhoone.exceptions.akaskhoone_rest_framework_exceptions_handler',
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
     ),

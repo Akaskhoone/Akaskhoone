@@ -71,8 +71,8 @@ class Profile(models.Model):
     bio = models.TextField(_('biography'), null=True, blank=True)
     image = models.ImageField(_('image'), upload_to=get_profile_image_path, blank=True, null=True,
                               default='profile_photos/default.jpg')
-    followings = models.ManyToManyField('Profile', related_name='followers', blank=True, verbose_name=_('followings'),
-                                        symmetrical=False)
+    followings = models.ManyToManyField('Profile', related_name='followers', blank=True, symmetrical=False)
+    requests = models.ManyToManyField('Profile', related_name='requests_sent', blank=True, symmetrical=False)
     private = models.BooleanField(_('private'), default=True)
 
     def clean(self):
