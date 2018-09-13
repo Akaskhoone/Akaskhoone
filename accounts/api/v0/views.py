@@ -1,19 +1,18 @@
-from accounts.api.v0.serializers import *
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
 from django.http import JsonResponse
-from accounts.api.utils import get_user, get_password_errors
 from django.contrib.auth.password_validation import validate_password
-from accounts.forms import SignUpForm, ProfileEditForm
-from rest_framework_simplejwt.views import TokenObtainPairView as TOPW, TokenRefreshView as TRV, TokenVerifyView as TVW
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView, TokenVerifyView
 from akaskhoone.exceptions import error_data, success_data
-from accounts.api.utils import *
 from accounts.models import *
+from accounts.forms import SignUpForm, ProfileEditForm
+from accounts.api.v0.serializers import ProfileSerializer
+from accounts.api.utils import get_user, get_password_errors, sending_mail
 from django.db.models import Q
 import json
 
 
-class LoginAPIView(TOPW):
+class LoginAPIView(TokenObtainPairView):
     def post(self, request, *args, **kwargs):
         try:
             return super(LoginAPIView, self).post(request)
@@ -31,7 +30,7 @@ class LoginAPIView(TOPW):
             return JsonResponse(errors, status=400)
 
 
-class RefreshTokenAPIView(TRV):
+class RefreshTokenAPIView(TokenRefreshView):
     def post(self, request, *args, **kwargs):
         try:
             return super(RefreshTokenAPIView, self).post(request)
@@ -45,7 +44,7 @@ class RefreshTokenAPIView(TRV):
             return JsonResponse(errors, status=400)
 
 
-class VerifyTokenAPIView(TVW):
+class VerifyTokenAPIView(TokenVerifyView):
     def post(self, request, *args, **kwargs):
         try:
             return super(VerifyTokenAPIView, self).post(request)
