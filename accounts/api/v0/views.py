@@ -178,7 +178,7 @@ class Signup(APIView):
         try:
             check_exist = request.META.get('CONTENT_TYPE').__contains__('form-data')
         except Exception as e:
-            pass
+            print(e)
         if not check_exist:
             email = request.data.get('email')
             password = request.data.get('password')
