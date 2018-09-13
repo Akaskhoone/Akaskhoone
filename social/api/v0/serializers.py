@@ -12,19 +12,19 @@ class PostSerializer(serializers.ModelSerializer):
             for field_name in existing - allowed:
                 self.fields.pop(field_name)
 
-    postId = serializers.SerializerMethodField()
+    post_id = serializers.SerializerMethodField()
     creator = serializers.SerializerMethodField()
     image = serializers.SerializerMethodField()
     tags = serializers.SerializerMethodField()
-    commentsCount = serializers.SerializerMethodField()
-    likesCount = serializers.SerializerMethodField()
+    comments_count = serializers.SerializerMethodField()
+    likes_count = serializers.SerializerMethodField()
     date = serializers.SerializerMethodField()
 
     class Meta:
         model = Post
-        fields = ('postId', 'creator', 'image', 'location', 'des', 'tags', 'commentsCount', 'likesCount', 'date')
+        fields = ('post_id', 'creator', 'image', 'location', 'des', 'tags', 'comments_count', 'likes_count', 'date')
 
-    def get_postId(self, obj):
+    def get_post_id(self, obj):
         return obj.pk
 
     def get_creator(self, obj):
@@ -36,10 +36,10 @@ class PostSerializer(serializers.ModelSerializer):
     def get_tags(self, obj):
         return TagSerializer(obj.tags.all(), many=True).data
 
-    def get_commentsCount(self, obj):
+    def get_comments_count(self, obj):
         return obj.comments.count()
 
-    def get_likesCount(self, obj):
+    def get_likes_count(self, obj):
         return obj.likes.count()
 
     def get_date(self, obj):
@@ -56,22 +56,22 @@ class BoardSerializer(serializers.ModelSerializer):
             for field_name in existing - allowed:
                 self.fields.pop(field_name)
 
-    boardId = serializers.SerializerMethodField()
-    postsCount = serializers.SerializerMethodField()
+    board_id = serializers.SerializerMethodField()
+    posts_count = serializers.SerializerMethodField()
     posts = serializers.SerializerMethodField()
 
     class Meta:
         model = Board
-        fields = ('boardId', 'name', 'postsCount', 'posts')
+        fields = ('board_id', 'name', 'posts_count', 'posts')
 
-    def get_boardId(self, obj):
+    def get_board_id(self, obj):
         return obj.pk
 
-    def get_postsCount(self, obj):
+    def get_posts_count(self, obj):
         return obj.posts.count()
 
     def get_posts(self, obj):
-        return PostSerializer(obj.posts.all(), many=True, fields=('postId', 'image')).data
+        return PostSerializer(obj.posts.all(), many=True, fields=('post_id', 'image')).data
 
 
 class CommentSerializer(serializers.ModelSerializer):
@@ -84,14 +84,14 @@ class CommentSerializer(serializers.ModelSerializer):
             for field_name in existing - allowed:
                 self.fields.pop(field_name)
 
-    commentId = serializers.SerializerMethodField()
-    postId = serializers.SerializerMethodField()
+    comment_id = serializers.SerializerMethodField()
+    post_id = serializers.SerializerMethodField()
     creator = serializers.SerializerMethodField()
     date = serializers.SerializerMethodField()
 
     class Meta:
         model = Comment
-        fields = ('commentId', 'postId', 'creator', 'text', 'date')
+        fields = ('comment_id', 'post_id', 'creator', 'text', 'date')
 
     def get_commentId(self, obj):
         return obj.pk

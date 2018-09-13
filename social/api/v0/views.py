@@ -10,7 +10,7 @@ from social.api.v0.serializers import PostSerializer, CommentSerializer, TagSeri
 from akaskhoone.utils import get_paginated_data
 
 
-class Tags(APIView):
+class TagsAPIView(APIView):
     """
     This view handles request related to tags.
     It returns all the previously stored tags if the query part is empty,
@@ -118,9 +118,9 @@ class BoardDetailAPIView(APIView):
                 url=F"/social/boards/{board_id}/?"
             )
             data.update({
-                "boardId": board['boardId'],
+                "board_id": board['board_id'],
                 "name": board['name'],
-                "postsCount": len(data['data']),
+                "posts_count": len(data['data']),
             })
             return JsonResponse(data, status=200)
         except Exception as e:
@@ -177,7 +177,7 @@ class BoardDetailAPIView(APIView):
             return JsonResponse(error_data(board="NotExist"), status=400)
 
 
-class PostWithID(APIView):
+class PostDetailAPIView(APIView):
     """
     This class handles requests sent to /api/v0/social/posts/<int: post_id>.
     Get method returns a post in json form if a post with given post_id is available,
@@ -229,7 +229,7 @@ class PostWithID(APIView):
             return JsonResponse(error_data(post="NotExist"), status=400)
 
 
-class Posts(APIView):
+class PostsAPIView(APIView):
     """
     This class handles requests sent to /api/v0/social/posts.
     In post method it handles creation of a new post and in

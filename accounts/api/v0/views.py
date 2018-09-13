@@ -13,10 +13,10 @@ from django.db.models import Q
 import json
 
 
-class TokenObtainPairView(TOPW):
+class LoginAPIView(TOPW):
     def post(self, request, *args, **kwargs):
         try:
-            return super(TokenObtainPairView, self).post(request)
+            return super(LoginAPIView, self).post(request)
         except Exception as e:
             errors = error_data()
             for i in e.args[0]:
@@ -31,10 +31,10 @@ class TokenObtainPairView(TOPW):
             return JsonResponse(errors, status=400)
 
 
-class TokenRefreshView(TRV):
+class RefreshTokenAPIView(TRV):
     def post(self, request, *args, **kwargs):
         try:
-            return super(TokenRefreshView, self).post(request)
+            return super(RefreshTokenAPIView, self).post(request)
         except Exception as e:
             errors = error_data()
             for i in e.args[0]:
@@ -45,10 +45,10 @@ class TokenRefreshView(TRV):
             return JsonResponse(errors, status=400)
 
 
-class TokenVerifyView(TVW):
+class VerifyTokenAPIView(TVW):
     def post(self, request, *args, **kwargs):
         try:
-            return super(TokenVerifyView, self).post(request)
+            return super(VerifyTokenAPIView, self).post(request)
         except Exception as e:
             errors = error_data()
             for i in e.args:
@@ -98,7 +98,8 @@ class ProfileAPIView(APIView):
                 for profile in filtered_profiles:
                     profiles.append(ProfileSerializer(profile, requester=request.user.profile,
                                                       fields=(
-                                                          "username", "name", "image", "isPrivate", "isFollowed")).data)
+                                                          "username", "name", "image", "is_private",
+                                                          "is_followed")).data)
                 return JsonResponse({"data": profiles}, status=200)
             except Exception as e:
                 return JsonResponse({"data": []}, status=200)
@@ -106,15 +107,15 @@ class ProfileAPIView(APIView):
         return JsonResponse(error_data(request="Invalid"), status=400)
 
     def put(self, request):
-        user = request.userrequester
         old_password = request.data.get('old_password')
         new_password = request.data.get('new_password')
+        is_private = request.data.get('is_private')
         if old_password and new_password:
-            if user.check_password(old_password):
+            if request.user.check_password(old_password):
                 try:
-                    validate_password(new_password, user=user, password_validators=None)
-                    user.set_password(new_password)
-                    user.save()
+                    validate_password(new_password, user=request.user, password_validators=None)
+                    request.user.set_password(new_password)
+                    request.user.save()
                     print("status: 200", success_data("PasswordChanged"))
                     return JsonResponse(success_data("PasswordChanged"), status=200)
                 except Exception as e:
@@ -123,7 +124,13 @@ class ProfileAPIView(APIView):
             else:
                 print("status: 400", error_data(old_password="NotMatch"))
                 return JsonResponse(error_data(old_password="NotMatch"), status=400)
-
+        elif is_private:
+            if is_private == True:
+                request.user.profile.is_private = True
+                request.user.profile.save()
+            elif is_private == False:
+                request.user.profile.is_private = False
+                request.user.profile.save()
         elif request.POST.get('name'):
             profile_edit_form = ProfileEditForm(data=request.POST, files=request.FILES)
             if profile_edit_form.is_valid():
@@ -145,7 +152,7 @@ class ProfileAPIView(APIView):
             return JsonResponse(errors, status=400)
 
 
-class Signup(APIView):
+class SignupAPIView(APIView):
     authentication_classes = ()
     permission_classes = (AllowAny,)
 
