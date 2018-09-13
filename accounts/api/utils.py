@@ -10,7 +10,7 @@ User = get_user_model()
 
 
 def has_permission(user, requested_user):
-    if requested_user.profile.private:
+    if requested_user.profile.is_private:
         if requested_user.profile in user.profile.followings.all():
             return True
         else:

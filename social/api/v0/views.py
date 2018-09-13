@@ -240,7 +240,7 @@ class Posts(APIView):
         tag = request.query_params.get("tag")
         if tag:
             data = get_paginated_data(
-                data=PostSerializer(Post.objects.filter(tags__name=tag), many=True).data,
+                data=PostSerializer(Post.objects.filter(tags__name=tag).order_by('-date'), many=True).data,
                 page=request.query_params.get('page'),
                 limit=request.query_params.get('limit'),
                 url=F"/social/posts/?tag={tag}"
@@ -250,7 +250,7 @@ class Posts(APIView):
         user = get_user(request)
         if user:
             data = get_paginated_data(
-                data=PostSerializer(Post.objects.filter(user_id=user.pk), many=True).data,
+                data=PostSerializer(Post.objects.filter(user_id=user.pk).order_by('-date'), many=True).data,
                 page=request.query_params.get('page'),
                 limit=request.query_params.get('limit'),
                 url=F"/social/posts/?username={user.username}"

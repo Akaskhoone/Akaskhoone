@@ -98,7 +98,7 @@ class ProfileAPIView(APIView):
                 for profile in filtered_profiles:
                     profiles.append(ProfileSerializer(profile, requester=request.user.profile,
                                                       fields=(
-                                                          "username", "name", "image", "private", "isFollowed")).data)
+                                                          "username", "name", "image", "isPrivate", "isFollowed")).data)
                 return JsonResponse({"data": profiles}, status=200)
             except Exception as e:
                 return JsonResponse({"data": []}, status=200)
@@ -294,7 +294,7 @@ class FollowingsAPIView(APIView):
                     print("status: 200", success_data("FollowedSuccessfully"))
                     return JsonResponse(success_data("FollowedSuccessfully"), status=200)
                 except Exception as e:
-                    if user.profile.private:
+                    if user.profile.is_private:
                         user.profile.requests.add(requester.profile)
                         print("status: 200", success_data("RequestedSuccessfully"))
                         return JsonResponse(success_data("RequestedSuccessfully"), status=200)

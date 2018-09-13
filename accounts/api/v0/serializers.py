@@ -17,14 +17,16 @@ class ProfileSerializer(serializers.ModelSerializer):
     image = serializers.SerializerMethodField()
     followings = serializers.SerializerMethodField()
     followers = serializers.SerializerMethodField()
+    isPrivate = serializers.SerializerMethodField()
     isFollowed = serializers.SerializerMethodField()
     postsCount = serializers.SerializerMethodField()
     boardsCount = serializers.SerializerMethodField()
 
     class Meta:
         model = Profile
-        fields = ("username", "name", "bio", "image", "followings", "followers", "private", "isFollowed", "postsCount",
-                  "boardsCount")
+        fields = (
+            "username", "name", "bio", "image", "followings", "followers", "isPrivate", "isFollowed", "postsCount",
+            "boardsCount")
 
     def get_username(self, obj):
         return obj.user.username
@@ -37,6 +39,9 @@ class ProfileSerializer(serializers.ModelSerializer):
 
     def get_followers(self, obj):
         return obj.followers.count()
+
+    def get_isPrivate(self, obj):
+        return obj.is_private
 
     def get_isFollowed(self, obj):
         if self.requester:

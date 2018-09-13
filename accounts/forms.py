@@ -1,13 +1,11 @@
 from django.contrib.auth.forms import AdminPasswordChangeForm, UserChangeForm, UserCreationForm
-import os
 from django import forms
-from .validators import *
+from .validators import UniqueEmailValidator, NotNumericValidator, LengthValidator, UniqueUsernameValidator
 from .models import User, Profile
 from django.contrib.auth.password_validation import validate_password
 
 
 class ProfileEditForm(forms.Form):
-    # name_validator = UnicodeNameValidator()
     name = forms.CharField(max_length=100)
     bio = forms.CharField(required=False)
     image = forms.ImageField(required=False)
@@ -26,19 +24,19 @@ class ProfileEditForm(forms.Form):
 
 class SignUpForm(forms.Form):
     email = forms.EmailField()
-    username = forms.CharField(
-        max_length=150,
-        validators=[UnicodeUsernameValidator],
-    )
+    username = forms.CharField(max_length=150)
     password = forms.CharField(max_length=128)
     name = forms.CharField(max_length=100)
     bio = forms.CharField(required=False)
     image = forms.ImageField(required=False)
 
     def save(self):
-        user = User.objects.create_user(email=self.cleaned_data["email"], username=self.cleaned_data["username"],
+        user = User.objects.create_user(email=self.cleaned_data["email"],
+                                        username=self.cleaned_data["username"],
                                         password=self.cleaned_data["password"])
-        Profile.objects.create(user=user, name=self.cleaned_data["name"], bio=self.cleaned_data["bio"],
+        Profile.objects.create(user=user,
+                               name=self.cleaned_data["name"],
+                               bio=self.cleaned_data["bio"],
                                image=self.cleaned_data["image"])
 
     def is_valid(self):

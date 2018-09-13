@@ -13,7 +13,6 @@ from django.utils.decorators import method_decorator
 from django.utils.html import escape
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.debug import sensitive_post_parameters
-from django.utils.translation import gettext, gettext_lazy as _
 
 from .models import User, Profile
 from .forms import AdminPasswordChangeForm, UserChangeForm, UserCreationForm
@@ -28,9 +27,9 @@ class UserAdmin(admin.ModelAdmin):
     change_user_password_template = None
     fieldsets = (
         (None, {'fields': ('email', 'username', 'password')}),
-        (_('Permissions'), {'fields': ('is_active', 'is_staff', 'is_superuser',
-                                       'groups', 'user_permissions')}),
-        (_('Important dates'), {'fields': ('last_login', 'date_joined')}),
+        ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser',
+                                    'groups', 'user_permissions')}),
+        ('Important dates', {'fields': ('last_login', 'date_joined')}),
     )
     add_fieldsets = (
         (None, {
@@ -111,7 +110,7 @@ class UserAdmin(admin.ModelAdmin):
             raise PermissionDenied
         user = self.get_object(request, unquote(id))
         if user is None:
-            raise Http404(_('%(name)s object with primary key %(key)r does not exist.') % {
+            raise Http404('%(name)s object with primary key %(key)r does not exist.' % {
                 'name': self.model._meta.verbose_name,
                 'key': escape(id),
             })
@@ -121,7 +120,7 @@ class UserAdmin(admin.ModelAdmin):
                 form.save()
                 change_message = self.construct_change_message(request, form, None)
                 self.log_change(request, user, change_message)
-                msg = gettext('Password changed successfully.')
+                msg = 'Password changed successfully.'
                 messages.success(request, msg)
                 update_session_auth_hash(request, form.user)
                 return HttpResponseRedirect(
@@ -141,7 +140,7 @@ class UserAdmin(admin.ModelAdmin):
         adminForm = admin.helpers.AdminForm(form, fieldsets, {})
 
         context = {
-            'title': _('Change password: %s') % escape(user.get_username()),
+            'title': 'Change password: %s' % escape(user.get_username()),
             'adminForm': adminForm,
             'form_url': form_url,
             'form': form,
@@ -177,4 +176,14 @@ class UserAdmin(admin.ModelAdmin):
 
 @register(Profile)
 class ProfileAdmin(admin.ModelAdmin):
+    fieldsets = (
+        (None, {'fields': (('user', 'name', 'is_private'),)}),
+        ('Personal', {'fields': ('image', 'bio')}),
+        ('Friends', {'fields': ('followings', 'requests')}),
+    )
+    autocomplete_fields = ('user',)
     filter_horizontal = ('followings', 'requests')
+    list_display = ('user', 'name', 'is_private')
+    list_filter = ('is_private',)
+    search_fields = ('name',)
+    ordering = ('user',)
