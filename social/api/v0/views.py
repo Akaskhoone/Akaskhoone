@@ -110,9 +110,19 @@ class BoardsAPIView(APIView):
 class BoardDetailAPIView(APIView):
     def get(self, request, board_id):
         try:
-            data = BoardSerializer(Board.objects.get(pk=board_id)).data
+            board = BoardSerializer(Board.objects.get(pk=board_id)).data
+            data = get_paginated_data(
+                data=board['posts'],
+                page=request.query_params.get('page'),
+                limit=request.query_params.get('limit'),
+                url=F"/social/boards/{board_id}/?"
+            )
+            data.update({
+                "boardId": board['boardId'],
+                "name": board['name'],
+                "postsCount": len(data['data']),
+            })
             return JsonResponse(data, status=200)
-
         except Exception as e:
             print("status: 400", error_data(board="NotExist"))
             return JsonResponse(error_data(board="NotExist"), status=400)
