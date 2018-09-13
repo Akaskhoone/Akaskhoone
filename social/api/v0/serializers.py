@@ -12,7 +12,6 @@ class PostSerializer(serializers.ModelSerializer):
             for field_name in existing - allowed:
                 self.fields.pop(field_name)
 
-    post_id = serializers.SerializerMethodField()
     creator = serializers.SerializerMethodField()
     image = serializers.SerializerMethodField()
     tags = serializers.SerializerMethodField()
@@ -22,10 +21,7 @@ class PostSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Post
-        fields = ('post_id', 'creator', 'image', 'location', 'des', 'tags', 'comments_count', 'likes_count', 'date')
-
-    def get_post_id(self, obj):
-        return obj.pk
+        fields = ('id', 'creator', 'image', 'location', 'des', 'tags', 'comments_count', 'likes_count', 'date')
 
     def get_creator(self, obj):
         return {"username": obj.user.username, "name": obj.user.profile.name, "image": str(obj.user.profile.image)}
@@ -56,16 +52,12 @@ class BoardSerializer(serializers.ModelSerializer):
             for field_name in existing - allowed:
                 self.fields.pop(field_name)
 
-    board_id = serializers.SerializerMethodField()
     posts_count = serializers.SerializerMethodField()
     posts = serializers.SerializerMethodField()
 
     class Meta:
         model = Board
-        fields = ('board_id', 'name', 'posts_count', 'posts')
-
-    def get_board_id(self, obj):
-        return obj.pk
+        fields = ('id', 'name', 'posts_count', 'posts')
 
     def get_posts_count(self, obj):
         return obj.posts.count()
@@ -84,17 +76,13 @@ class CommentSerializer(serializers.ModelSerializer):
             for field_name in existing - allowed:
                 self.fields.pop(field_name)
 
-    comment_id = serializers.SerializerMethodField()
     post_id = serializers.SerializerMethodField()
     creator = serializers.SerializerMethodField()
     date = serializers.SerializerMethodField()
 
     class Meta:
         model = Comment
-        fields = ('comment_id', 'post_id', 'creator', 'text', 'date')
-
-    def get_commentId(self, obj):
-        return obj.pk
+        fields = ('id', 'post_id', 'creator', 'text', 'date')
 
     def get_postId(self, obj):
         return obj.post.id

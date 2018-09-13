@@ -84,11 +84,11 @@ class BoardsAPIView(APIView):
                 posts = []
                 for post in board.posts.all():
                     posts.append({
-                        "post_id": post.id,
+                        "id": post.id,
                         "image": str(post.image)
                     })
                 data = {
-                    "board_id": board.id,
+                    "id": board.id,
                     "name": board.name,
                     "count": board.posts.count(),
                     "posts": posts
@@ -118,7 +118,7 @@ class BoardDetailAPIView(APIView):
                 url=F"/social/boards/{board_id}/?"
             )
             data.update({
-                "board_id": board['board_id'],
+                "id": board['id'],
                 "name": board['name'],
                 "posts_count": len(data['data']),
             })
@@ -151,11 +151,11 @@ class BoardDetailAPIView(APIView):
             posts = []
             for post in board.posts.all():
                 posts.append({
-                    "post_id": post.id,
+                    "id": post.id,
                     "image": str(post.image)
                 })
             data = {
-                "board_id": board.id,
+                "id": board.id,
                 "name": board.name,
                 "count": board.posts.count(),
                 "posts": posts
