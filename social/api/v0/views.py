@@ -1,20 +1,13 @@
 import json
 from django.core.exceptions import ObjectDoesNotExist
-from django.core.paginator import Paginator, EmptyPage, InvalidPage
 from rest_framework.views import APIView
 from django.http import JsonResponse
-from rest_framework.parsers import FormParser, MultiPartParser
-from django.utils.datastructures import MultiValueDictKeyError
 from social.forms import CreatePostFrom
 from accounts.api.utils import get_user
-from django.contrib.auth import get_user_model
 from social.models import Post, Tag, Board
 from akaskhoone.exceptions import error_data, success_data
 from social.api.v0.serializers import PostSerializer, CommentSerializer, TagSerializer, BoardSerializer
 from akaskhoone.utils import get_paginated_data
-from accounts.api.v0.serializers import ProfileSerializer
-
-User = get_user_model()
 
 
 class Tags(APIView):
@@ -100,7 +93,6 @@ class BoardsAPIView(APIView):
                     "count": board.posts.count(),
                     "posts": posts
                 }
-                print("status: 200", data)
                 return JsonResponse(data, status=200)
             except Exception as e:
                 print("status: 400", error_data(request="InternalError"))
@@ -119,7 +111,6 @@ class BoardDetailAPIView(APIView):
     def get(self, request, board_id):
         try:
             data = BoardSerializer(Board.objects.get(pk=board_id)).data
-            print("status: 200", data)
             return JsonResponse(data, status=200)
 
         except Exception as e:
@@ -159,7 +150,6 @@ class BoardDetailAPIView(APIView):
                 "count": board.posts.count(),
                 "posts": posts
             }
-            print("status: 200", data)
             return JsonResponse(data, status=200)
 
         except Exception as e:
@@ -170,7 +160,6 @@ class BoardDetailAPIView(APIView):
         try:
             board = Board.objects.get(pk=board_id)
             board.delete()
-            print("status: 200", success_data("BoardDeleted"))
             return JsonResponse(success_data("BoardDeleted"), status=200)
 
         except Exception as e:
@@ -186,7 +175,6 @@ class PostWithID(APIView):
     Put method updates a post with given post_id if available, and an error if not.
     Delete method deletes a post with given post_id if available, and an error if not.
     """
-    parser_classes = (MultiPartParser, FormParser)
 
     def get(self, request, post_id):
         try:
@@ -278,22 +266,6 @@ class Posts(APIView):
 
 
 class PostLikesAPIView(APIView):
-    # extra future
-    # def get(self, request, post_id):
-    #     try:
-    #         post = Post.objects.get(pk=post_id)
-    #         data = get_paginated_data(
-    #             data=ProfileSerializer(post.likes.all(), many=True, fields=(
-    #                 "username", "name", "image", "private", "isFollowed")).data,
-    #             page=request.query_params.get('page'),
-    #             limit=request.query_params.get('limit'),
-    #             url=F"/social/posts/{post_id}/likes/?"
-    #         )
-    #         return JsonResponse(data)
-    #     except ObjectDoesNotExist:
-    #         print("status: 400", error_data(post="NotExist"))
-    #         return JsonResponse(error_data(post="NotExist"), status=400)
-
     def put(self, request, post_id):
         try:
             post = Post.objects.get(pk=post_id)
