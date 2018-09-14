@@ -6,7 +6,6 @@ from social.models import *
 from accounts.models import *
 from rest_framework.permissions import AllowAny
 
-
 Redis = redis.StrictRedis(host='localhost', port=6379, db=0)
 
 
@@ -20,7 +19,7 @@ class Private(APIView):
         if request.data["type"] == "post":
             for obj in serializers.deserialize("json", request.data["post"]):
                 post = obj.object
-            data = NOtificationData.objects.create(
+            data = NotificationData.objects.create(
                 type="post",
                 user=user,
                 post=post
@@ -33,7 +32,7 @@ class Private(APIView):
         elif request.data["type"] == "like":
             for obj in serializers.deserialize("json", request.data["post"]):
                 post = obj.object
-            data = NOtificationData.objects.create(
+            data = NotificationData.objects.create(
                 type="like",
                 user=user,
                 post=post,
@@ -45,7 +44,7 @@ class Private(APIView):
         elif request.data["type"] == "dislike":
             for obj in serializers.deserialize("json", request.data["post"]):
                 post = obj.object
-            data = NOtificationData.objects.create(
+            data = NotificationData.objects.create(
                 type="dislike",
                 user=user,
                 post=post
@@ -57,7 +56,7 @@ class Private(APIView):
         elif request.data["type"] == "comment":
             for obj in serializers.deserialize("json", request.data["post"]):
                 post = obj.object
-            data = NOtificationData.objects.create(
+            data = NotificationData.objects.create(
                 type="comment",
                 user=user,
                 post=post
@@ -69,7 +68,7 @@ class Private(APIView):
         elif request.data["type"] == "follow":
             for obj in serializers.deserialize("json", request.data["profile"]):
                 profile = obj.object
-            data = NOtificationData.objects.create(
+            data = NotificationData.objects.create(
                 type="follow",
                 user=user,
                 profile=profile
@@ -81,7 +80,7 @@ class Private(APIView):
         elif request.data["type"] == "unfollow":
             for obj in serializers.deserialize("json", request.data["profile"]):
                 profile = obj.object
-            data = NOtificationData.objects.create(
+            data = NotificationData.objects.create(
                 type="unfollow",
                 user=user,
                 profile=profile
@@ -91,7 +90,7 @@ class Private(APIView):
                 data=data
             )
         elif request.data["type"] == "join":
-            data = NOtificationData.objects.create(
+            data = NotificationData.objects.create(
                 type="join",
                 user=user,
             )
