@@ -24,7 +24,7 @@ class PostSerializer(serializers.ModelSerializer):
         fields = ('id', 'creator', 'image', 'location', 'des', 'tags', 'comments_count', 'likes_count', 'date')
 
     def get_creator(self, obj):
-        return {"username": obj.user.username, "name": obj.user.profile.name, "image": str(obj.user.profile.image)}
+        return {"username": obj.user.username, "name": obj.user.profile.name, "image": F"{obj.user.profile.image}"}
 
     def get_image(self, obj):
         return F"{obj.image}"
@@ -84,11 +84,11 @@ class CommentSerializer(serializers.ModelSerializer):
         model = Comment
         fields = ('id', 'post_id', 'creator', 'text', 'date')
 
-    def get_postId(self, obj):
+    def get_post_id(self, obj):
         return obj.post.id
 
     def get_creator(self, obj):
-        return {"username": obj.user.username, "name": obj.user.profile.name, "image": str(obj.user.profile.image)}
+        return {"username": obj.user.username, "name": obj.user.profile.name, "image": F"{obj.user.profile.image}"}
 
     def get_date(self, obj):
         return F"{obj.date}"
@@ -101,19 +101,21 @@ class TagSerializer(serializers.ModelSerializer):
 
 
 class NotificationSerializer(serializers.ModelSerializer):
-    post_id = serializers.SerializerMethodField()
     creator = serializers.SerializerMethodField()
+    post = serializers.SerializerMethodField()
     date = serializers.SerializerMethodField()
-    
+
     class Meta:
         model = Notification
         fields = ('__all__',)
 
-    def get_postId(self, obj):
-        return obj.post.id
-
     def get_creator(self, obj):
-        return {"username": obj.user.username, "name": obj.user.profile.name, "image": str(obj.user.profile.image)}
+        return {"username": obj.user.username, "name": obj.user.profile.name, "image": F"{obj.user.profile.image}"}
+
+    def get_post(self, obj):
+        if obj.post:
+            return PostSerializer(obj.post, fields=('id', 'image')).data
+        return None
 
     def get_date(self, obj):
         return F"{obj.date}"
