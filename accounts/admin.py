@@ -185,5 +185,6 @@ class ProfileAdmin(admin.ModelAdmin):
     filter_horizontal = ('followings', 'requests')
     list_display = ('user', 'name', 'is_private')
     list_filter = ('is_private',)
+    list_editable = ('is_private',)
     search_fields = ('name',)
     ordering = ('user',)

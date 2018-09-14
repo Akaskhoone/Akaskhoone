@@ -1,5 +1,4 @@
-import os
-
+import os, json, requests
 from django.db import models
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.contrib.auth.models import PermissionsMixin
@@ -40,12 +39,21 @@ class User(AbstractBaseUser, PermissionsMixin):
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']
 
+    def send_email(self, subject, body):
+        data = {
+            "to": self.email,
+            "subject": str(subject),
+            "body": str(body)
+        }
+        headers = {"Agent-Key": "3Q0gRe22zp", "content-type": "application/json"}
+        response = requests.post(url='http://192.168.10.66:80/api/send/mail', data=json.dumps(data), headers=headers)
+        if response.status_code == 200:
+            return True
+        return False
+
     def clean(self):
         super().clean()
         self.email = self.__class__.objects.normalize_email(self.email)
-
-    def __str__(self):
-        return str(self.email)
 
 
 def get_profile_image_path(instance, filename):

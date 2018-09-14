@@ -3,12 +3,17 @@ from django.core.exceptions import ObjectDoesNotExist
 from rest_framework.views import APIView
 from django.http import JsonResponse
 from social.forms import CreatePostFrom
-from accounts.api.utils import get_user
+from accounts.utils import get_user
 from social.models import Post, Tag, Board
-from social.api.v0.serializers import PostSerializer, CommentSerializer, TagSerializer, BoardSerializer
+from social.api.v0.serializers import (PostSerializer, CommentSerializer, TagSerializer, BoardSerializer,
+                                       NotificationSerializer)
 from akaskhoone.utils import get_paginated_data, error_data, success_data
 from akaskhoone.notifications import push_to_queue
 from django.db.models import Count
+from django.contrib.auth import get_user_model
+from accounts.utils import has_permission
+
+User = get_user_model()
 
 
 class TagsAPIView(APIView):
@@ -61,8 +66,12 @@ class BoardsAPIView(APIView):
     def get(self, request):
         user = get_user(request)
         if user:
+            if not has_permission(request.user, user):
+                print("status: 400", error_data(profile="Private"))
+                return JsonResponse(error_data(profile="Private"), status=400)
+
             data = get_paginated_data(
-                data=BoardSerializer(user.boards.all(), many=True).data,
+                data=BoardSerializer(user.boards.all().order_by('-id'), requester=request.user, many=True).data,
                 page=request.query_params.get('page'),
                 limit=request.query_params.get('limit'),
                 url=F"/social/boards/?username={user.username}"
@@ -83,7 +92,7 @@ class BoardsAPIView(APIView):
                         board.posts.add(post)
                     except Exception as e:
                         pass
-                return JsonResponse(BoardSerializer(board).data)
+                return JsonResponse(BoardSerializer(board, requester=request.user).data)
             except Exception as e:
                 print("status: 400", error_data(request="InternalError"))
                 return JsonResponse(error_data(request="InternalError"), status=400)
@@ -100,7 +109,11 @@ class BoardsAPIView(APIView):
 class BoardDetailAPIView(APIView):
     def get(self, request, board_id):
         try:
-            board = BoardSerializer(Board.objects.get(pk=board_id)).data
+            if not has_permission(request.user, Board.objects.get(pk=board_id).user):
+                print("status: 400", error_data(profile="Private"))
+                return JsonResponse(error_data(profile="Private"), status=400)
+
+            board = BoardSerializer(Board.objects.get(pk=board_id), requester=request.user).data
             data = get_paginated_data(
                 data=board['posts'],
                 page=request.query_params.get('page'),
@@ -119,7 +132,7 @@ class BoardDetailAPIView(APIView):
 
     def put(self, request, board_id):
         try:
-            board = Board.objects.get(pk=board_id)
+            board = Board.objects.get(pk=board_id, user=request.user)
             name = request.data.get('name')
             add_posts = request.data.get('add_posts')
             remove_posts = request.data.get('remove_posts')
@@ -138,7 +151,19 @@ class BoardDetailAPIView(APIView):
                     except Exception as e:
                         pass
             board.save()
-            return JsonResponse(BoardSerializer(board).data)
+            board = BoardSerializer(board, requester=request.user).data
+            data = get_paginated_data(
+                data=board['posts'],
+                page=request.query_params.get('page'),
+                limit=request.query_params.get('limit'),
+                url=F"/social/boards/{board_id}/?"
+            )
+            data.update({
+                "id": board['id'],
+                "name": board['name'],
+                "posts_count": len(data['data']),
+            })
+            return JsonResponse(data)
 
         except Exception as e:
             print("status: 400", error_data(board="NotExist"))
@@ -146,7 +171,7 @@ class BoardDetailAPIView(APIView):
 
     def delete(self, request, board_id):
         try:
-            board = Board.objects.get(pk=board_id)
+            board = Board.objects.get(pk=board_id, user=request.user)
             board.delete()
             return JsonResponse(success_data("BoardDeleted"))
 
@@ -166,14 +191,18 @@ class PostDetailAPIView(APIView):
 
     def get(self, request, post_id):
         try:
-            return JsonResponse(PostSerializer(Post.objects.get(pk=post_id)).data)
+            if not has_permission(request.user, Post.objects.get(pk=post_id).user):
+                print("status: 400", error_data(profile="Private"))
+                return JsonResponse(error_data(profile="Private"), status=400)
+
+            return JsonResponse(PostSerializer(Post.objects.get(pk=post_id), requester=request.user).data)
         except ObjectDoesNotExist as e:
             print("status: 400", error_data(post="NotExist"))
             return JsonResponse(error_data(post="NotExist"), status=400)
 
     def put(self, request, post_id):
         try:
-            post = Post.objects.get(pk=post_id)
+            post = Post.objects.get(pk=post_id, user=request.user)
             if request.data.get("des"):
                 post.des = request.data.get("des")
             if request.data.get("location"):
@@ -188,7 +217,7 @@ class PostDetailAPIView(APIView):
                 post.tags.clear()
                 post.tags.add(*tags)
             post.save()
-            return JsonResponse(PostSerializer(Post.objects.get(pk=post_id)).data)
+            return JsonResponse(PostSerializer(Post.objects.get(pk=post_id), requester=request.user).data)
 
         except ObjectDoesNotExist:
             print("status: 400", error_data(post="NotExist"))
@@ -196,7 +225,7 @@ class PostDetailAPIView(APIView):
 
     def delete(self, request, post_id):
         try:
-            Post.objects.get(pk=post_id).delete()
+            Post.objects.get(pk=post_id, user=request.user).delete()
             print("status: 200", success_data("PostDeletedSuccessfully"))
             return JsonResponse(success_data("PostDeletedSuccessfully"))
         except ObjectDoesNotExist as e:
@@ -212,20 +241,29 @@ class PostsAPIView(APIView):
     """
 
     def get(self, request):
-        tag = request.query_params.get("tag")
-        if tag:
+        search = request.query_params.get("search")
+        if search:
+            users = list(Post.objects.all().filter(user__profile__is_private=False).values_list('user', flat=True))
+            users += list(request.user.profile.followings.all().values_list('user', flat=True))
+            users.append(request.user.pk)
             data = get_paginated_data(
-                data=PostSerializer(Post.objects.filter(tags__name=tag).order_by('-date'), many=True).data,
+                data=PostSerializer(Post.objects.filter(tags__name=search, user_id__in=set(users)).order_by('-date'),
+                                    many=True, requester=request.user).data,
                 page=request.query_params.get('page'),
                 limit=request.query_params.get('limit'),
-                url=F"/social/posts/?tag={tag}"
+                url=F"/social/posts/?search={search}"
             )
             return JsonResponse(data)
 
         user = get_user(request)
         if user:
+            if not has_permission(request.user, user):
+                print("status: 400", error_data(profile="Private"))
+                return JsonResponse(error_data(profile="Private"), status=400)
+
             data = get_paginated_data(
-                data=PostSerializer(Post.objects.filter(user_id=user.pk).order_by('-date'), many=True).data,
+                data=PostSerializer(Post.objects.filter(user_id=user.pk).order_by('-date'), many=True,
+                                    requester=request.user).data,
                 page=request.query_params.get('page'),
                 limit=request.query_params.get('limit'),
                 url=F"/social/posts/?username={user.username}"
@@ -240,7 +278,7 @@ class PostsAPIView(APIView):
         if post_form.is_valid():
             post = post_form.save(request.user)
             push_to_queue(type="post", user=request.user, post=post)
-            return JsonResponse(PostSerializer(post).data)
+            return JsonResponse(PostSerializer(post, requester=request.user).data)
         else:
             errors = {}
             errors_as_json = json.loads(post_form.errors.as_json())
@@ -311,7 +349,7 @@ class NotificationsAPIView(APIView):
     def get(self, request):
         notifications = request.user.notifications.all().order_by('-date')
         data = get_paginated_data(
-            data=PostSerializer(notifications, many=True).data,
+            data=NotificationSerializer(notifications, many=True).data,
             page=request.query_params.get('page'),
             limit=request.query_params.get('limit'),
             url="/social/notifications/?"

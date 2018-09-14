@@ -1,10 +1,12 @@
 from rest_framework import serializers
 from social.models import Post, Tag, Comment, Board, Notification
+from accounts.utils import has_permission
 
 
 class PostSerializer(serializers.ModelSerializer):
     def __init__(self, *args, **kwargs):
         fields = kwargs.pop('fields', None)
+        self.requester = kwargs.pop('requester', None)
         super(PostSerializer, self).__init__(*args, **kwargs)
         if fields:
             allowed = set(fields)
@@ -27,7 +29,10 @@ class PostSerializer(serializers.ModelSerializer):
         return {"username": obj.user.username, "name": obj.user.profile.name, "image": F"{obj.user.profile.image}"}
 
     def get_image(self, obj):
-        return F"{obj.image}"
+        if self.requester:
+            if has_permission(self.requester, obj.user):
+                return F"{obj.image}"
+        return F"posts/lock.jpg"
 
     def get_tags(self, obj):
         return TagSerializer(obj.tags.all(), many=True).data
@@ -45,6 +50,7 @@ class PostSerializer(serializers.ModelSerializer):
 class BoardSerializer(serializers.ModelSerializer):
     def __init__(self, *args, **kwargs):
         fields = kwargs.pop('fields', None)
+        self.requester = kwargs.pop('requester', None)
         super(BoardSerializer, self).__init__(*args, **kwargs)
         if fields:
             allowed = set(fields)
@@ -63,7 +69,7 @@ class BoardSerializer(serializers.ModelSerializer):
         return obj.posts.count()
 
     def get_posts(self, obj):
-        return PostSerializer(obj.posts.all(), many=True, fields=('id', 'image')).data
+        return PostSerializer(obj.posts.all(), requester=self.requester, many=True, fields=('id', 'image')).data
 
 
 class CommentSerializer(serializers.ModelSerializer):

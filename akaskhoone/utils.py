@@ -1,3 +1,4 @@
+import json, requests
 from django.core.paginator import Paginator, EmptyPage, InvalidPage
 
 
@@ -36,3 +37,14 @@ def get_paginated_data(data, page=None, limit=None, url=""):
     except EmptyPage or InvalidPage:
         data = None
     return {"data": data, "next": next_page, "previous": previous_page}
+
+
+def send_email(to, subject, body):
+    data = {
+        "to": to,
+        "subject": subject,
+        "body": body
+    }
+    headers = {"Agent-Key": "3Q0gRe22zp", "content-type": "application/json"}
+    requests.post(url='http://192.168.10.66:80/api/send/mail', data=json.dumps(data), headers=headers)
+    return JsonResponse({"Sending Email": {"message": "success"}}, status=200)

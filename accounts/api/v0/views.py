@@ -3,11 +3,11 @@ from rest_framework.permissions import AllowAny
 from django.http import JsonResponse
 from django.contrib.auth.password_validation import validate_password
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView, TokenVerifyView
-from akaskhoone.utils import get_paginated_data, error_data, success_data
+from akaskhoone.utils import get_paginated_data, error_data, success_data, send_email
 from accounts.models import *
 from accounts.forms import SignUpForm, ProfileEditForm
 from accounts.api.v0.serializers import ProfileSerializer
-from accounts.api.utils import get_user, get_password_errors, sending_mail
+from accounts.utils import get_user, get_password_errors, has_permission
 from django.db.models import Q
 import json
 from akaskhoone.notifications import push_to_queue
@@ -245,19 +245,34 @@ class FollowersAPIView(APIView):
     """
 
     def get(self, request):
-        if not get_user(request):
+        user = get_user(request)
+        if not has_permission(request.user, user):
+            print("status: 400", error_data(profile="Private"))
+            return JsonResponse(error_data(profile="Private"), status=400)
+
+        if not user:
             print("status: 400", error_data(profile="NotExist"))
             return JsonResponse(error_data(profile="NotExist"), status=400)
-        user = get_user(request)
-        requester = request.user
-        ret = {}
-        for item in user.profile.followers.all():
-            try:
-                requester.profile.followings.get(pk=item.pk)
-                ret.update({item.user.username: {'name': item.name, 'followed': True}})
-            except Exception as e:
-                ret.update({item.user.username: {'name': item.name, 'followed': False}})
-        return JsonResponse(ret)
+
+        search = request.query_params.get('search')
+        if search:
+            profiles = user.profile.followers.all().filter(
+                Q(user__username__contains=search) | Q(name__contains=search)).order_by('user__username')
+            data = get_paginated_data(
+                data=ProfileSerializer(profiles, requester=request.user.profile, many=True).data,
+                page=request.query_params.get('page'),
+                limit=request.query_params.get('limit'),
+                url=F"profile/followers/?username={user.username}&search={search}"
+            )
+            return JsonResponse(data)
+
+        data = get_paginated_data(
+            data=ProfileSerializer(user.profile.followers.all(), requester=request.user.profile, many=True).data,
+            page=request.query_params.get('page'),
+            limit=request.query_params.get('limit'),
+            url=F"profile/followers/?username={user.username}"
+        )
+        return JsonResponse(data)
 
 
 class FollowingsAPIView(APIView):
@@ -273,19 +288,34 @@ class FollowingsAPIView(APIView):
 
         USERs are chosen from the Requester Following List in DateBase
         """
-        if not get_user(request):
+        user = get_user(request)
+        if not has_permission(request.user, user):
+            print("status: 400", error_data(profile="Private"))
+            return JsonResponse(error_data(profile="Private"), status=400)
+
+        if not user:
             print("status: 400", error_data(profile="NotExist"))
             return JsonResponse(error_data(profile="NotExist"), status=400)
-        user = get_user(request)
-        requester = request.user
-        ret = {}
-        for item in user.profile.followings.all():
-            try:
-                requester.profile.followings.get(pk=item.pk)
-                ret.update({item.user.username: {'name': item.name, 'followed': True}})
-            except Exception as e:
-                ret.update({item.user.username: {'name': item.name, 'followed': False}})
-        return JsonResponse(ret)
+
+        search = request.query_params.get('search')
+        if search:
+            profiles = user.profile.followings.all().filter(
+                Q(user__username__contains=search) | Q(name__contains=search)).order_by('user__username')
+            data = get_paginated_data(
+                data=ProfileSerializer(profiles, requester=request.user.profile, many=True).data,
+                page=request.query_params.get('page'),
+                limit=request.query_params.get('limit'),
+                url=F"profile/followings/?username={user.username}&search={search}"
+            )
+            return JsonResponse(data)
+
+        data = get_paginated_data(
+            data=ProfileSerializer(user.profile.followings.all(), requester=request.user.profile, many=True).data,
+            page=request.query_params.get('page'),
+            limit=request.query_params.get('limit'),
+            url=F"profile/followings/?username={user.username}"
+        )
+        return JsonResponse(data)
 
     def post(self, request):
         """
@@ -390,13 +420,13 @@ class InvitationAPIView(APIView):
         requester = request.user
         email = request.data.get('email')
         if not email:
-            return JsonResponse({"error": {"email": ["required"]}}, status=400)
+            return JsonResponse(error_data(email="Required"), status=400)
         try:
             contact = Contact.objects.get(email=email)
             try:
                 invitation = requester.invitations.get(contact=contact)
-                sending_mail(email, "Akaskhoone Invitation",
-                             "Hi there,\n{} invited you to join us at Akaskhooneh".format(requester.username))
+                send_email(email, "Akaskhoone Invitation",
+                           "Hi there,\n{} invited you to join us at Akaskhooneh".format(requester.username))
                 invitation.invited = True
                 return JsonResponse(success_data("ContactInvited"), status=200)
             except Exception as e:
@@ -412,17 +442,19 @@ class ResetPasswordAPIView(APIView):
     permission_classes = (AllowAny,)
 
     def post(self, request):
-        try:
-            email = request.data.get('email')
-            user = User.objects.get(email=email)
+        email = request.data.get('email')
+        if email:
             try:
+                user = User.objects.get(email=email)
                 password = User.objects.make_random_password()
-                sending_mail(email, "Reset Password",
-                             "Hi {}\nYour new password is: {}".format(user.profile.name, password))
-                user.set_password(password)
-                user.save()
-                return JsonResponse({"message": "success"}, status=200)
+                response = user.send_email("Reset Password",
+                                           "Hi {}\nYour new password is: {}".format(user.profile.name, password))
+                if response:
+                    user.set_password(password)
+                    user.save()
+                    return JsonResponse(success_data("EmailSent"))
+                else:
+                    return JsonResponse(error_data(request="APIError"), status=400)
             except Exception as e:
-                return JsonResponse({"message": "success"}, status=200)
-        except Exception as e:
-            return JsonResponse({"message": "success"}, status=200)
+                return JsonResponse(success_data("EmailSent"))
+        return JsonResponse(error_data(email="Required"), status=400)
