@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.admin.decorators import register
-from .models import Tag, Post, Board, Comment, Notification, NotificationData
+from .models import Tag, Post, Board, Comment, Notification
 
 
 @register(Tag)
@@ -25,9 +25,4 @@ class CommentAdmin(admin.ModelAdmin):
 
 @register(Notification)
 class NotificationAdmin(admin.ModelAdmin):
-    pass
-
-
-@register(NotificationData)
-class NotificationDataAdmin(admin.ModelAdmin):
     pass
