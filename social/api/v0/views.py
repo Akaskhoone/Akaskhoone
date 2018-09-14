@@ -77,23 +77,7 @@ class BoardsAPIView(APIView):
                         board.posts.add(post)
                     except Exception as e:
                         pass
-                if board.posts.count() == 0:
-                    board.delete()
-                    print("status: 400", error_data(posts="NotValid"))
-                    return JsonResponse(error_data(posts="NotValid"), status=400)
-                posts = []
-                for post in board.posts.all():
-                    posts.append({
-                        "id": post.id,
-                        "image": str(post.image)
-                    })
-                data = {
-                    "id": board.id,
-                    "name": board.name,
-                    "count": board.posts.count(),
-                    "posts": posts
-                }
-                return JsonResponse(data, status=200)
+                return JsonResponse(BoardSerializer(board).data)
             except Exception as e:
                 print("status: 400", error_data(request="InternalError"))
                 return JsonResponse(error_data(request="InternalError"), status=400)
@@ -122,7 +106,7 @@ class BoardDetailAPIView(APIView):
                 "name": board['name'],
                 "posts_count": len(data['data']),
             })
-            return JsonResponse(data, status=200)
+            return JsonResponse(data)
         except Exception as e:
             print("status: 400", error_data(board="NotExist"))
             return JsonResponse(error_data(board="NotExist"), status=400)
@@ -148,19 +132,7 @@ class BoardDetailAPIView(APIView):
                     except Exception as e:
                         pass
             board.save()
-            posts = []
-            for post in board.posts.all():
-                posts.append({
-                    "id": post.id,
-                    "image": str(post.image)
-                })
-            data = {
-                "id": board.id,
-                "name": board.name,
-                "count": board.posts.count(),
-                "posts": posts
-            }
-            return JsonResponse(data, status=200)
+            return JsonResponse(BoardSerializer(board).data)
 
         except Exception as e:
             print("status: 400", error_data(board="NotExist"))
@@ -170,7 +142,7 @@ class BoardDetailAPIView(APIView):
         try:
             board = Board.objects.get(pk=board_id)
             board.delete()
-            return JsonResponse(success_data("BoardDeleted"), status=200)
+            return JsonResponse(success_data("BoardDeleted"))
 
         except Exception as e:
             print("status: 400", error_data(board="NotExist"))
@@ -188,8 +160,7 @@ class PostDetailAPIView(APIView):
 
     def get(self, request, post_id):
         try:
-            data = PostSerializer(Post.objects.get(pk=post_id))
-            return JsonResponse(data)
+            return JsonResponse(PostSerializer(Post.objects.get(pk=post_id)).data)
         except ObjectDoesNotExist as e:
             print("status: 400", error_data(post="NotExist"))
             return JsonResponse(error_data(post="NotExist"), status=400)
@@ -211,8 +182,7 @@ class PostDetailAPIView(APIView):
                 post.tags.clear()
                 post.tags.add(*tags)
             post.save()
-            data = PostSerializer(Post.objects.get(pk=post_id))
-            return JsonResponse(data)
+            return JsonResponse(PostSerializer(Post.objects.get(pk=post_id)).data)
 
         except ObjectDoesNotExist:
             print("status: 400", error_data(post="NotExist"))
@@ -220,8 +190,7 @@ class PostDetailAPIView(APIView):
 
     def delete(self, request, post_id):
         try:
-            post = Post.objects.get(pk=post_id)
-            post.delete()
+            Post.objects.get(pk=post_id).delete()
             print("status: 200", success_data("PostDeletedSuccessfully"))
             return JsonResponse(success_data("PostDeletedSuccessfully"))
         except ObjectDoesNotExist as e:
@@ -261,14 +230,14 @@ class PostsAPIView(APIView):
             return JsonResponse(error_data(profile="NotExist"), status=400)
 
     def post(self, request):
-        new_post = CreatePostFrom(request.POST, request.FILES)
-        if new_post.is_valid():
-            new_post.save(request.user)
-            print("status: 200", success_data("PostCreatedSuccessfully"))
-            return JsonResponse(success_data("PostCreatedSuccessfully"))
+        post_form = CreatePostFrom(request.POST, request.FILES)
+        if post_form.is_valid():
+            post = post_form.save(request.user)
+            push_to_queue(type="post", user=request.user, post=post)
+            return JsonResponse(PostSerializer(post).data)
         else:
             errors = {}
-            errors_as_json = json.loads(new_post.errors.as_json())
+            errors_as_json = json.loads(post_form.errors.as_json())
             image_error = errors_as_json.get("image")
             if image_error.get("image") == "required":
                 errors["image"] = ["Required"]
@@ -359,4 +328,4 @@ class NotificationsAPIView(APIView):
             "posts": notifs_list,
             "next": F"/social/home/?page={next_page}" if next_page else None
         }
-        return JsonResponse(data, status=200, safe=False)
+        return JsonResponse(data, safe=False)

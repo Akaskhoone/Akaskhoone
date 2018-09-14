@@ -98,3 +98,22 @@ class TagSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tag
         fields = ('name',)
+
+
+class NotificationSerializer(serializers.ModelSerializer):
+    post_id = serializers.SerializerMethodField()
+    creator = serializers.SerializerMethodField()
+    date = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Notification
+        fields = ('__all__',)
+
+    def get_postId(self, obj):
+        return obj.post.id
+
+    def get_creator(self, obj):
+        return {"username": obj.user.username, "name": obj.user.profile.name, "image": str(obj.user.profile.image)}
+
+    def get_date(self, obj):
+        return F"{obj.date}"

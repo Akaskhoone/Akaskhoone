@@ -1,7 +1,5 @@
-import json
 from django import forms
 from .models import Tag, Post
-from akaskhoone.notifications import push_to_queue
 
 
 class CreatePostFrom(forms.Form):
@@ -14,7 +12,7 @@ class CreatePostFrom(forms.Form):
         tags = self.cleaned_data["tags"].split()
         for tag in tags:
             Tag.objects.get_or_create(name=tag)
-        new_post = Post.objects.create(user=user, image=self.cleaned_data["image"], des=self.cleaned_data["des"],
-                                       location=self.cleaned_data["location"])
-        new_post.tags.add(*tags)
-        push_to_queue(type="post", user=user, post=new_post)
+        post = Post.objects.create(user=user, image=self.cleaned_data["image"], des=self.cleaned_data["des"],
+                                   location=self.cleaned_data["location"])
+        post.tags.add(*tags)
+        return post
