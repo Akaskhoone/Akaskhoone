@@ -6,8 +6,9 @@ from social.forms import CreatePostFrom
 from accounts.api.utils import get_user
 from social.models import Post, Tag, Board
 from social.api.v0.serializers import PostSerializer, CommentSerializer, TagSerializer, BoardSerializer
-from akaskhoone.utils import get_paginated_data, error_data, success_data, Paginator, InvalidPage, EmptyPage
+from akaskhoone.utils import get_paginated_data, error_data, success_data
 from akaskhoone.notifications import push_to_queue
+from django.db.models import Count
 
 
 class TagsAPIView(APIView):
@@ -22,14 +23,19 @@ class TagsAPIView(APIView):
         search = request.query_params.get('search')
         if search:
             data = get_paginated_data(
-                data=TagSerializer(Tag.objects.filter(name__contains=search), many=True).data,
+                data=TagSerializer(
+                    Tag.objects.filter(name__contains=search).annotate(posts_count=Count('posts')).order_by(
+                        '-posts_count').exclude(posts__isnull=True), many=True).data,
                 page=request.query_params.get('page'),
                 limit=request.query_params.get('limit'),
                 url=F"/social/tags/?search={search}"
             )
         else:
             data = get_paginated_data(
-                data=TagSerializer(Tag.objects.all(), many=True).data,
+                data=TagSerializer(
+                    Tag.objects.all().annotate(posts_count=Count('posts')).order_by('-posts_count').exclude(
+                        posts__isnull=True),
+                    many=True).data,
                 page=request.query_params.get('page'),
                 limit=request.query_params.get('limit'),
                 url=F"/social/tags/?"
