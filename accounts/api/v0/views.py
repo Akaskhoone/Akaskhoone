@@ -6,7 +6,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from akaskhoone.utils import get_paginated_data, error_data, success_data, send_email
 from accounts.models import *
 from accounts.forms import SignUpForm, ProfileEditForm
-from accounts.api.v0.serializers import ProfileSerializer
+from accounts.api.v0.serializers import ProfileSerializer, TokenSerializer
 from accounts.utils import get_user, get_password_errors, has_permission
 from django.db.models import Q
 import json
@@ -14,6 +14,8 @@ from akaskhoone.notifications import push_to_queue
 
 
 class LoginAPIView(TokenObtainPairView):
+    serializer_class = TokenSerializer
+
     def post(self, request, *args, **kwargs):
         try:
             return super(LoginAPIView, self).post(request)
