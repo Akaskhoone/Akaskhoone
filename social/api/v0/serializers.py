@@ -63,7 +63,7 @@ class BoardSerializer(serializers.ModelSerializer):
         return obj.posts.count()
 
     def get_posts(self, obj):
-        return PostSerializer(obj.posts.all(), many=True, fields=('post_id', 'image')).data
+        return PostSerializer(obj.posts.all(), many=True, fields=('id', 'image')).data
 
 
 class CommentSerializer(serializers.ModelSerializer):

@@ -3,7 +3,7 @@ from rest_framework.permissions import AllowAny
 from django.http import JsonResponse
 from django.contrib.auth.password_validation import validate_password
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView, TokenVerifyView
-from akaskhoone.exceptions import error_data, success_data
+from akaskhoone.utils import get_paginated_data, error_data, success_data
 from accounts.models import *
 from accounts.forms import SignUpForm, ProfileEditForm
 from accounts.api.v0.serializers import ProfileSerializer

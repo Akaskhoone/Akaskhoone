@@ -1,15 +1,12 @@
 import json
-from rest_framework.permissions import AllowAny
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework.views import APIView
 from django.http import JsonResponse
 from social.forms import CreatePostFrom
 from accounts.api.utils import get_user
 from social.models import Post, Tag, Board
-from akaskhoone.exceptions import error_data, success_data
 from social.api.v0.serializers import PostSerializer, CommentSerializer, TagSerializer, BoardSerializer
-from akaskhoone.utils import get_paginated_data
-from accounts.models import Contact
+from akaskhoone.utils import get_paginated_data, error_data, success_data, Paginator, InvalidPage, EmptyPage
 from akaskhoone.notifications import push_to_queue
 
 
