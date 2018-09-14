@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from social.models import Post, Tag, Comment, Board
+from social.models import Post, Tag, Comment, Board, Notification
 
 
 class PostSerializer(serializers.ModelSerializer):

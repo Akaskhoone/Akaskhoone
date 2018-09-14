@@ -1,4 +1,5 @@
 import json
+from rest_framework.permissions import AllowAny
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework.views import APIView
 from django.http import JsonResponse
@@ -8,6 +9,8 @@ from social.models import Post, Tag, Board
 from akaskhoone.exceptions import error_data, success_data
 from social.api.v0.serializers import PostSerializer, CommentSerializer, TagSerializer, BoardSerializer
 from akaskhoone.utils import get_paginated_data
+from accounts.models import Contact
+from akaskhoone.notifications import push_to_queue
 
 
 class TagsAPIView(APIView):
@@ -283,9 +286,11 @@ class PostLikesAPIView(APIView):
                 method = request.data.get('method')
                 if method == "like":
                     post.likes.add(request.user)
+                    push_to_queue(type="like", user=request.user, post=post)
                     return JsonResponse(success_data("PostLiked"))
                 elif method == "dislike":
                     post.likes.remove(request.user)
+                    push_to_queue(type="dislike", user=request.user, post=post)
                     return JsonResponse(success_data("PostDisliked"))
                 else:
                     print("status: 400", error_data(method="WrongData"))
@@ -320,6 +325,7 @@ class PostCommentsAPIView(APIView):
                 post = Post.objects.get(pk=post_id)
                 comment = post.comments.create(user=request.user, text=text)
                 data = CommentSerializer(comment).data
+                push_to_queue(type="comment", user=request.user, post=post)
                 return JsonResponse(data)
             except ObjectDoesNotExist:
                 print("status: 400", error_data(post="NotExist"))
@@ -327,3 +333,33 @@ class PostCommentsAPIView(APIView):
         else:
             print("status: 400", error_data(text="Required"))
             return JsonResponse(error_data(text="Required"), status=400)
+
+
+class NotificationsAPIView(APIView):
+    def get(self, request):
+        limit = request.query_params.get('limit') or 1
+        page = request.query_params.get('page') or 1
+        page = int(page)
+        notifs_list = []
+        notifications = request.user.notifications.all().order_by('-date')
+        notifs_paginated = Paginator(notifications, limit)
+        for notif in notifs_paginated.object_list:
+            notifs_list.append({
+                "type": notif.data.type,
+                "user_name": notif.data.user.username,
+                "user_image": str(notif.data.user.profile.image),
+                "post_id": notif.data.post.id,
+                "post_image": str(notif.data.post.image),
+                "date": str(notif.data.date),
+            })
+        notifs_paginated.object_list = notifs_list
+        next_page = (page + 1) if (page + 1) <= notifs_paginated.num_pages else None
+        try:
+            notifs_list = list(notifs_paginated.page(page))
+        except EmptyPage or InvalidPage:
+            notifs_list = None
+        data = {
+            "posts": notifs_list,
+            "next": F"/social/home/?page={next_page}" if next_page else None
+        }
+        return JsonResponse(data, status=200, safe=False)

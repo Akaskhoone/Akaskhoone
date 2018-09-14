@@ -1,5 +1,7 @@
+import json
 from django import forms
 from .models import Tag, Post
+from akaskhoone.notifications import push_to_queue
 
 
 class CreatePostFrom(forms.Form):
@@ -15,3 +17,4 @@ class CreatePostFrom(forms.Form):
         new_post = Post.objects.create(user=user, image=self.cleaned_data["image"], des=self.cleaned_data["des"],
                                        location=self.cleaned_data["location"])
         new_post.tags.add(*tags)
+        push_to_queue(type="post", user=user, post=new_post)

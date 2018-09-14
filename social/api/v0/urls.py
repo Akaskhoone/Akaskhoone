@@ -12,4 +12,5 @@ urlpatterns = [
     path('posts/<int:post_id>/', PostDetailAPIView.as_view(), name="post_detail"),
     path('posts/<int:post_id>/likes/', PostLikesAPIView.as_view(), name="post_likes"),
     path('posts/<int:post_id>/comments/', PostCommentsAPIView.as_view(), name="post_comments"),
+    path('notifications/', NotificationsAPIView.as_view(), name="notifications")
 ]

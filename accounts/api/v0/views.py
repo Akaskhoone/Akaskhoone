@@ -10,6 +10,7 @@ from accounts.api.v0.serializers import ProfileSerializer
 from accounts.api.utils import get_user, get_password_errors, sending_mail
 from django.db.models import Q
 import json
+from akaskhoone.notifications import push_to_queue
 
 
 class LoginAPIView(TokenObtainPairView):
@@ -309,6 +310,7 @@ class FollowingsAPIView(APIView):
                         print("status: 200", success_data("RequestedSuccessfully"))
                         return JsonResponse(success_data("RequestedSuccessfully"), status=200)
                     requester.profile.followings.add(user.profile)
+                    push_to_queue(type="follow", user=request.user, profile=user.profile)
                     print("status: 200", success_data("FollowedSuccessfully"))
                     return JsonResponse(success_data("FollowedSuccessfully"), status=200)
             except Exception as e:
@@ -325,11 +327,14 @@ class FollowingsAPIView(APIView):
                     return JsonResponse(error_data(profile="NotExist"), status=400)
                 try:
                     requester.profile.followings.remove(user.profile.id)
+                    push_to_queue(type="unfollow", user=request.user, profile=user.profile)
                     print("status: 200", success_data("UnFollowedSuccessfully"))
                     return JsonResponse(success_data("UnFollowedSuccessfully"), status=200)
                 except Exception as e:
+                    push_to_queue(type="unfollow", user=request.user, profile=user.profile)
                     print("status: 200", success_data("UnFollowedSuccessfully"))
                     return JsonResponse(success_data("UnFollowedSuccessfully"), status=200)
+
             except Exception as e:
                 print("status: 400", error_data(profile="NotExist"))
                 return JsonResponse(error_data(profile="NotExist"), status=400)

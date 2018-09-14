@@ -1,8 +1,13 @@
+import json
 from django.contrib.auth.forms import AdminPasswordChangeForm, UserChangeForm, UserCreationForm
 from django import forms
 from .validators import UniqueEmailValidator, NotNumericValidator, LengthValidator, UniqueUsernameValidator
+from django.core import serializers
 from .models import User, Profile
 from django.contrib.auth.password_validation import validate_password
+import redis
+
+Redis = redis.StrictRedis(host='localhost', port=6379, db=0)
 
 
 class ProfileEditForm(forms.Form):
@@ -38,6 +43,7 @@ class SignUpForm(forms.Form):
                                name=self.cleaned_data["name"],
                                bio=self.cleaned_data["bio"],
                                image=self.cleaned_data["image"])
+        Redis.lpush("notifications", json.dumps({"type": "join", "user": serializers.serialize('json', [user])}))
 
     def is_valid(self):
         is_valid = super(SignUpForm, self).is_valid()
