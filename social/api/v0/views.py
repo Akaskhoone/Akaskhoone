@@ -303,29 +303,11 @@ class PostCommentsAPIView(APIView):
 
 class NotificationsAPIView(APIView):
     def get(self, request):
-        limit = request.query_params.get('limit') or 1
-        page = request.query_params.get('page') or 1
-        page = int(page)
-        notifs_list = []
         notifications = request.user.notifications.all().order_by('-date')
-        notifs_paginated = Paginator(notifications, limit)
-        for notif in notifs_paginated.object_list:
-            notifs_list.append({
-                "type": notif.data.type,
-                "user_name": notif.data.user.username,
-                "user_image": str(notif.data.user.profile.image),
-                "post_id": notif.data.post.id,
-                "post_image": str(notif.data.post.image),
-                "date": str(notif.data.date),
-            })
-        notifs_paginated.object_list = notifs_list
-        next_page = (page + 1) if (page + 1) <= notifs_paginated.num_pages else None
-        try:
-            notifs_list = list(notifs_paginated.page(page))
-        except EmptyPage or InvalidPage:
-            notifs_list = None
-        data = {
-            "posts": notifs_list,
-            "next": F"/social/home/?page={next_page}" if next_page else None
-        }
-        return JsonResponse(data, safe=False)
+        data = get_paginated_data(
+            data=PostSerializer(notifications, many=True).data,
+            page=request.query_params.get('page'),
+            limit=request.query_params.get('limit'),
+            url="/social/notifications/?"
+        )
+        return JsonResponse(data)
