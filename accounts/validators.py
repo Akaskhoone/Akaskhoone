@@ -7,9 +7,9 @@ from django.core.exceptions import ObjectDoesNotExist
 
 @deconstructible
 class UnicodeNameValidator(validators.RegexValidator):
-    regex = r'([a-zA-Z\s])+$|^$'
+    regex = r'^[\D]+$'
     message = (
-        'Enter a valid name. This value may contain only English letters and Spaces'
+        'Enter a valid name. This value may contain only letters and Spaces'
     )
     flags = 0
 
@@ -43,7 +43,7 @@ class UniqueUsernameValidator:
             self.User.objects.get(username=value)
             raise validators.ValidationError(self.message, self.code)
         except ObjectDoesNotExist as e:
-            print(e)
+            pass
 
 
 @deconstructible

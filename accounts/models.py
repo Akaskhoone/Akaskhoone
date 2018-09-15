@@ -4,12 +4,12 @@ from django.contrib.auth.base_user import AbstractBaseUser
 from django.contrib.auth.models import PermissionsMixin
 from django.utils import timezone
 from .managers import UserManager
-from .validators import UnicodeUsernameValidator, UnicodeNameValidator
+from .validators import UnicodeUsernameValidator, UnicodeNameValidator, ASCIIUsernameValidator
 
 
 class User(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(unique=True)
-    username_validator = UnicodeUsernameValidator()
+    username_validator = ASCIIUsernameValidator()
     username = models.CharField(
         'username',
         max_length=150,
@@ -53,7 +53,8 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def clean(self):
         super().clean()
-        self.email = self.__class__.objects.normalize_email(self.email)
+        self.email = str(self.email).lower()
+        self.username = str(self.username).lower()
 
 
 def get_profile_image_path(instance, filename):
@@ -62,7 +63,8 @@ def get_profile_image_path(instance, filename):
 
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    name = models.CharField(max_length=100, blank=False)
+    name_validator = UnicodeNameValidator()
+    name = models.CharField(max_length=100, blank=False, validators=[name_validator])
     bio = models.TextField(verbose_name='biography', null=True, blank=True)
     image = models.ImageField(upload_to=get_profile_image_path, blank=True, null=True,
                               default='profile_photos/default.jpg')

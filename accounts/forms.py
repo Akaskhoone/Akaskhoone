@@ -1,7 +1,8 @@
 import json
 from django.contrib.auth.forms import AdminPasswordChangeForm, UserChangeForm, UserCreationForm
 from django import forms
-from .validators import UniqueEmailValidator, NotNumericValidator, LengthValidator, UniqueUsernameValidator
+from .validators import (UniqueEmailValidator, NotNumericValidator, LengthValidator, UniqueUsernameValidator,
+                         ASCIIUsernameValidator, UnicodeNameValidator)
 from django.core import serializers
 from .models import User, Profile
 from django.contrib.auth.password_validation import validate_password
@@ -11,7 +12,8 @@ Redis = redis.StrictRedis(host='localhost', port=6379, db=0)
 
 
 class ProfileEditForm(forms.Form):
-    name = forms.CharField(max_length=100)
+    name_validator = UnicodeNameValidator()
+    name = forms.CharField(max_length=100, validators=[name_validator])
     bio = forms.CharField(required=False)
     image = forms.ImageField(required=False)
 
@@ -29,7 +31,8 @@ class ProfileEditForm(forms.Form):
 
 class SignUpForm(forms.Form):
     email = forms.EmailField()
-    username = forms.CharField(max_length=150)
+    username_validator = ASCIIUsernameValidator()
+    username = forms.CharField(max_length=150, validators=[username_validator])
     password = forms.CharField(max_length=128)
     name = forms.CharField(max_length=100)
     bio = forms.CharField(required=False)

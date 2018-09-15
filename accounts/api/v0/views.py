@@ -11,6 +11,7 @@ from accounts.utils import get_user, get_password_errors, has_permission
 from django.db.models import Q
 import json
 from akaskhoone.notifications import push_to_queue
+from django.http import HttpRequest
 
 
 class LoginAPIView(TokenObtainPairView):
@@ -18,8 +19,15 @@ class LoginAPIView(TokenObtainPairView):
 
     def post(self, request, *args, **kwargs):
         try:
-            return super(LoginAPIView, self).post(request)
+            new_request = HttpRequest()
+            data = {
+                "email": request.data.get('email').lower() if request.data.get('email') else None,
+                "password": request.data.get('password')
+            }
+            new_request.data = data
+            return super(LoginAPIView, self).post(new_request)
         except Exception as e:
+            print(e)
             errors = error_data()
             for i in e.args[0]:
                 if i == 'non_field_errors':
