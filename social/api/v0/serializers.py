@@ -121,7 +121,7 @@ class NotificationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Notification
-        fields = ('__all__',)
+        fields = ('type', 'creator', 'post', 'date')
 
     def get_creator(self, obj):
         return {"username": obj.user.username, "name": obj.user.profile.name, "image": F"{obj.user.profile.image}"}

@@ -50,8 +50,8 @@ class Board(models.Model):
 
 class Notification(models.Model):
     type = models.CharField(
-        choices=[("unfollow", "unfollow"), ("dislike", "dislike"), ("like", "like"), ("follow", "follow"),
-                 ("comment", "comment"), ("post", "post"), ("join", "join")], max_length=8)
+        choices=[("like", "like"), ("follow", "follow"), ("request", "request"), ("comment", "comment"),
+                 ("join", "join")], max_length=8)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="notifications_created")
     post = models.ForeignKey(Post, on_delete=models.CASCADE, blank=True, null=True, related_name="notifications")
     user_notified = models.ForeignKey(User, on_delete=models.CASCADE, blank=True, null=True,

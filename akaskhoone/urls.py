@@ -2,11 +2,11 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-from .notifications import Private
+from .notifications import PrivateAPIView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('redis', Private.as_view()),
+    path('private/', PrivateAPIView.as_view(), name="private"),
     path('', include('accounts.urls')),
     path('', include('social.urls')),
 ]

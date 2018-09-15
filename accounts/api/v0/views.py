@@ -10,7 +10,7 @@ from accounts.api.v0.serializers import ProfileSerializer, TokenSerializer
 from accounts.utils import get_user, get_password_errors, has_permission
 from django.db.models import Q
 import json
-from akaskhoone.notifications import push_to_queue
+from akaskhoone.notifications import notify
 from django.http import HttpRequest
 
 
@@ -73,32 +73,6 @@ class VerifyTokenAPIView(TokenVerifyView):
 
 class ProfileAPIView(APIView):
     def get(self, request):
-        if request.query_params == {}:
-            try:
-                profile = ProfileSerializer(request.user.profile)
-                return JsonResponse(profile.data, status=200)
-            except Exception as e:
-                return JsonResponse(error_data(profile="NotExist"), status=400)
-
-        username = request.query_params.get("username")
-        if username:
-            try:
-                target_user = User.objects.get(username=username)
-                profile = ProfileSerializer(target_user.profile, requester=request.user.profile)
-                return JsonResponse(profile.data, status=200)
-            except Exception as e:
-                return JsonResponse(error_data(profile="NotExist"), status=400)
-
-        email = request.query_params.get("email")
-        if email:
-            try:
-                target_user = User.objects.get(email=email)
-                profile = ProfileSerializer(target_user.profile, requester=request.user.profile)
-                return JsonResponse(profile.data, status=200)
-            except Exception as e:
-                print(e)
-                return JsonResponse(error_data(profile="NotExist"), status=400)
-
         search = request.query_params.get("search")
         if search:
             try:
@@ -114,7 +88,11 @@ class ProfileAPIView(APIView):
             except Exception as e:
                 return JsonResponse({"data": []}, status=200)
 
-        return JsonResponse(error_data(request="Invalid"), status=400)
+        user = get_user(request)
+        if user:
+            return JsonResponse(ProfileSerializer(user.profile, requester=request.user.profile).data, status=200)
+
+        return JsonResponse(error_data(profile="NotExist"), status=400)
 
     def put(self, request):
         old_password = request.data.get('old_password')
@@ -227,7 +205,12 @@ class SignupAPIView(APIView):
 
         signup_form = SignUpForm(data=request.POST, files=request.FILES)
         if signup_form.is_valid():
-            signup_form.save()
+            user = signup_form.save()
+            try:
+                users = list(Contact.objects.get(email=user.email).users.all().values_list('id', flat=True))
+                notify(notify_type="join", user_id=user.id, users_notified=users)
+            except Exception as e:
+                pass
             print("status: 200", success_data("UserCreated"))
             return JsonResponse(success_data("UserCreated"), status=200)
         else:
@@ -340,19 +323,15 @@ class FollowingsAPIView(APIView):
                 if user == requester:
                     print("status: 400", error_data(profile="NotExist"))
                     return JsonResponse(error_data(profile="NotExist"), status=400)
-                try:
-                    requester.profile.followings.get(user.profile)
-                    print("status: 200", success_data("FollowedSuccessfully"))
-                    return JsonResponse(success_data("FollowedSuccessfully"), status=200)
-                except Exception as e:
-                    if user.profile.is_private:
-                        user.profile.requests.add(requester.profile)
-                        print("status: 200", success_data("RequestedSuccessfully"))
-                        return JsonResponse(success_data("RequestedSuccessfully"), status=200)
-                    requester.profile.followings.add(user.profile)
-                    push_to_queue(type="follow", user=request.user, profile=user.profile)
-                    print("status: 200", success_data("FollowedSuccessfully"))
-                    return JsonResponse(success_data("FollowedSuccessfully"), status=200)
+                elif user.profile.is_private:
+                    user.profile.requests.add(requester.profile)
+                    notify(notify_type="request", user_id=request.user.id, users_notified=[user.id])
+                    print("status: 200", success_data("RequestedSuccessfully"))
+                    return JsonResponse(success_data("RequestedSuccessfully"), status=200)
+                requester.profile.followings.add(user.profile)
+                notify(notify_type="follow", user_id=request.user.id, users_notified=[user.id])
+                print("status: 200", success_data("FollowedSuccessfully"))
+                return JsonResponse(success_data("FollowedSuccessfully"), status=200)
             except Exception as e:
                 print("status: 400", error_data(profile="NotExist"))
                 return JsonResponse(error_data(profile="NotExist"), status=400)
@@ -367,11 +346,9 @@ class FollowingsAPIView(APIView):
                     return JsonResponse(error_data(profile="NotExist"), status=400)
                 try:
                     requester.profile.followings.remove(user.profile.id)
-                    push_to_queue(type="unfollow", user=request.user, profile=user.profile)
                     print("status: 200", success_data("UnFollowedSuccessfully"))
                     return JsonResponse(success_data("UnFollowedSuccessfully"), status=200)
                 except Exception as e:
-                    push_to_queue(type="unfollow", user=request.user, profile=user.profile)
                     print("status: 200", success_data("UnFollowedSuccessfully"))
                     return JsonResponse(success_data("UnFollowedSuccessfully"), status=200)
 
@@ -387,11 +364,51 @@ class FollowingsAPIView(APIView):
                 if user == requester:
                     print("status: 400", error_data(profile="NotExist"))
                     return JsonResponse(error_data(profile="NotExist"), status=400)
-                if user.profile in requester.profile.requests.all():
+                elif user.profile in requester.profile.requests.all():
                     user.profile.followings.add(requester.profile)
                     requester.profile.requests.remove(user.profile)
                     print("status: 200", success_data("AcceptedSuccessfully"))
                     return JsonResponse(success_data("AcceptedSuccessfully"), status=200)
+                else:
+                    print("status: 400", error_data(profile="RequestNotExist"))
+                    return JsonResponse(error_data(profile="RequestNotExist"), status=400)
+
+            except Exception as e:
+                print("status: 400", error_data(profile="NotExist"))
+                return JsonResponse(error_data(profile="NotExist"), status=400)
+
+        username = request.data.get('reject')
+        if username:
+            try:
+                user = User.objects.get(username=username)
+                requester = request.user
+                if user == requester:
+                    print("status: 400", error_data(profile="NotExist"))
+                    return JsonResponse(error_data(profile="NotExist"), status=400)
+                elif user.profile in requester.profile.requests.all():
+                    requester.profile.requests.remove(user.profile)
+                    print("status: 200", success_data("RejectedSuccessfully"))
+                    return JsonResponse(success_data("RejectedSuccessfully"), status=200)
+                else:
+                    print("status: 400", error_data(profile="RequestNotExist"))
+                    return JsonResponse(error_data(profile="RequestNotExist"), status=400)
+
+            except Exception as e:
+                print("status: 400", error_data(profile="NotExist"))
+                return JsonResponse(error_data(profile="NotExist"), status=400)
+
+        username = request.data.get('cancel')
+        if username:
+            try:
+                user = User.objects.get(username=username)
+                requester = request.user
+                if user == requester:
+                    print("status: 400", error_data(profile="NotExist"))
+                    return JsonResponse(error_data(profile="NotExist"), status=400)
+                elif requester.profile in user.profile.requests.all():
+                    user.profile.requests.remove(user.profile)
+                    print("status: 200", success_data("CanceledSuccessfully"))
+                    return JsonResponse(success_data("CanceledSuccessfully"), status=200)
                 else:
                     print("status: 400", error_data(profile="RequestNotExist"))
                     return JsonResponse(error_data(profile="RequestNotExist"), status=400)

@@ -8,7 +8,7 @@ from social.models import Post, Tag, Board
 from social.api.v0.serializers import (PostSerializer, CommentSerializer, TagSerializer, BoardSerializer,
                                        NotificationSerializer)
 from akaskhoone.utils import get_paginated_data, error_data, success_data
-from akaskhoone.notifications import push_to_queue
+from akaskhoone.notifications import notify
 from django.db.models import Count
 from django.contrib.auth import get_user_model
 from accounts.utils import has_permission
@@ -277,7 +277,6 @@ class PostsAPIView(APIView):
         post_form = CreatePostFrom(request.POST, request.FILES)
         if post_form.is_valid():
             post = post_form.save(request.user)
-            push_to_queue(type="post", user=request.user, post=post)
             return JsonResponse(PostSerializer(post, requester=request.user).data)
         else:
             errors = {}
@@ -296,11 +295,10 @@ class PostLikesAPIView(APIView):
                 method = request.data.get('method')
                 if method == "like":
                     post.likes.add(request.user)
-                    push_to_queue(type="like", user=request.user, post=post)
+                    notify(notify_type="like", user_id=request.user.id, post_id=post.id, users_notified=[post.user.id])
                     return JsonResponse(success_data("PostLiked"))
                 elif method == "dislike":
                     post.likes.remove(request.user)
-                    push_to_queue(type="dislike", user=request.user, post=post)
                     return JsonResponse(success_data("PostDisliked"))
                 else:
                     print("status: 400", error_data(method="WrongData"))
@@ -335,7 +333,7 @@ class PostCommentsAPIView(APIView):
                 post = Post.objects.get(pk=post_id)
                 comment = post.comments.create(user=request.user, text=text)
                 data = CommentSerializer(comment).data
-                push_to_queue(type="comment", user=request.user, post=post)
+                notify(notify_type="comment", user_id=request.user.id, post_id=post.id, users_notified=[post.user.id])
                 return JsonResponse(data)
             except ObjectDoesNotExist:
                 print("status: 400", error_data(post="NotExist"))
