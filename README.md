@@ -35,32 +35,32 @@ Windows:
 ```
 #### installing requirements
 macOS / Linux / Windows:
-```bash
+```
 pip install -r akaskhoone/requirements.txt
 ```
 ## Migrating
 in root directory of project run this command for migrating models
 
 macOS / Linux / Windows:
-```bash
+```
+export DJANGO_SETTINGS_MODULE=“akaskhoone.settings.base”
 python manage.py makemigrations --settings=akaskhoone.settings.base
 python manage.py migrate --settings=akaskhoone.settings.base
 ```
-
 ## Loading Fixture
 macOS / Linux / Windows:
-```bash
+```
 python manage.py loaddata user profile tag post board --settings=akaskhoone.settings.base
 ```
 and then:
-```bash
+```
 mkdir media
 cp -r accounts/fixtures/profile_photos media
 cp -r social/fixtures/posts media
 ```  
 ## Runserver
 in root directory of project run this command:
-> change the ```DEBUG = True``` for testing projext with local Django server. 
+> change the ```DEBUG = True``` for testing project with local Django server. 
 
 macOS / Linux / Windows:
 ```
