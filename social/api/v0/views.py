@@ -241,17 +241,17 @@ class PostsAPIView(APIView):
     """
 
     def get(self, request):
-        search = request.query_params.get("search")
-        if search:
+        tag = request.query_params.get("tag")
+        if tag:
             users = list(Post.objects.all().filter(user__profile__is_private=False).values_list('user', flat=True))
             users += list(request.user.profile.followings.all().values_list('user', flat=True))
             users.append(request.user.pk)
             data = get_paginated_data(
-                data=PostSerializer(Post.objects.filter(tags__name=search, user_id__in=set(users)).order_by('-date'),
+                data=PostSerializer(Post.objects.filter(tags__name=tag, user_id__in=set(users)).order_by('-date'),
                                     many=True, requester=request.user).data,
                 page=request.query_params.get('page'),
                 limit=request.query_params.get('limit'),
-                url=F"/social/posts/?search={search}"
+                url=F"/social/posts/?tag={tag}"
             )
             return JsonResponse(data)
 

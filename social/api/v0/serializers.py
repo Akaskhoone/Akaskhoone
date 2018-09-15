@@ -19,11 +19,13 @@ class PostSerializer(serializers.ModelSerializer):
     tags = serializers.SerializerMethodField()
     comments_count = serializers.SerializerMethodField()
     likes_count = serializers.SerializerMethodField()
+    is_liked = serializers.SerializerMethodField()
     date = serializers.SerializerMethodField()
 
     class Meta:
         model = Post
-        fields = ('id', 'creator', 'image', 'location', 'des', 'tags', 'comments_count', 'likes_count', 'date')
+        fields = (
+            'id', 'creator', 'image', 'location', 'des', 'tags', 'comments_count', 'likes_count', 'is_liked', 'date')
 
     def get_creator(self, obj):
         return {"username": obj.user.username, "name": obj.user.profile.name, "image": F"{obj.user.profile.image}"}
@@ -42,6 +44,12 @@ class PostSerializer(serializers.ModelSerializer):
 
     def get_likes_count(self, obj):
         return obj.likes.count()
+
+    def get_is_liked(self, obj):
+        if self.requester:
+            if self.requester in obj.likes.all():
+                return True
+        return False
 
     def get_date(self, obj):
         return F"{obj.date}"
