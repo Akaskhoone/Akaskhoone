@@ -69,3 +69,9 @@ DATABASES = {
     }
 }
 ```
+#### dependencies
+```
+yum install -y python36u-devel.x86_64
+yum install mariadb-devel
+pip install mysqlclient
+```

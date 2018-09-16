@@ -31,10 +31,11 @@ class PostSerializer(serializers.ModelSerializer):
         return {"username": obj.user.username, "name": obj.user.profile.name, "image": F"{obj.user.profile.image}"}
 
     def get_image(self, obj):
-        if self.requester:
-            if has_permission(self.requester, obj.user):
-                return F"{obj.image}"
-        return F"posts/lock.jpg"
+        return F"{obj.image}"
+        # if self.requester:
+        #     if has_permission(self.requester, obj.user):
+        #         return F"{obj.image}"
+        # return F"posts/lock.jpg"
 
     def get_tags(self, obj):
         return TagSerializer(obj.tags.all(), many=True).data
