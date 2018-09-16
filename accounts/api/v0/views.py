@@ -73,9 +73,8 @@ class VerifyTokenAPIView(TokenVerifyView):
 
 class ProfileAPIView(APIView):
     def get(self, request):
-        search = request.query_params.get("search")
-        if search:
-            print(search)
+        if request.query_params:
+            search = request.query_params.get("search")
             try:
                 data = get_paginated_data(
                     data=ProfileSerializer(Profile.objects.filter(
@@ -326,12 +325,10 @@ class FollowingsAPIView(APIView):
                 elif user.profile.is_private:
                     user.profile.requests.add(requester.profile)
                     notify(notify_type="request", user_id=request.user.id, users_notified=[user.id])
-                    print("status: 200", success_data("RequestedSuccessfully"))
-                    return JsonResponse(success_data("RequestedSuccessfully"), status=200)
+                    return JsonResponse(ProfileSerializer(user.profile, requester=requester).data)
                 requester.profile.followings.add(user.profile)
                 notify(notify_type="follow", user_id=request.user.id, users_notified=[user.id])
-                print("status: 200", success_data("FollowedSuccessfully"))
-                return JsonResponse(success_data("FollowedSuccessfully"), status=200)
+                return JsonResponse(ProfileSerializer(user.profile, requester=requester).data)
             except Exception as e:
                 print("status: 400", error_data(profile="NotExist"))
                 return JsonResponse(error_data(profile="NotExist"), status=400)
