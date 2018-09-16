@@ -44,6 +44,10 @@ getting users list
 ```mysql
 SELECT user,authentication_string,plugin,host FROM mysql.user;
 ```
+changing user password
+```mysql
+ALTER USER 'aasmpro'@'hostname' IDENTIFIED BY 'new_password';
+```
 #### creating new database
 ```mysql
 CREATE DATABASE akaskhoone CHARACTER SET UTF8;
