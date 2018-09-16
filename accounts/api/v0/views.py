@@ -73,7 +73,7 @@ class VerifyTokenAPIView(TokenVerifyView):
 
 class ProfileAPIView(APIView):
     def get(self, request):
-        if request.query_params:
+        if request.query_params.__contains__("search"):
             search = request.query_params.get("search")
             try:
                 data = get_paginated_data(
@@ -86,11 +86,11 @@ class ProfileAPIView(APIView):
                 )
                 return JsonResponse(data)
             except Exception as e:
-                return JsonResponse({"data": []}, status=200)
+                return JsonResponse({"data": []})
 
         user = get_user(request)
         if user:
-            return JsonResponse(ProfileSerializer(user.profile, requester=request.user.profile).data, status=200)
+            return JsonResponse(ProfileSerializer(user.profile, requester=request.user.profile).data)
 
         return JsonResponse(error_data(profile="NotExist"), status=400)
 
@@ -342,11 +342,9 @@ class FollowingsAPIView(APIView):
                     return JsonResponse(error_data(profile="NotExist"), status=400)
                 try:
                     requester.profile.followings.remove(user.profile.id)
-                    print("status: 200", success_data("UnFollowedSuccessfully"))
-                    return JsonResponse(success_data("UnFollowedSuccessfully"), status=200)
+                    return JsonResponse(ProfileSerializer(user.profile, requester=requester).data)
                 except Exception as e:
-                    print("status: 200", success_data("UnFollowedSuccessfully"))
-                    return JsonResponse(success_data("UnFollowedSuccessfully"), status=200)
+                    return JsonResponse(ProfileSerializer(user.profile, requester=requester).data)
 
             except Exception as e:
                 print("status: 400", error_data(profile="NotExist"))
@@ -363,8 +361,7 @@ class FollowingsAPIView(APIView):
                 elif user.profile in requester.profile.requests.all():
                     user.profile.followings.add(requester.profile)
                     requester.profile.requests.remove(user.profile)
-                    print("status: 200", success_data("AcceptedSuccessfully"))
-                    return JsonResponse(success_data("AcceptedSuccessfully"), status=200)
+                    return JsonResponse(ProfileSerializer(user.profile, requester=requester).data)
                 else:
                     print("status: 400", error_data(profile="RequestNotExist"))
                     return JsonResponse(error_data(profile="RequestNotExist"), status=400)
@@ -383,8 +380,7 @@ class FollowingsAPIView(APIView):
                     return JsonResponse(error_data(profile="NotExist"), status=400)
                 elif user.profile in requester.profile.requests.all():
                     requester.profile.requests.remove(user.profile)
-                    print("status: 200", success_data("RejectedSuccessfully"))
-                    return JsonResponse(success_data("RejectedSuccessfully"), status=200)
+                    return JsonResponse(ProfileSerializer(user.profile, requester=requester).data)
                 else:
                     print("status: 400", error_data(profile="RequestNotExist"))
                     return JsonResponse(error_data(profile="RequestNotExist"), status=400)
@@ -403,8 +399,7 @@ class FollowingsAPIView(APIView):
                     return JsonResponse(error_data(profile="NotExist"), status=400)
                 elif requester.profile in user.profile.requests.all():
                     user.profile.requests.remove(user.profile)
-                    print("status: 200", success_data("CanceledSuccessfully"))
-                    return JsonResponse(success_data("CanceledSuccessfully"), status=200)
+                    return JsonResponse(ProfileSerializer(user.profile, requester=requester).data)
                 else:
                     print("status: 400", error_data(profile="RequestNotExist"))
                     return JsonResponse(error_data(profile="RequestNotExist"), status=400)
