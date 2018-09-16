@@ -313,8 +313,8 @@ class FollowingsAPIView(APIView):
         This def handles two functions, first is Follow Request and Second is Unfollow request
         and both returns a message and a key that shows weather the request served successfully or not
         """
-        username = request.data.get('follow')
-        if username:
+        if request.data.__contains__('follow'):
+            username = request.data.get('follow')
             try:
                 user = User.objects.get(username=username)
                 requester = request.user
@@ -324,34 +324,36 @@ class FollowingsAPIView(APIView):
                 elif user.profile.is_private:
                     user.profile.requests.add(requester.profile)
                     notify(notify_type="request", user_id=request.user.id, users_notified=[user.id])
-                    return JsonResponse(ProfileSerializer(user.profile, requester=requester).data)
+                    return JsonResponse(ProfileSerializer(user.profile, requester=requester.profile).data)
                 requester.profile.followings.add(user.profile)
                 notify(notify_type="follow", user_id=request.user.id, users_notified=[user.id])
-                return JsonResponse(ProfileSerializer(user.profile, requester=requester).data)
+                return JsonResponse(ProfileSerializer(user.profile, requester=requester.profile).data)
             except Exception as e:
                 print("status: 400", error_data(profile="NotExist"))
                 return JsonResponse(error_data(profile="NotExist"), status=400)
 
-        username = request.data.get('unfollow')
-        if username:
+        if request.data.__contains__('unfollow'):
+            username = request.data.get('unfollow')
             try:
                 user = User.objects.get(username=username)
                 requester = request.user
                 if user == requester:
                     print("status: 400", error_data(profile="NotExist"))
                     return JsonResponse(error_data(profile="NotExist"), status=400)
-                try:
+                elif user.profile in requester.profile.followings.all():
                     requester.profile.followings.remove(user.profile.id)
-                    return JsonResponse(ProfileSerializer(user.profile, requester=requester).data)
-                except Exception as e:
-                    return JsonResponse(ProfileSerializer(user.profile, requester=requester).data)
+                    return JsonResponse(ProfileSerializer(user.profile, requester=requester.profile).data)
+                elif user.profile in requester.profile.requests_sent.all():
+                    requester.profile.requests_sent.remove(user.profile.id)
+                    return JsonResponse(ProfileSerializer(user.profile, requester=requester.profile).data)
 
+                return JsonResponse(ProfileSerializer(user.profile, requester=requester.profile).data)
             except Exception as e:
                 print("status: 400", error_data(profile="NotExist"))
                 return JsonResponse(error_data(profile="NotExist"), status=400)
 
-        username = request.data.get('accept')
-        if username:
+        if request.data.__contains__('accept'):
+            username = request.data.get('accept')
             try:
                 user = User.objects.get(username=username)
                 requester = request.user
@@ -361,7 +363,7 @@ class FollowingsAPIView(APIView):
                 elif user.profile in requester.profile.requests.all():
                     user.profile.followings.add(requester.profile)
                     requester.profile.requests.remove(user.profile)
-                    return JsonResponse(ProfileSerializer(user.profile, requester=requester).data)
+                    return JsonResponse(ProfileSerializer(user.profile, requester=requester.profile).data)
                 else:
                     print("status: 400", error_data(profile="RequestNotExist"))
                     return JsonResponse(error_data(profile="RequestNotExist"), status=400)
@@ -370,8 +372,8 @@ class FollowingsAPIView(APIView):
                 print("status: 400", error_data(profile="NotExist"))
                 return JsonResponse(error_data(profile="NotExist"), status=400)
 
-        username = request.data.get('reject')
-        if username:
+        if request.data.__contains__('reject'):
+            username = request.data.get('reject')
             try:
                 user = User.objects.get(username=username)
                 requester = request.user
@@ -380,26 +382,7 @@ class FollowingsAPIView(APIView):
                     return JsonResponse(error_data(profile="NotExist"), status=400)
                 elif user.profile in requester.profile.requests.all():
                     requester.profile.requests.remove(user.profile)
-                    return JsonResponse(ProfileSerializer(user.profile, requester=requester).data)
-                else:
-                    print("status: 400", error_data(profile="RequestNotExist"))
-                    return JsonResponse(error_data(profile="RequestNotExist"), status=400)
-
-            except Exception as e:
-                print("status: 400", error_data(profile="NotExist"))
-                return JsonResponse(error_data(profile="NotExist"), status=400)
-
-        username = request.data.get('cancel')
-        if username:
-            try:
-                user = User.objects.get(username=username)
-                requester = request.user
-                if user == requester:
-                    print("status: 400", error_data(profile="NotExist"))
-                    return JsonResponse(error_data(profile="NotExist"), status=400)
-                elif requester.profile in user.profile.requests.all():
-                    user.profile.requests.remove(user.profile)
-                    return JsonResponse(ProfileSerializer(user.profile, requester=requester).data)
+                    return JsonResponse(ProfileSerializer(user.profile, requester=requester.profile).data)
                 else:
                     print("status: 400", error_data(profile="RequestNotExist"))
                     return JsonResponse(error_data(profile="RequestNotExist"), status=400)
