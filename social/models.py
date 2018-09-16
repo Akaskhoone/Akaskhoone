@@ -58,5 +58,8 @@ class Notification(models.Model):
                                       related_name="notifications")
     date = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        unique_together = ('type', 'user', 'post', 'user_notified')
+
     def __str__(self):
         return F"[{self.user}] {self.type}ed"

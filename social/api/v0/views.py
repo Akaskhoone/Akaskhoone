@@ -296,10 +296,10 @@ class PostLikesAPIView(APIView):
                 if method == "like":
                     post.likes.add(request.user)
                     notify(notify_type="like", user_id=request.user.id, post_id=post.id, users_notified=[post.user.id])
-                    return JsonResponse(success_data("PostLiked"))
+                    return JsonResponse(PostSerializer(post, requester=request.user).data)
                 elif method == "dislike":
                     post.likes.remove(request.user)
-                    return JsonResponse(success_data("PostDisliked"))
+                    return JsonResponse(PostSerializer(post, requester=request.user).data)
                 else:
                     print("status: 400", error_data(method="WrongData"))
                     return JsonResponse(error_data(method="WrongData"), status=400)
