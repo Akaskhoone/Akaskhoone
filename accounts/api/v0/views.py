@@ -75,16 +75,17 @@ class ProfileAPIView(APIView):
     def get(self, request):
         search = request.query_params.get("search")
         if search:
+            print(search)
             try:
-                filtered_profiles = Profile.objects.filter(
-                    Q(user__username__contains=search) | Q(name__contains=search)).exclude(user=request.user)
-                profiles = []
-                for profile in filtered_profiles:
-                    profiles.append(ProfileSerializer(profile, requester=request.user.profile,
-                                                      fields=(
-                                                          "username", "name", "image", "is_private",
-                                                          "is_followed")).data)
-                return JsonResponse({"data": profiles}, status=200)
+                data = get_paginated_data(
+                    data=ProfileSerializer(Profile.objects.filter(
+                        Q(user__username__contains=search) | Q(name__contains=search)), many=True,
+                        requester=request.user.profile).data,
+                    page=request.query_params.get('page'),
+                    limit=request.query_params.get('limit'),
+                    url=F"profile/?search={search}"
+                )
+                return JsonResponse(data)
             except Exception as e:
                 return JsonResponse({"data": []}, status=200)
 
@@ -103,7 +104,6 @@ class ProfileAPIView(APIView):
                     validate_password(new_password, user=request.user, password_validators=None)
                     request.user.set_password(new_password)
                     request.user.save()
-                    print("status: 200", success_data("PasswordChanged"))
                     return JsonResponse(success_data("PasswordChanged"), status=200)
                 except Exception as e:
                     print("status: 400", error_data(new_password=get_password_errors(e)))
