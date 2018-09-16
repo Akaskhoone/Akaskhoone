@@ -72,6 +72,10 @@ class Profile(models.Model):
     requests = models.ManyToManyField('Profile', related_name='requests_sent', blank=True, symmetrical=False)
     is_private = models.BooleanField(verbose_name="private", default=True)
 
+    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+        self.clean()
+        super().save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
+
     def clean(self):
         super().clean()
         if not self.image:

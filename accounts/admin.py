@@ -14,7 +14,7 @@ from django.utils.html import escape
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.debug import sensitive_post_parameters
 
-from .models import User, Profile
+from .models import User, Profile, Contact, Invitation
 from .forms import AdminPasswordChangeForm, UserChangeForm, UserCreationForm
 
 csrf_protect_m = method_decorator(csrf_protect)
@@ -188,3 +188,22 @@ class ProfileAdmin(admin.ModelAdmin):
     list_editable = ('is_private',)
     search_fields = ('name',)
     ordering = ('user',)
+
+
+@register(Contact)
+class ContactAdmin(admin.ModelAdmin):
+    filter_horizontal = ('users',)
+    list_display = ('email',)
+    search_fields = ('email',)
+
+
+@register(Invitation)
+class InvitationAdmin(admin.ModelAdmin):
+    fieldsets = (
+        (None, {'fields': (('contact', 'user', 'invited'),)}),
+    )
+    autocomplete_fields = ('user', 'contact')
+    list_display = ('contact', 'user', 'invited')
+    list_filter = ('invited',)
+    search_fields = ('contact__email', 'user__username')
+    ordering = ('contact',)
