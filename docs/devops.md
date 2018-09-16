@@ -52,6 +52,10 @@ ALTER USER 'aasmpro'@'hostname' IDENTIFIED BY 'new_password';
 ```mysql
 CREATE DATABASE akaskhoone CHARACTER SET UTF8;
 ```
+also for deleting
+```mysql
+DROP DATABASE akaskhoone;
+```
 #### django DB settings
 ```python
 DATABASES = {
