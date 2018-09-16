@@ -82,7 +82,7 @@ class ProfileAPIView(APIView):
                         requester=request.user.profile).data,
                     page=request.query_params.get('page'),
                     limit=request.query_params.get('limit'),
-                    url=F"profile/?search={search}"
+                    url=F"/accounts/profile/?search={search}"
                 )
                 return JsonResponse(data)
             except Exception as e:
@@ -127,7 +127,6 @@ class ProfileAPIView(APIView):
             if profile_edit_form.is_valid():
                 profile_edit_form.save(user=request.user)
                 profile = ProfileSerializer(request.user.profile)
-                print("status: 200", profile.data)
                 return JsonResponse(profile.data, status=200)
             else:
                 print("status: 400", error_data(image="Size"))
@@ -254,7 +253,7 @@ class FollowersAPIView(APIView):
                 data=ProfileSerializer(profiles, requester=request.user.profile, many=True).data,
                 page=request.query_params.get('page'),
                 limit=request.query_params.get('limit'),
-                url=F"profile/followers/?username={user.username}&search={search}"
+                url=F"/accounts/profile/followers/?username={user.username}&search={search}"
             )
             return JsonResponse(data)
 
@@ -262,7 +261,7 @@ class FollowersAPIView(APIView):
             data=ProfileSerializer(user.profile.followers.all(), requester=request.user.profile, many=True).data,
             page=request.query_params.get('page'),
             limit=request.query_params.get('limit'),
-            url=F"profile/followers/?username={user.username}"
+            url=F"/accounts/profile/followers/?username={user.username}"
         )
         return JsonResponse(data)
 
@@ -297,7 +296,7 @@ class FollowingsAPIView(APIView):
                 data=ProfileSerializer(profiles, requester=request.user.profile, many=True).data,
                 page=request.query_params.get('page'),
                 limit=request.query_params.get('limit'),
-                url=F"profile/followings/?username={user.username}&search={search}"
+                url=F"/accounts/profile/followings/?username={user.username}&search={search}"
             )
             return JsonResponse(data)
 
@@ -305,7 +304,7 @@ class FollowingsAPIView(APIView):
             data=ProfileSerializer(user.profile.followings.all(), requester=request.user.profile, many=True).data,
             page=request.query_params.get('page'),
             limit=request.query_params.get('limit'),
-            url=F"profile/followings/?username={user.username}"
+            url=F"/accounts/profile/followings/?username={user.username}"
         )
         return JsonResponse(data)
 
