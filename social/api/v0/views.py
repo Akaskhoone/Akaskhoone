@@ -295,7 +295,6 @@ class PostLikesAPIView(APIView):
                 method = request.data.get('method')
                 if method == "like":
                     post.likes.add(request.user)
-                    notify(notify_type="like", user_id=request.user.id, post_id=post.id, users_notified=[post.user.id])
                     return JsonResponse(PostSerializer(post, requester=request.user).data)
                 elif method == "dislike":
                     post.likes.remove(request.user)
@@ -333,7 +332,6 @@ class PostCommentsAPIView(APIView):
                 post = Post.objects.get(pk=post_id)
                 comment = post.comments.create(user=request.user, text=text)
                 data = CommentSerializer(comment).data
-                notify(notify_type="comment", user_id=request.user.id, post_id=post.id, users_notified=[post.user.id])
                 return JsonResponse(data)
             except ObjectDoesNotExist:
                 print("status: 400", error_data(post="NotExist"))

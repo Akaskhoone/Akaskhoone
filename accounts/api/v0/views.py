@@ -190,8 +190,9 @@ class SignupAPIView(APIView):
                     try:
                         validate_password(password)
                     except Exception as e:
-                        errors = error_data(password=get_password_errors(e))
-                if errors:
+                        errors = error_data(__data__=errors, password=get_password_errors(e))
+
+                if errors['error'] != {}:
                     print("status: 400", errors)
                     return JsonResponse(errors, status=400)
                 else:
@@ -205,9 +206,8 @@ class SignupAPIView(APIView):
         if signup_form.is_valid():
             user = signup_form.save()
             try:
-                users = list(Contact.objects.get(email=user.email).users.all().values_list('id', flat=True))
-                notify(notify_type="join", user_id=user.id, users_notified=users)
-            except Exception as e:
+                user.boards.create(name='آلبوم شخصی')
+            except:
                 pass
             print("status: 200", success_data("UserCreated"))
             return JsonResponse(success_data("UserCreated"), status=200)
@@ -323,10 +323,8 @@ class FollowingsAPIView(APIView):
                     return JsonResponse(error_data(profile="NotExist"), status=400)
                 elif user.profile.is_private:
                     user.profile.requests.add(requester.profile)
-                    notify(notify_type="request", user_id=request.user.id, users_notified=[user.id])
                     return JsonResponse(ProfileSerializer(user.profile, requester=requester.profile).data)
                 requester.profile.followings.add(user.profile)
-                notify(notify_type="follow", user_id=request.user.id, users_notified=[user.id])
                 return JsonResponse(ProfileSerializer(user.profile, requester=requester.profile).data)
             except Exception as e:
                 print("status: 400", error_data(profile="NotExist"))

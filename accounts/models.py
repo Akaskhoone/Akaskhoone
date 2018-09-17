@@ -70,7 +70,7 @@ class Profile(models.Model):
                               default='profile_photos/default.jpg')
     followings = models.ManyToManyField('Profile', related_name='followers', blank=True, symmetrical=False)
     requests = models.ManyToManyField('Profile', related_name='requests_sent', blank=True, symmetrical=False)
-    is_private = models.BooleanField(verbose_name="private", default=True)
+    is_private = models.BooleanField(verbose_name="private", default=False)
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         self.clean()

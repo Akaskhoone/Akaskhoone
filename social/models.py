@@ -42,7 +42,7 @@ class Comment(models.Model):
 class Board(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='creator', related_name='boards')
     name = models.CharField(max_length=200, verbose_name='name')
-    posts = models.ManyToManyField(Post, related_name='boards', verbose_name='posts', blank=False)
+    posts = models.ManyToManyField(Post, related_name='boards', verbose_name='posts', blank=True)
 
     def __str__(self):
         return F"[{self.user}] {self.name}"
