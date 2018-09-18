@@ -8,13 +8,10 @@ this repo handles backend of akaskhoone project
 * djangorestframework_simplejwt 3.2.3
 * redis 2.10.6
 * requests 2.19.1
+* mysqlclient
 
 ## Setup
-#### clone repo
-```
-git clone http://gitlab.rahnemacollege.com/Team-3/akaskhoone.git
-```
-#### installing ```virtualenv``` if you don't have it already
+#### installing virtualenv
 macOS / Linux / Windows:
 ```
 pip install virtualenv
